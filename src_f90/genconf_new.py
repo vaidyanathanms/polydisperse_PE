@@ -85,7 +85,7 @@ for ifree in range(len(free_chains)):
         if not os.path.isdir(workdir_arch):
             os.mkdir(workdir_arch)
 
-        workdir_headpdi = workdir2 + '/pdi_' + str(pdi_free)
+        workdir_headpdi = workdir_arch + '/pdi_' + str(pdi_free)
         if not os.path.isdir(workdir_headpdi):
             os.mkdir(workdir_headpdi)
 
@@ -119,8 +119,8 @@ for ifree in range(len(free_chains)):
                 #----Run PDI code------
                 print("Running PDI calculation file")
                 tot_chains = free_chains[ifree] + graft_chains
-                init_pdi_write(free_chains[ifree],free_avg_mw,pdi_graft,\
-                               graft_chains,graft_avg_mw,pdi_graft,destdir)
+                init_pdi_write(pdi_free,free_avg_mw,free_chains[ifree],\
+                               pdi_graft,graft_avg_mw,graft_chains,destdir)
                 compile_and_run_pdi(destdir)
 
                 pdiflag = 1
@@ -156,10 +156,11 @@ for ifree in range(len(free_chains)):
                         cpy_main_files(destdir,initdir,fyl)
                         os.remove(fyl)
 
-                files = glob.glob(destdir +'/init*')
+                files = glob.glob('init_*')
                 for fyl in files:
-                    cpy_main_files(destdir,initdir,fyl)
-                    os.remove(f)
+                    if not os.path.isdir(fyl):
+                        cpy_main_files(destdir,initdir,fyl)
+                        os.remove(fyl)
                 
 
                 files = glob.glob(destdir +'/*var*')
@@ -174,14 +175,7 @@ for ifree in range(len(free_chains)):
                 for f in files:
                     os.remove(f)
 
-                if not os.path.isfile(newdataname):
-                    print(newdataname, "not found")
-                    continue
 
-
-                print( "Submitting Jobs..")
-
-                subprocess.call(["qsub","jobswitch.sh"])
 
                 os.chdir(maindir)
 

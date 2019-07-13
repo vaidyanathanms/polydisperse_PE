@@ -15,15 +15,15 @@ def cpy_main_files(maindir,destdir,fylname):
     desfyl = destdir + '/' + fylname
     shutil.copy2(srcfyl, desfyl)
 
-def init_pdi_write(freechains, freemw, freepdi,\
-                   graftch,graftmw,graftpdi,destdir):
+def init_pdi_write(freepdi, freemw,freechains,\
+                   graftpdi,graftmw,graftch,destdir):
 
     pdi_fyl = destdir + '/init_pdi.txt'
     finit   = open(pdi_fyl,'w')
-    finit.write('%s\t %s' %('free_data', '#pdi mw nchains'))
-    finit.write('%d\t %d\t %g\n' %(freepdi,freemw,freechains))
-    finit.write('%s\t %s' %('graft_data', '#pdi mw nchains'))
-    finit.write('%d\t %d\t %g\n' %(graftpdi,graftmw,graftch))
+    finit.write('%s\t %s\n' %('free_data', '#pdi mw nchains'))
+    finit.write('%g\t %g\t %g\n' %(freepdi,freemw,freechains))
+    finit.write('%s\t %s\n' %('graft_data', '#pdi mw nchains'))
+    finit.write('%g\t %g\t %g\n' %(graftpdi,graftmw,graftch))
     finit.close()
 
 
@@ -86,14 +86,14 @@ def compute_total_particles(destdir,freech,graftch,tailmons,nsalt,\
     
     nfree_cntr = int(fcharge*free_mons)
     ngraft_cntr = int(fcharge*(graft_mons - \
-                                graft_chains*tailmons))
+                                graftch*tailmons))
     ntotal = nfree_cntr + ngraft_cntr + free_mons + \
                          graft_mons + 2*nsalt
     
     fout_main = open('init_alldata.txt','w')
     fout_main.write('%s\t %g\n' %('Free chains', freech))
     fout_main.write('%s\t %g\n' %('Graft chains',graftch))
-    fout_main.write('%s\t %g\n' %('Total freemons', freemons))
+    fout_main.write('%s\t %g\n' %('Total freemons', free_mons))
     fout_main.write('%s\t %g\n' %('Total graftmons',graft_mons))
     fout_main.write('%s\t %g\n' %('Free counter', nfree_cntr))
     fout_main.write('%s\t %g\n' %('Graft counter',\
