@@ -61,7 +61,45 @@ def check_pdifiles(destdir,flagcheck):
         break
         
 
-
+def compute_total_particles(destdir,freech,graftch,tailmons,nsalt\
+                            fcharge,free_mons,graft_mons,totalmons):
+    os.chdir(destdir)
+    free_fyl = destdir + '/FreeChains.dat'
+    ffree = fopen(free_fyl,'r')
+    lyne = ffree.readline()
+    dat_lyne = lyne.split()
+    if int(dat_lyne[0]) != freech:
+        print("Free chains do not match",int(dat_lyne[0]),freech)
     
+    free_mons = int(dat_lyne[1])
+    ffree.close()
 
+    graft_fyl = destdir + '/GraftChains.dat'
+    fgraft = fopen(graft_fyl,'r')
+    lyne = fgraft.readline()
+    dat_lyne = lyne.split()
+    if int(dat_lyne[0]) != graftch:
+        print("Graft chains do not match",int(dat_lyne[0]),graftch)
+    
+    graft_mons = int(dat_lyne[1])
+    fgraft.close()
+    
+    nfree_cntr = int(fcharge*free_mons)
+    ngraft_cntr = int(fcharge*(graft_mons - \
+                                graft_chains*tailmons))
+    ntotal = nfree_cntr + ngraft_cntr + free_mons + \
+                         graft_mons + 2*nsalt
+    
+    fout_main = fopen('init_alldata.txt')
+    fout_main.write('%s\t %g\n' %('Free chains', freech))
+    fout_main.write('%s\t %g\n' %('Graft chains',graftch))
+    fout_main.write('%s\t %g\n' %('Total freemons', freemons))
+    fout_main.write('%s\t %g\n' %('Total graftmons',graft_mons))
+    fout_main.write('%s\t %g\n' %('Free counter', nfree_cntr))
+    fout_main.write('%s\t %g\n' %('Graft counter',\
+                                  ngraft_cntr))
+    fout_main.write('%s\t %g\n' %('Net salt (sum both)',\
+                                  2*nsalt))
+    fout_main.write('%s\t %g\n' %('Total particle',ntotal)
+    fout_main.close()
 

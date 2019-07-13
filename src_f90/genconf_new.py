@@ -11,6 +11,9 @@ from subprocess import call
 
 from my_python_functions import cpy_main_files
 from my_python_functions import init_pdi_write
+from my_python_functions import compile_and_run_pdi
+from my_python_functions import check_pdi_files
+from my_python_functions import compute_total_particles
 
 #---------input flags------------------------------------------
 #0-initial run  1- production
@@ -24,7 +27,7 @@ graft_chains = 64
 graft_avg_mw = 32 
 nsalt        = 510
 f_charge     = 0.5
-archarr      = [1,2,3,4]
+archarr      = [1]#,2,3,4]
 ncases_pdi   = 5
 pdi_free     = 1.2
 pdi_graft    = 1.0
@@ -126,22 +129,34 @@ for ifree in range(len(free_chains)):
                     print("Check PDI files")
                     continue
 
-                #----Compute total particles, required counterions
-
-                
+                    
+                compute_total_particles(destdir,free_chains[ifree],\
+                                        graft_chains,tail_mons,nsalt,f_charge, 
+                                        nfree_mons,ngraft_mons,ntotal)
 
                 #----Generate input files-----
 
                 print( "Copy Successful - Generating Input Files")
 
+                dataname = "PEdata_new_"+str(free_chains[ifree])+\
+                           "_"+fylstr+".dat"
 
 
+                initdir = destdir + '/init_files'
+                if not os.path.isdir(initdir):
+                    os.mkdir(initdir)
 
-                dataname = "PEdata_new_"+str(free_chains[ifree])+"_"+fylstr+".dat"
-                newdataname = "PEdata_recreate_"+str(free_chains[ifree])+"_"+fylstr+".dat"
 
+                for fyl in f90_files:
+                    if os.path.exists(fyl):
+                        cpy_main_files(destdir,initdir,fyl)
+                        os.remove(fyl)
 
-
+                files = glob.glob(destdir +'/init*')
+                for fyl in files:
+                    cpy_main_files(destdir,initdir,fyl)
+                    os.remove(f)
+                
 
                 files = glob.glob(destdir +'/*var*')
                 for f in files:
