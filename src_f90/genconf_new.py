@@ -25,6 +25,7 @@ free_chains  = [32]#,80,32,48]
 free_avg_mw  = 30
 graft_chains = 64
 graft_avg_mw = 32 
+tail_mons    = 2
 nsalt        = 510
 f_charge     = 0.5
 archarr      = [1]#,2,3,4]
@@ -34,7 +35,7 @@ pdi_graft    = 1.0
 
 #--------file_lists--------------------------------------------
 
-f90_files = ['ran_number.f90','lammps_inp.f90','lmp_params.f90'
+f90_files = ['ran_numbers.f90','lammps_inp.f90','lmp_params.f90'
              ,'SZDist2.f90','init_pdi.txt']
 lmp_files = ['in.longrun','in.init']
 
@@ -123,13 +124,16 @@ for ifree in range(len(free_chains)):
                 compile_and_run_pdi(destdir)
 
                 pdiflag = 1
-                check_pdifiles(destdir,pdiflag)
+                check_pdi_files(destdir,pdiflag)
 
                 if pdiflag == -1:
                     print("Check PDI files")
                     continue
 
                     
+                nfree_mons = 0
+                ngraft_mons = 0
+                ntotal = 0
                 compute_total_particles(destdir,free_chains[ifree],\
                                         graft_chains,tail_mons,nsalt,f_charge, 
                                         nfree_mons,ngraft_mons,ntotal)
