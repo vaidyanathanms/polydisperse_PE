@@ -12,17 +12,11 @@ MODULE PARAMS
 
 ! Parameter data for creating the data file
 
-  INTEGER, PARAMETER :: N = 32
-  INTEGER, PARAMETER :: M = 30
-  INTEGER, PARAMETER :: N_brush = 64
-  INTEGER, PARAMETER :: M_brush = 40
-  INTEGER, PARAMETER :: tail_brush = 2
-  INTEGER, PARAMETER :: N_salt  = 510
-  INTEGER, PARAMETER :: default_dim = 1 !If 1=>53*53*120.Or else use  !box.dat
-  REAL, PARAMETER    :: charge_frac = 0.5
-  INTEGER, PARAMETER :: ncntr_brush  = N_brush*INT((M_brush&
-       &-tail_brush)*charge_frac)
-  INTEGER, PARAMETER :: ncntr_free   = N*INT(M*charge_frac)
+  INTEGER :: nch_free, avg_mon_free, nch_brush, avg_mon_brush
+  INTEGER :: mon_tail_brush
+  INTEGER :: n_salt
+  INTEGER :: default_dim = 1 !If 1=>53*53*120.Or else use  !box.dat
+  REAL    :: charge_frac = 0.5
   REAL    :: brush_dist
   INTEGER :: arch
 
@@ -31,13 +25,23 @@ MODULE PARAMS
   REAL :: boxl_x, boxl_y, boxl_z
   REAL :: volbox, density
   INTEGER :: totpart
-  INTEGER :: n_cntr_ions, nchains, npolyatoms
+  INTEGER :: nchains, npolyatoms
+  INTEGER :: mw_tot_free, mw_tot_brush
+  INTEGER :: max_free_mw, max_brush_mw
+  INTEGER :: ncntr_brush
+  INTEGER :: ncntr_free
+  REAL    :: pdi_free, pdi_brush
+
+! Files
+
+  CHARACTER(LEN = 256) :: data_fname, log_fname, inp_fname
+  CHARACTER(LEN = 256) :: free_pdi_fname, brush_pdi_fname
+  INTEGER, PARAMETER :: outdata = 100, logout = 110, inpdata = 120
+  INTEGER, PARAMETER :: freeread = 130, brushread = 140
+
 
 ! Flags for creating the data file
 
-  INTEGER, PARAMETER :: atomic = 0
-  INTEGER, PARAMETER :: triblock = 0
-  INTEGER, PARAMETER :: stretched = 0
   INTEGER, PARAMETER :: numatomtypes = 8
   INTEGER, PARAMETER :: numbondtypes = 1
   INTEGER, PARAMETER :: numangltypes = 1
@@ -45,18 +49,16 @@ MODULE PARAMS
   INTEGER, PARAMETER :: bondtype = 1
   INTEGER, PARAMETER :: angltype = 1
   INTEGER, PARAMETER :: dihdtype = 0
-  INTEGER, PARAMETER :: outfile  = 17
 
-! Global Arrays involved in creating data file
+! Global arrays involved in creating data file
   
   REAL,ALLOCATABLE,DIMENSION(:,:) :: rxyz, uxyz
   REAL,ALLOCATABLE,DIMENSION(:) :: charge
   INTEGER, ALLOCATABLE, DIMENSION(:,:) :: aidvals,ixyz
+  INTEGER, ALLOCATABLE, DIMENSION(:,:) :: free_mon_arr,brush_mon_arr
+  INTEGER, ALLOCATABLE, DIMENSION(:,:) :: free_mon_ptr,brush_mon_ptr
 
-! Character Arrays for creating the data file name
-
-  CHARACTER (LEN = 12) :: f_char
-  CHARACTER (LEN = 60 ):: datafile
+! Random number generator
 
   TYPE (RAN_SAVE) :: X
   INTEGER(4) :: S
