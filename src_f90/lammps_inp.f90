@@ -26,9 +26,7 @@ PROGRAM LAMMPSINP
   CALL GENERATE_INPCOR()
   CALL CREATE_ATOMTYPE_CHARGE()
   CALL CREATE_WRITE_DATAFILE()
-  CALL WRITE_POSITIONS()
   CALL DEALLOCATE_ARRAYS()
-  
 
 END PROGRAM LAMMPSINP
 
@@ -231,10 +229,6 @@ SUBROUTINE CREATE_WRITE_DATAFILE()
   
   PRINT *, "Writing to LAMMPS Datafile .. "
 
-20 FORMAT(5X,I0,2X,A)
-22 FORMAT(5X,I0,2X,A)
-24 FORMAT(5X,I0,2X,F14.6,2X,A)
-  
   OPEN (unit=outdata, file = data_fname, status="replace",action="write"&
        &,iostat = ierror)
   
@@ -242,29 +236,29 @@ SUBROUTINE CREATE_WRITE_DATAFILE()
      
   WRITE (outdata,*) "Data for CG-PE simulations "
   WRITE (outdata,*) 
-  WRITE (outdata,20) totpart, "atoms"
+  WRITE (outdata,'(5X,I0,2X,A)') totpart, "atoms"
 
   ntotbonds = 0; ntotangls = 0; ntotdihds = 0
 
   CALL COMPUTE_TOTAL_TOPO_DETAILS(ntotbonds,ntotangls,ntotdihds)
 
-  WRITE (outdata,20) ntotbonds, "bonds"
-  WRITE (outdata,20) ntotangls, "angles"
-  WRITE (outdata,20) ntotdihds, "dihedrals"
+  WRITE (outdata,'(5X,I0,2X,A)') ntotbonds, "bonds"
+  WRITE (outdata,'(5X,I0,2X,A)') ntotangls, "angles"
+  WRITE (outdata,'(5X,I0,2X,A)') ntotdihds, "dihedrals"
 
-  WRITE (outdata,20) 0, "impropers"
+  WRITE (outdata,'(5X,I0,2X,A)') 0, "impropers"
 
 
-  WRITE (outdata,20) numatomtypes, "atom types"
-  WRITE (outdata,20) numbondtypes, "bond types"
-  WRITE (outdata,22) numangltypes, "angle types"
-  WRITE (outdata,22) numdihdtypes, "dihedral types"
-  WRITE (outdata,22) 0, "improper types"
+  WRITE (outdata,'(5X,I0,2X,A)') numatomtypes, "atom types"
+  WRITE (outdata,'(5X,I0,2X,A)') numbondtypes, "bond types"
+  WRITE (outdata,'(5X,I0,2X,A)') numangltypes, "angle types"
+  WRITE (outdata,'(5X,I0,2X,A)') numdihdtypes, "dihedral types"
+  WRITE (outdata,'(5X,I0,2X,A)') 0, "improper types"
 
   WRITE (outdata,*)
-  WRITE (outdata,24) 0, boxl_x, "xlo xhi"
-  WRITE (outdata,24) 0, boxl_y, "ylo yhi"
-  WRITE (outdata,24) 0, boxl_z, "zlo zhi"
+  WRITE (outdata,'(5X,I0,2X,F14.6,2X,A)') 0, boxl_x, "xlo xhi"
+  WRITE (outdata,'(5X,I0,2X,F14.6,2X,A)') 0, boxl_y, "ylo yhi"
+  WRITE (outdata,'(5X,I0,2X,F14.6,2X,A)') 0, boxl_z, "zlo zhi"
   WRITE (outdata,*)
   WRITE (outdata,*) "Masses"
   WRITE (outdata,*)
@@ -339,11 +333,11 @@ SUBROUTINE COMPUTE_TOTAL_TOPO_DETAILS(ntotbonds,ntotangls,ntotdihds)
   ELSE
 
      DO i = 1,nch_brush 
-        ntotdihds = ntotdihds + brush_mon_ptr(i,2) -2
+        ntotdihds = ntotdihds + brush_mon_ptr(i,2) - 3
      END DO
 
      DO i = 1,nch_free
-        ntotdihds = ntotdihds + free_mon_ptr(i,2) -2
+        ntotdihds = ntotdihds + free_mon_ptr(i,2) - 3
      END DO
 
   END IF
@@ -415,7 +409,7 @@ SUBROUTINE CREATE_WRITE_BOND_TOPO()
   ! Free chains
   DO i = 1,nch_free
      
-     DO j = 1,free_mon_ptr(i,2)
+     DO j = 1,free_mon_ptr(i,2) - 1
         
         bondid = bondid + 1
         k = sum_tot_free + j + mw_tot_brush
@@ -711,10 +705,14 @@ SUBROUTINE COMPUTE_COUNTERIONS()
 
   ncntr_brush = 0; ncntr_free = 0
 
+  !IMPORTANT: THE mod value is to adjust for odd number of
+  !monomers. If there are odd number of monomers (after subtracting
+  !the tail monomers for the case of brush), then the extra monomer(s)
+  !will be accounted as the neutral part.
   DO i = 1,nch_brush
      neut_brush_mons = mon_tail_brush + INT(charge_frac&
           &*(brush_mon_ptr(i,2)-mon_tail_brush)) +&
-          & mod(brush_mon_ptr(i,2),inv_charge)
+          & mod(brush_mon_ptr(i,2)-mon_tail_brush,inv_charge)
      ncntr_brush = ncntr_brush + brush_mon_ptr(i,2) - neut_brush_mons
   END DO
 
@@ -975,7 +973,8 @@ SUBROUTINE CREATE_ATOMTYPE_CHARGE()
 
   sum_mon_brush = 0
 
-  WRITE(45,*) "Polycation brush .."
+  WRITE(45,'(A)') trim(adjustl("Polycation brush: chID, totmons, neut,&
+       & charged"))
 
   n_charg_polybrush = 0; n_charg_polyfree = 0
 
@@ -983,7 +982,7 @@ SUBROUTINE CREATE_ATOMTYPE_CHARGE()
 
      fin_neut_brush = mon_tail_brush + INT(charge_frac&
           &*(brush_mon_ptr(i,2)-mon_tail_brush)) +&
-          & mod(brush_mon_ptr(i,2),inv_charge)
+          & mod(brush_mon_ptr(i,2)-mon_tail_brush,inv_charge)
      !The reminder is for a generic charge fraction case.
 
      WRITE(45,'(4(I0,1X))') i,brush_mon_ptr(i,2),fin_neut_brush&
@@ -1036,7 +1035,8 @@ SUBROUTINE CREATE_ATOMTYPE_CHARGE()
 
 ! Free
 
-  WRITE(45,*) "Free polyanion .."
+  WRITE(45,'(A)') trim(adjustl("Polyanion free: chID, totmons, neut, c&
+       &harged"))
   sum_mon_free = 0
 
   DO i = 1,nch_free
@@ -1146,6 +1146,7 @@ SUBROUTINE CREATE_ATOMTYPE_CHARGE()
         WRITE(77,*), i,aidvals(i,3), charge(i)
      END DO
 
+     CLOSE(77)
      WRITE(logout,*) "System not charge neutral", csum
      PRINT *, "ERROR: System not charge neutral", csum
      STOP
@@ -1158,7 +1159,8 @@ SUBROUTINE CREATE_ATOMTYPE_CHARGE()
      DO i = 1,totpart
         WRITE(77,*), i,aidvals(i,3), charge(i)
      END DO
-
+     
+     CLOSE(77)
      WRITE(logout,*) "Good Charge Neutrality ", csum
      PRINT *, "Good Charge Neutrality ", csum
 

@@ -33,7 +33,7 @@ tail_mons    = 5
 nsalt        = 510
 f_charge     = 0.5
 archarr      = [1]#,2,3,4]
-ncases_pdi   = 5
+ncases_pdi   = 1
 pdi_free     = 1.2
 pdi_graft    = 1.0
 
