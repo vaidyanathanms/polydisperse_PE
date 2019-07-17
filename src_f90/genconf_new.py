@@ -25,15 +25,15 @@ restart = 0 # For restarting from given configurations
 
 
 #---------input details----------------------------------------
-free_chains  = [32]#,80,32,48]
+free_chains  = [32,80]#,80,32,48]
 free_avg_mw  = 30
 graft_chains = 64
 graft_avg_mw = 35 
 tail_mons    = 5
 nsalt        = 510
 f_charge     = 0.5
-archarr      = [1]#,2,3,4]
-ncases_pdi   = 1
+archarr      = [1,4]
+ncases_pdi   = 5
 pdi_free     = 1.2
 pdi_graft    = 1.0
 
@@ -157,8 +157,8 @@ for ifree in range(len(free_chains)):
                 #---Run LAMMPS files-------------
 
                 edit_generate_input_lmp_files('in.init_var',lmp_data_fyle)
-#                run_lammps(free_chains[ifree],pdifree,caselen,fylstr,\
-#                           'jobmain_var.sh','jobmain.sh')
+                run_lammps(free_chains[ifree],pdi_free,caselen,fylstr,\
+                           'jobmain_var.sh','jobmain.sh')
                 
                 #----Copy/Backup initial files---
                 clean_backup_initfiles(f90_files,pdi_files,par_files,destdir)

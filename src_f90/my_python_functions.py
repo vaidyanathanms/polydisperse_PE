@@ -9,10 +9,15 @@ import sys
 import glob
 import re
 
-def cpy_main_files(maindir,destdir,fylname):
+def cpy_main_files(dum_maindir,dum_destdir,fylname):
 
-    srcfyl = maindir + '/' + fylname
-    desfyl = destdir + '/' + fylname
+    srcfyl = dum_maindir + '/' + fylname
+
+    if not os.path.exists(srcfyl):
+        print('ERROR', fylname, 'not found')
+        return
+
+    desfyl = dum_destdir + '/' + fylname
     shutil.copy2(srcfyl, desfyl)
 
 def init_pdi_write(freepdi, freemw,freechains,\
@@ -129,7 +134,7 @@ def run_lammps(nch_free,pdifree,casenum,dirstr,inpjob,outjob):
              + str(casenum) + "_" + dirstr
     fr  = open(inpjob,'r')
     fw  = open(outjob,'w')
-    fid = fr.read().replace("py_jobname",jobname)
+    fid = fr.read().replace("py_jobname",jobstr)
     fw.write(fid)
     fw.close()
     fr.close()
@@ -164,15 +169,20 @@ def clean_backup_initfiles(f90_files,pdi_files,par_files,destdir):
             cpy_main_files(destdir,initdir,fyl)
             os.remove(fyl)
 
-    files = glob.glob(destdir +'/*var*')
-    for f in files:
-        os.remove(f)
+    files = glob.glob('*var*')
+    for fyl in files:
+        if os.path.exists(fyl):
+            cpy_main_files(destdir,initdir,fyl)
+            os.remove(fyl)
 
+    files = glob.glob('*.o')
+    for fyl in files:
+        if os.path.exists(fyl):
+            cpy_main_files(destdir,initdir,fyl)
+            os.remove(fyl)
+    
     files = glob.glob(destdir +'/*.mod')
-    for f in files:
-        os.remove(f)
+    for fyl in files:
+        os.remove(fyl)
 
-    files = glob.glob(destdir +'/*.o')
-    for f in files:
-        os.remove(f)
 
