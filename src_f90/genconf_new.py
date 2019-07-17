@@ -24,8 +24,8 @@ restart = 0 # For restarting from given configurations
 free_chains  = [32]#,80,32,48]
 free_avg_mw  = 30
 graft_chains = 64
-graft_avg_mw = 32 
-tail_mons    = 2
+graft_avg_mw = 33 
+tail_mons    = 5
 nsalt        = 510
 f_charge     = 0.5
 archarr      = [1]#,2,3,4]
@@ -36,8 +36,10 @@ pdi_graft    = 1.0
 #--------file_lists--------------------------------------------
 
 f90_files = ['ran_numbers.f90','lammps_inp.f90','lmp_params.f90'
-             ,'SZDist2.f90','init_pdi.txt']
-lmp_files = ['in.longrun','in.init']
+             ,'SZDist2.f90','init_pdi.txt','polyinp_var.dat']
+lmp_files = ['in.longrun','in.init_var','in.run1']
+pdi_files = ['FreeChains.dat','GraftChains.dat'] #Order: freepdi,graftpdi
+par_files = ['polyinp_var.dat','polyinp.txt'] #Order: varfile,oufyle
 
 #---------directory info---------------------------------------
 maindir = os.getcwd()
@@ -124,61 +126,35 @@ for ifree in range(len(free_chains)):
                 compile_and_run_pdi(destdir)
 
                 pdiflag = 1
-                check_pdi_files(destdir,pdiflag)
+                check_pdi_files(destdir,pdi_files,pdiflag)
 
                 if pdiflag == -1:
                     print("Check PDI files")
                     continue
 
                     
-                nfree_mons = 0
-                ngraft_mons = 0
-                ntotal = 0
-                compute_total_particles(destdir,free_chains[ifree],\
-                                        graft_chains,tail_mons,nsalt,f_charge, 
-                                        nfree_mons,ngraft_mons,ntotal)
-
                 #----Generate input files-----
-
                 print( "Copy Successful - Generating Input Files")
+                
+                if not os.path.exists(inpgenfyl):
+                    print('ERROR:', inpgenfyl, 'not found!')
+                    continue
 
-                dataname = "PEdata_new_"+str(free_chains[ifree])+\
-                           "_"+fylstr+".dat"
+                create_paramfyl_for_datafyl(destdir,par_files,free_chains[ifree]\
+                                            ,fylstr,caselen,mw_free,nch_graft,\
+                                            mw_graft,nsalt,f_charge,tail_mons,\
+                                            archarr[iarch],pdi_files)
+
+                compile_and_run_inpgenfyles(inpfyles[1],destdir)
 
 
-                initdir = destdir + '/init_files'
-                if not os.path.isdir(initdir):
-                    os.mkdir(initdir)
-
-
-                for fyl in f90_files:
-                    if os.path.exists(fyl):
-                        cpy_main_files(destdir,initdir,fyl)
-                        os.remove(fyl)
-
-                files = glob.glob('init_*')
-                for fyl in files:
-                    if not os.path.isdir(fyl):
-                        cpy_main_files(destdir,initdir,fyl)
-                        os.remove(fyl)
+                #----Copy/Backup initial files---
+                clean_backup_initfiles(f90_files,pdi_files,par_files,destdir)
                 
 
-                files = glob.glob(destdir +'/*var*')
-                for f in files:
-                    os.remove(f)
-
-                files = glob.glob(destdir +'/*.mod')
-                for f in files:
-                    os.remove(f)
-
-                files = glob.glob(destdir +'/*.o')
-                for f in files:
-                    os.remove(f)
-
-
+                #---Run LAMMPS files-------------
 
                 os.chdir(maindir)
-
 
             else:
 

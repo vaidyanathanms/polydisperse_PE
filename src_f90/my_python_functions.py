@@ -47,59 +47,100 @@ def compile_and_run_pdi(destdir):
     subprocess.call(["./pdiinp.o"])
 
 
-def check_pdi_files(destdir,flagcheck):
+def check_pdi_files(destdir,pdi_files,flagcheck):
 
     os.chdir(destdir)
-    if not os.path.exists('FreeChains.dat'):
-        print('FreeChains.dat not found')
-        flagcheck = -1
-        return
+    for fyl in pdi_files:
+        if not os.path.exists(fyl):
+            print(fyl, 'not found')            
+            flagcheck = -1
 
-    if not os.path.exists('GraftChains.dat'):
-        print('GraftChains.dat not found')
-        flagcheck = -1
-        return
-        
 
-def compute_total_particles(destdir,freech,graftch,tailmons,nsalt,\
-                            fcharge,free_mons,graft_mons,totalmons):
+def create_paramfyl_for_datafyl(destdir,inpfyles,nch_free,archstr\
+                                ,casenum,mw_free,nch_graft,mw_graft,\
+                                nsalt,f_charge,ntail,iarch,pdi_files):
+    
     os.chdir(destdir)
-    free_fyl = destdir + '/FreeChains.dat'
-    ffree = open(free_fyl,'r')
-    lyne = ffree.readline()
-    dat_lyne = lyne.split()
-    if int(dat_lyne[0]) != freech:
-        print("Free chains do not match",int(dat_lyne[0]),freech)
-    
-    free_mons = int(dat_lyne[1])
-    ffree.close()
+    datafyle = "PEdata_"+str(free_chains[ifree])+"_" \
+               +fylstr+"_"+str(caselen+1)+".dat"
+    logout = "log_" + dataname
 
-    graft_fyl = destdir + '/GraftChains.dat'
-    fgraft = open(graft_fyl,'r')
-    lyne = fgraft.readline()
-    dat_lyne = lyne.split()
-    if int(dat_lyne[0]) != graftch:
-        print("Graft chains do not match",int(dat_lyne[0]),graftch)
+    fr  = open(inpfyles[0],'r')
+    fw  = open(inpfyles[1],'w')
+
+    fid = fr.read().replace("py_dataname",datafyle).\
+          replace("py_freepdi_dataname",pdi_files[0]).\
+          replace("py_graft_pdi_dataname",pdi_files[1]).\
+          replace("py_numfree_chains", str(nch_free)).\
+          replace("py_avgmw_free",str(mw_free)).\
+          replace("py_numgraft_chains",str(nch_graft)).\
+          replace("py_avgmw_graft", str(mw_graft)).\
+          replace("py_numtail_mons",str(ntail)).\
+          replace("py_saltonespecies",str(nsalt)).\
+          replace("py_chargfrac_perchain",str(f_charge)).\
+          replace("py_arch",str(iarch)).\
+          replace("py_log_fylename",logout)
+    fw.write(fid)
+    fw.close()
+    fr.close()
+
+    outfyle = launch_fyl
+
+
+def compile_and_run_inpgenfyles(launch_fyle,destdir):
+
+    if not os.path.exists('ran_numbers.f90'):
+        print('ran_numbers.f90 not found')
+        return
+    if not os.path.exists('lmp_params.f90'):
+        print('lmp_params.f90 not found')
+        return
+    if not os.path.exists('lammps_inp.f90'):
+        print('lammps_inp.f90 not found')
+        return
+
+    os.chdir(destdir)
+    subprocess.call(['ran_numbers.f90','lmp_params.f90','lammps_inp.f90'\
+                     '-o','inpgen.o'])
+    subprocess.call(['./inpgen.o',launch_fyle])
+
     
-    graft_mons = int(dat_lyne[1])
-    fgraft.close()
+def clean_backup_initfiles(f90_files,pdi_files,par_files,destdir):
     
-    nfree_cntr = int(fcharge*free_mons)
-    ngraft_cntr = int(fcharge*(graft_mons - \
-                                graftch*tailmons))
-    ntotal = nfree_cntr + ngraft_cntr + free_mons + \
-                         graft_mons + 2*nsalt
-    
-    fout_main = open('init_alldata.txt','w')
-    fout_main.write('%s\t %g\n' %('Free chains', freech))
-    fout_main.write('%s\t %g\n' %('Graft chains',graftch))
-    fout_main.write('%s\t %g\n' %('Total freemons', free_mons))
-    fout_main.write('%s\t %g\n' %('Total graftmons',graft_mons))
-    fout_main.write('%s\t %g\n' %('Free counter', nfree_cntr))
-    fout_main.write('%s\t %g\n' %('Graft counter',\
-                                  ngraft_cntr))
-    fout_main.write('%s\t %g\n' %('Net salt (sum both)',\
-                                  2*nsalt))
-    fout_main.write('%s\t %g\n' %('Total particle',ntotal))
-    fout_main.close()
+    initdir = destdir + '/init_files'
+    if not os.path.isdir(initdir):
+        os.mkdir(initdir)
+
+    for fyl in f90_files:
+        if os.path.exists(fyl):
+            cpy_main_files(destdir,initdir,fyl)
+            os.remove(fyl)
+
+    for fyl in pdi_files:
+        if os.path.exists(fyl):
+            cpy_main_files(destdir,initdir,fyl)
+            os.remove(fyl)
+
+    for fyl in par_files:
+        if os.path.exists(fyl):
+            cpy_main_files(destdir,initdir,fyl)
+            os.remove(fyl)
+
+    files = glob.glob('init_*')
+    for fyl in files:
+        if not os.path.isdir(fyl):
+            cpy_main_files(destdir,initdir,fyl)
+            os.remove(fyl)
+
+    files = glob.glob(destdir +'/*var*')
+    for f in files:
+        os.remove(f)
+
+    files = glob.glob(destdir +'/*.mod')
+    for f in files:
+        os.remove(f)
+
+    files = glob.glob(destdir +'/*.o')
+    for f in files:
+        os.remove(f)
 
