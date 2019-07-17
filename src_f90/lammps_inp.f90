@@ -19,11 +19,14 @@ PROGRAM LAMMPSINP
   
   CALL READ_INP_FILE()
   CALL PDI_READ_AND_ANALYZE()
+  CALL COMPUTE_COUNTERIONS()
   CALL COMPUTE_POLY_ION_BOX_SALT_DETAILS()
+  CALL WRITE_INIT_DETAILS()
   CALL ALLOCATE_ARRAYS()
-  CALL INPCOR()
-  CALL CREATE_ATTYPE()
-  CALL LMP_COORD()
+  CALL GENERATE_INPCOR()
+  CALL CREATE_ATOMTYPE_CHARGE()
+  CALL CREATE_WRITE_DATAFILE()
+  CALL WRITE_POSITIONS()
   CALL DEALLOCATE_ARRAYS()
   
 
@@ -39,7 +42,7 @@ SUBROUTINE READ_INP_FILE()
   INTEGER :: nargs,ierr,logflag,AllocateStatus,i,j, pdiflag
   CHARACTER(256) :: dumchar
 
-  CALL DEFAULTVALUES()
+  CALL DEFAULT_VALUES()
 
   nargs = IARGC()
   IF(nargs .NE. 1) STOP "Input incorrect"
@@ -84,8 +87,7 @@ SUBROUTINE READ_INP_FILE()
 
         READ(inpread,*,iostat=ierr) avg_mon_free
 
-     ELSEIF(dumchar == 'nfree_brush') THEN
-
+     ELSEIF(dumchar == 'nbrush_chains') THEN
         READ(inpread,*,iostat=ierr) nch_brush
 
      ELSEIF(dumchar == 'brush_avg_mw') THEN
@@ -96,7 +98,7 @@ SUBROUTINE READ_INP_FILE()
 
         READ(inpread,*,iostat=ierr) mon_tail_brush
 
-     ELSEIF(dumchar == 'salt') THEN
+     ELSEIF(dumchar == 'n_salt') THEN
 
         READ(inpread,*,iostat=ierr) n_salt
 
@@ -138,7 +140,7 @@ SUBROUTINE DEFAULT_VALUES()
   USE PARAMS
   IMPLICIT NONE
 
-  nch_free = 0; mon_free = 0; nch_brush = 0; mon_brush = 0
+  nch_free = 0; avg_mon_free = 0; nch_brush = 0; avg_mon_brush = 0
   mon_tail_brush = 0; n_salt = 0; charge_frac = 0.0
 
 
@@ -155,6 +157,7 @@ SUBROUTINE PDI_READ_AND_ANALYZE()
   INTEGER :: i,j, dum_freech, dum_brushch, misq !misq is for PDI
   !calculation; not important here
 
+! read free chains
   OPEN(unit = freeread,file=trim(free_pdi_fname),action="read",status&
        &="old",iostat=ierr)
   
@@ -165,17 +168,6 @@ SUBROUTINE PDI_READ_AND_ANALYZE()
 
   END IF
 
-  OPEN(unit = brushread,file=trim(brush_pdi_fname),action="read"&
-       &,status="old",iostat=ierr)
-  
-  IF(ierr /= 0) THEN
-
-     PRINT *, trim(brush_pdi_fname), "not found"
-     STOP
-
-  END IF
-
-! read free chains
   READ(freeread,*) dum_freech, mw_tot_free, misq, pdi_free
   IF(dum_freech .NE. nch_free) THEN
      PRINT *, dum_freech, nch_free
@@ -191,7 +183,20 @@ SUBROUTINE PDI_READ_AND_ANALYZE()
 
   END DO
 
+  CLOSE(freeread)
+
+
 ! read brush chains
+  OPEN(unit = brushread,file=trim(brush_pdi_fname),action="read"&
+       &,status="old",iostat=ierr)
+  
+  IF(ierr /= 0) THEN
+
+     PRINT *, trim(brush_pdi_fname), "not found"
+     STOP
+
+  END IF
+
   READ(brushread,*) dum_brushch, mw_tot_brush, misq, pdi_brush
   IF(dum_brushch .NE. nch_brush) THEN
      PRINT *, dum_brushch, nch_brush
@@ -203,236 +208,333 @@ SUBROUTINE PDI_READ_AND_ANALYZE()
 
   DO i = 1, nch_brush
      
-     READ(freeread,*) brush_mon_ptr(i,1), brush_mon_ptr(i,2)
+     READ(brushread,*) brush_mon_ptr(i,1), brush_mon_ptr(i,2)
 
   END DO
-
-
-! compute max_mw for free and brush and allocate arrays
-
-  max_free_mw  = MAX(free_mon_ptr(:,2))
-  max_brush_mw = MAX(brush_mon_ptr(:,2))
-
-  ALLOCATE(free_mon_arr(nch_free,max_free_mw),Stat=AllocateStatus)
-  IF(AllocateStatus /= 0) STOP "Could not allocate free_mon_arr"
-
-  ALLOCATE(brush_mon_arr(nch_brush,max_brush_mw),Stat=AllocateStatus)
-  IF(AllocateStatus /= 0) STOP "Could not allocate brush_mon_arr"
-
-  ! fill with -1 
-  free_mon_arr = -1; brush_mon_arr = -1
-  
+  CLOSE(brushread)
 
 END SUBROUTINE PDI_READ_AND_ANALYZE
 
 !----------------------------------------------------------------------
 
-SUBROUTINE LMP_COORD()
+SUBROUTINE CREATE_WRITE_DATAFILE()
 
   USE PARAMS
   
   IMPLICIT NONE
   
   INTEGER :: i,j, k, ierror
-  INTEGER ::  bondid, anglid, dihdid
-  REAL ::  massval, rx, ry, rz
+  INTEGER :: ntotbonds, ntotangls,ntotdihds
+  REAL ::  massval
   
   i = 1
   
-  PRINT *, "Writing LAMMPS Datafile .. "
+  PRINT *, "Writing to LAMMPS Datafile .. "
 
 20 FORMAT(5X,I0,2X,A)
 22 FORMAT(5X,I0,2X,A)
 24 FORMAT(5X,I0,2X,F14.6,2X,A)
   
-  OPEN (unit=10, file = datafile, status="replace",action=&
-       &"write",iostat = ierror)
+  OPEN (unit=outdata, file = data_fname, status="replace",action="write"&
+       &,iostat = ierror)
   
   IF(ierror /= 0) STOP "Failed to open datafile"
      
-  WRITE (10,*) "Data for CG-PE simulations "
-  WRITE (10,*) 
-  WRITE (10,20) totpart, "atoms"
+  WRITE (outdata,*) "Data for CG-PE simulations "
+  WRITE (outdata,*) 
+  WRITE (outdata,20) totpart, "atoms"
 
-  IF(numbondtypes /= 0) THEN
-     WRITE (10,20) N*(M-1)+N_brush*(M_brush-1), "bonds"
-  ELSE
-     WRITE (10,20) 0, "bonds"
-  END IF
+  ntotbonds = 0; ntotangls = 0; ntotdihds = 0
 
-  IF(numangltypes /= 0) THEN
-     WRITE (10,20) N*(M-2)+N_brush*(M_brush-2), "angles"
-  ELSE
-     WRITE (10,20) 0, "angles"
-  END IF
+  CALL COMPUTE_TOTAL_TOPO_DETAILS(ntotbonds,ntotangls,ntotdihds)
 
-  IF(numdihdtypes /= 0) THEN
-     WRITE (10,20) N*(M-3)+N_brush*(M_brush-3), "dihedrals"
-  ELSE
-     WRITE (10,20) 0, "dihedrals"
-  END IF
+  WRITE (outdata,20) ntotbonds, "bonds"
+  WRITE (outdata,20) ntotangls, "angles"
+  WRITE (outdata,20) ntotdihds, "dihedrals"
 
-  WRITE (10,20) 0, "impropers"
-  WRITE (10,20) numatomtypes, "atom types"
-  WRITE (10,20) numbondtypes, "bond types"
-  WRITE (10,22) numangltypes, "angle types"
-  WRITE (10,22) numdihdtypes, "dihedral types"
-  WRITE (10,22) 0, "improper types"
+  WRITE (outdata,20) 0, "impropers"
 
-  WRITE (10,*)
-  WRITE (10,24) 0, boxl_x, "xlo xhi"
-  WRITE (10,24) 0, boxl_y, "ylo yhi"
-  WRITE (10,24) 0, boxl_z, "zlo zhi"
-  WRITE (10,*)
-  WRITE (10,*) "Masses"
-  WRITE (10,*)
+
+  WRITE (outdata,20) numatomtypes, "atom types"
+  WRITE (outdata,20) numbondtypes, "bond types"
+  WRITE (outdata,22) numangltypes, "angle types"
+  WRITE (outdata,22) numdihdtypes, "dihedral types"
+  WRITE (outdata,22) 0, "improper types"
+
+  WRITE (outdata,*)
+  WRITE (outdata,24) 0, boxl_x, "xlo xhi"
+  WRITE (outdata,24) 0, boxl_y, "ylo yhi"
+  WRITE (outdata,24) 0, boxl_z, "zlo zhi"
+  WRITE (outdata,*)
+  WRITE (outdata,*) "Masses"
+  WRITE (outdata,*)
   
   ! Writing Masses
 
   DO i = 1,numatomtypes
 
      massval = 1.000
-     WRITE(10,'(I0,1X,F14.8)') i, massval
+     WRITE(outdata,'(I0,1X,F14.8)') i, massval
 
   END DO
-  
 
   CALL SET_IMGFLAGS()
+  CALL WRITE_POSITIONS()
+  IF(numbondtypes /= 0) CALL CREATE_WRITE_BOND_TOPO()
+  IF(numangltypes /= 0) CALL CREATE_WRITE_ANGLE_TOPO()
+  IF(numdihdtypes /= 0) CALL CREATE_WRITE_DIHEDRAL_TOPO()
+
+  CLOSE(unit = outdata)  
+
+END SUBROUTINE CREATE_WRITE_DATAFILE
+
+!----------------------------------------------------------------------
+
+SUBROUTINE COMPUTE_TOTAL_TOPO_DETAILS(ntotbonds,ntotangls,ntotdihds)
+
+  USE PARAMS
+  IMPLICIT NONE
+
+  INTEGER, INTENT(OUT):: ntotbonds,ntotangls,ntotdihds
+  INTEGER :: i
+
+  ntotbonds = 0; ntotangls = 0; ntotdihds = 0  
+
+  IF(numbondtypes == 0) THEN
+
+     ntotbonds = 0
+
+  ELSE
+
+     DO i = 1,nch_brush 
+        ntotbonds = ntotbonds + brush_mon_ptr(i,2) -1
+     END DO
+
+     DO i = 1,nch_free
+        ntotbonds = ntotbonds + free_mon_ptr(i,2) -1
+     END DO
+
+  END IF
+
+  IF(numangltypes == 0) THEN
+
+     ntotangls = 0
+
+  ELSE
+
+     DO i = 1,nch_brush 
+        ntotangls = ntotangls + brush_mon_ptr(i,2) -2
+     END DO
+
+     DO i = 1,nch_free
+        ntotangls = ntotangls + free_mon_ptr(i,2) -2
+     END DO
+
+  END IF
+
+  IF(numdihdtypes == 0) THEN
+
+     ntotdihds = 0
+
+  ELSE
+
+     DO i = 1,nch_brush 
+        ntotdihds = ntotdihds + brush_mon_ptr(i,2) -2
+     END DO
+
+     DO i = 1,nch_free
+        ntotdihds = ntotdihds + free_mon_ptr(i,2) -2
+     END DO
+
+  END IF
+
+
+END SUBROUTINE COMPUTE_TOTAL_TOPO_DETAILS
+
+!----------------------------------------------------------------------
+
+SUBROUTINE WRITE_POSITIONS()
+
+  USE PARAMS
+  IMPLICIT NONE
+
+  INTEGER i
 
   ! Writing atomic corrdinates
   
-  WRITE (10,*) 
-  WRITE (10,*) "Atoms"
-  WRITE (10,*)
+  WRITE (outdata,*) 
+  WRITE (outdata,*) "Atoms"
+  WRITE (outdata,*)
 
   DO i = 1,totpart
      
-     WRITE(10,'(3(I0,1X),4(F14.6,1X),3(I0,1X))') aidvals(i,1),&
+     WRITE(outdata,'(3(I0,1X),4(F14.6,1X),3(I0,1X))') aidvals(i,1),&
           & aidvals(i,2), aidvals(i,3), charge(i), rxyz(i,1), rxyz(i&
           &,2),rxyz(i,3), ixyz(i,1), ixyz(i,2), ixyz(i,3)
         
   END DO
 
-  IF(numbondtypes /= 0) THEN
 
-     ! Writing Bond Details  
+END SUBROUTINE WRITE_POSITIONS
+
+!----------------------------------------------------------------------
+
+SUBROUTINE CREATE_WRITE_BOND_TOPO()
+
+  USE PARAMS
+  IMPLICIT NONE
+  
+  INTEGER :: i,j,k
+  INTEGER :: bondid, sum_tot_brush, sum_tot_free
+
+  bondid = 0
+  WRITE (outdata,*)
+  WRITE (outdata,*) "Bonds"
+  WRITE (outdata,*)
+  
+  sum_tot_free = 0; sum_tot_brush = 0
+
+  !Brush chains
+  DO i = 1,nch_brush
      
-     bondid = 0
-     WRITE (10,*)
-     WRITE (10,*) "Bonds"
-     WRITE (10,*)
+     DO j = 1,brush_mon_ptr(i,2)-1
+        
+        k = sum_tot_brush + j
+        bondid = bondid + 1
+        
+        WRITE(outdata,'(4(I0,2X))') bondid, bondtype, aidvals(k,1)&
+             &,aidvals(k+1,1)
+        
+     END DO
+
+     sum_tot_brush = sum_tot_brush + brush_mon_ptr(i,2)
      
-     DO i = 1,N_brush
-        
-        DO j = 1,M_brush-1
-           
-           k = (i-1)*M_brush + j
-           bondid = bondid + 1
-           
-           WRITE(10,'(4(I0,2X))') bondid, bondtype, aidvals(k,1)&
-                &,aidvals(k+1,1)
-           
-        END DO
-        
+  END DO
 
-        
-     END DO
 
-     DO i = 1,N
-        
-        DO j = 1,M-1
-           
-           bondid = bondid + 1
-           k = (i-1)*M + j + N_brush*M_brush
-           
-           WRITE(10,'(4(I0,2X))') bondid, bondtype, aidvals(k,1)&
-                &,aidvals(k+1,1)
-           
-        END DO
-
-     END DO
-
-  END IF
-
-  IF(numangltypes /= 0) THEN
-
-     ! Writing Angle Details
-
-     anglid = 0
-     WRITE (10,*)
-     WRITE (10,*) "Angles"
-     WRITE (10,*)
+  ! Free chains
+  DO i = 1,nch_free
      
-     DO i = 1,N_brush
+     DO j = 1,free_mon_ptr(i,2)
         
-        DO j = 1,M_brush-2
-           
-           anglid = anglid + 1
-           k = (i-1)*M_brush + j           
-           WRITE(10,'(5(I0,2X))') anglid, angltype, aidvals(k,1)&
-                &,aidvals(k+1,1),aidvals(k+2,1)
-           
-        END DO
+        bondid = bondid + 1
+        k = sum_tot_free + j + mw_tot_brush
+        
+        WRITE(outdata,'(4(I0,2X))') bondid, bondtype, aidvals(k,1)&
+             &,aidvals(k+1,1)
         
      END DO
 
-     DO i = 1,N
-        
-        DO j = 1,M-2
-           
-           anglid = anglid + 1
-           k = (i-1)*M + j + N_brush*M_brush
-           WRITE(10,'(5(I0,2X))') anglid, angltype, aidvals(k,1)&
-                &,aidvals(k+1,1),aidvals(k+2,1)
-           
-        END DO
-        
-     END DO
-
-  END IF
-
-  IF(numdihdtypes /= 0) THEN
-
-     ! Writing Dihedral Details
+     sum_tot_free = sum_tot_free + free_mon_ptr(i,2)
      
-     dihdid = 0
-     WRITE (10,*)
-     WRITE (10,*) "Dihedrals"
-     WRITE (10,*)
+  END DO
+
+
+END SUBROUTINE CREATE_WRITE_BOND_TOPO
+
+!----------------------------------------------------------------------
+
+SUBROUTINE CREATE_WRITE_ANGLE_TOPO()
+
+  USE PARAMS
+  IMPLICIT NONE
+
+  INTEGER :: i,j,k
+  INTEGER :: anglid, sum_tot_free, sum_tot_brush
+
+  anglid = 0
+  WRITE (outdata,*)
+  WRITE (outdata,*) "Angles"
+  WRITE (outdata,*)
+
+  sum_tot_free = 0; sum_tot_brush = 0
+
+  !Brush chains
+  DO i = 1,nch_brush
      
-     DO i = 1,N_brush
-        
-        DO j = 1,M_brush-3
+     DO j = 1,brush_mon_ptr(i,2)-2
+     
+        anglid = anglid + 1
+        k = sum_tot_brush + j           
+        WRITE(outdata,'(5(I0,2X))') anglid, angltype, aidvals(k,1)&
+             &,aidvals(k+1,1),aidvals(k+2,1)
            
-           dihdid = dihdid + 1
-           k = (i-1)*M_brush + j 
+     END DO
 
-           WRITE(10,'(6(I0,2X))') dihdid, dihdtype, aidvals(k,1)&
-                &,aidvals(k+1,1), aidvals(k+2,1), aidvals(k+3,1)
-           
-        END DO
+     sum_tot_brush = sum_tot_brush + brush_mon_ptr(i,2)
+     
+  END DO
+  
+  !Free chains
+  DO i = 1,nch_free
+     
+     DO j = 1,free_mon_ptr(i,2)-2
+        
+        anglid = anglid + 1
+        k = sum_tot_free + j + mw_tot_brush
+        WRITE(outdata,'(5(I0,2X))') anglid, angltype, aidvals(k,1)&
+             &,aidvals(k+1,1),aidvals(k+2,1)
         
      END DO
 
-     DO i = 1,N
-        
-        DO j = 1,M-3
-           
-           dihdid = dihdid + 1
-           k = (i-1)*M + j + N_brush*M_brush
+     sum_tot_free = sum_tot_free + free_mon_ptr(i,2)
+     
+  END DO
+  
+END SUBROUTINE CREATE_WRITE_ANGLE_TOPO
 
-           WRITE(10,'(6(I0,2X))') dihdid, dihdtype, aidvals(k,1)&
-                &,aidvals(k+1,1), aidvals(k+2,1), aidvals(k+3,1)
-           
-        END DO
+!----------------------------------------------------------------------
+
+SUBROUTINE CREATE_WRITE_DIHEDRAL_TOPO()
+
+  USE PARAMS
+  IMPLICIT NONE
+
+  INTEGER :: i,j,k
+  INTEGER :: dihdid, sum_tot_brush, sum_tot_free
+     
+  dihdid = 0
+  WRITE (outdata,*)
+  WRITE (outdata,*) "Dihedrals"
+  WRITE (outdata,*)
+  
+
+  sum_tot_free = 0; sum_tot_brush = 0
+
+  !Brush chains
+  DO i = 1,nch_brush
+     
+     DO j = 1,brush_mon_ptr(i,2)-3
+     
+        dihdid = dihdid + 1
+        k = sum_tot_brush + j           
+        WRITE(outdata,'(6(I0,2X))') dihdid, dihdtype, aidvals(k,1)&
+             &,aidvals(k+1,1), aidvals(k+2,1), aidvals(k+3,1)
         
      END DO
 
-  END IF
+     sum_tot_brush = sum_tot_brush + brush_mon_ptr(i,2)
+     
+  END DO
+  
+  !Free chains
+  DO i = 1,nch_free
+     
+     DO j = 1,free_mon_ptr(i,2)-3
+        
+        dihdid = dihdid + 1
+        k = sum_tot_free + j + mw_tot_brush
+        WRITE(outdata,'(6(I0,2X))') dihdid, dihdtype, aidvals(k,1)&
+             &,aidvals(k+1,1), aidvals(k+2,1), aidvals(k+3,1)
+        
+     END DO
 
-  CLOSE(unit = 10)
+     sum_tot_free = sum_tot_free + free_mon_ptr(i,2)
+     
+  END DO
 
-END SUBROUTINE LMP_COORD
+
+END SUBROUTINE CREATE_WRITE_DIHEDRAL_TOPO
 
 !--------------------------------------------------------------------  
 
@@ -441,7 +543,8 @@ SUBROUTINE SET_IMGFLAGS()
   USE PARAMS
   IMPLICIT NONE
 
-  INTEGER :: i,k,sum_mon_brush, sum_mon_free
+  INTEGER :: i,j,k,sum_mon_brush, sum_mon_free
+  REAL :: rx, ry, rz
 
 !!$Fetching image information - Brush
 
@@ -554,14 +657,7 @@ SUBROUTINE COMPUTE_POLY_ION_BOX_SALT_DETAILS()
      READ(24,*) boxl_x, boxl_y, boxl_z
   END IF
 
-  WRITE(outfile,*) "Simulation Details ...."
-  PRINT *, "Simulation Details ...."
-
-  ! Compute free/brush counter ions
-  ncntr_brush  = INT(mw_tot_brush*charge_frac)
-  ncntr_free   = INT(mw_tot_free*charge_frac)
   nchains = nch_free + nch_brush
-
   totpart = mw_tot_brush + mw_tot_free + ncntr_brush + ncntr_free +&
        & 2.0*n_salt
   volbox  = boxl_x*boxl_y*boxl_z
@@ -572,15 +668,25 @@ SUBROUTINE COMPUTE_POLY_ION_BOX_SALT_DETAILS()
   ! Extra 2.0 factor above so that diagonal is approximately equal to
   !  sqrt(area/num_chains)
 
+END SUBROUTINE COMPUTE_POLY_ION_BOX_SALT_DETAILS
+!--------------------------------------------------------------------
+
+SUBROUTINE WRITE_INIT_DETAILS() 
+  
+  USE PARAMS
+  IMPLICIT NONE
+
+  WRITE(logout,*) "Simulation Details ...."
+  PRINT *, "Writing Simulation Details ...."
   WRITE(logout,*) "Total particles: ", totpart
   WRITE(logout,*) "Number of atomtypes: ", numatomtypes
   WRITE(logout,*) "# of Polyanion (free) chains: ", nch_free
   WRITE(logout,*) "Total # of polyanion monomers: ", mw_tot_free
   WRITE(logout,*) "PDI of free chains: ", pdi_free
-  WRITE(logout,*) "# of Polycation (brush) chains: ", N_brush
+  WRITE(logout,*) "# of Polycation (brush) chains: ", nch_brush
   WRITE(logout,*) "Total # of polycation monomers: ", mw_tot_brush
   WRITE(logout,*) "PDI of brush chains: ", pdi_brush  
-  WRITE(logout,*) "# of Salt: ", N_salt
+  WRITE(logout,*) "# of Salt: ", 2.0*n_salt
   WRITE(logout,*) "# of Brush counterions: ", ncntr_brush
   WRITE(logout,*) "# of Free counterions: ", ncntr_free
   WRITE(logout,*) "# of Polyelectrolytes: ", npolyatoms
@@ -589,11 +695,40 @@ SUBROUTINE COMPUTE_POLY_ION_BOX_SALT_DETAILS()
   WRITE(logout,*) "Density: ", density
   WRITE(logout,*) "Minimum distance between brush base: ", brush_dist
 
-END SUBROUTINE COMPUTE_POLY_ION_BOX_SALT_DETAILS
+END SUBROUTINE WRITE_INIT_DETAILS
 
 !--------------------------------------------------------------------
 
-SUBROUTINE INPCOR()
+SUBROUTINE COMPUTE_COUNTERIONS()
+
+  USE PARAMS
+  IMPLICIT NONE
+
+  INTEGER :: i,neut_brush_mons,neut_free_mons
+  INTEGER :: inv_charge
+
+  inv_charge = INT(1.0/charge_frac)
+
+  ncntr_brush = 0; ncntr_free = 0
+
+  DO i = 1,nch_brush
+     neut_brush_mons = mon_tail_brush + INT(charge_frac&
+          &*(brush_mon_ptr(i,2)-mon_tail_brush)) +&
+          & mod(brush_mon_ptr(i,2),inv_charge)
+     ncntr_brush = ncntr_brush + brush_mon_ptr(i,2) - neut_brush_mons
+  END DO
+
+  DO i = 1,nch_free
+     neut_free_mons = INT(charge_frac*free_mon_ptr(i,2)) +&
+          & mod(free_mon_ptr(i,2),inv_charge)
+     ncntr_free = ncntr_free + free_mon_ptr(i,2) - neut_free_mons
+  END DO
+
+END SUBROUTINE COMPUTE_COUNTERIONS
+
+!--------------------------------------------------------------------
+
+SUBROUTINE GENERATE_INPCOR()
   
   USE PARAMS
 
@@ -759,7 +894,8 @@ SUBROUTINE INPCOR()
 
 ! Create brush counterions
 
-  k = 1 + mw_tot_brush + mw_tot_free +2.0*N_salt; i = 1
+  k = 1 + mw_tot_brush + mw_tot_free +2.0*N_salt
+  i = 1
   DO WHILE(i .LE. ncntr_brush)
      
      in_box = .false.
@@ -811,31 +947,51 @@ SUBROUTINE INPCOR()
         
   END DO
   
-END SUBROUTINE INPCOR
+END SUBROUTINE GENERATE_INPCOR
 
 !--------------------------------------------------------------------
 
-SUBROUTINE CREATE_ATTYPE()
+SUBROUTINE CREATE_ATOMTYPE_CHARGE()
 
   USE PARAMS
   IMPLICIT NONE
 
   INTEGER :: i,j,k
   INTEGER :: fin_neut_brush, fin_neut_free
+  INTEGER :: sum_mon_brush, sum_mon_free
   REAL :: csum
+  INTEGER :: inv_charge
+  INTEGER :: charg_mon_polyan, charg_mon_polycat
+  INTEGER :: n_charg_polybrush, n_charg_polyfree
 
-  csum = 0
-  IF(arch .LE. 2) fin_neut_brush = tail_brush + INT(0.5*(M_brush&
-       &-tail_brush))
 
-  WRITE(logout,*) "Generating Charges .. "
+  OPEN(unit=45,file="poly_charg.txt",action="write",status="replace")
+
+  inv_charge = INT(1.0/charge_frac)
+  csum = 0; charge = 0
+  
+  WRITE(logout,*) "Generating Atomtypes and Charges .. "
 ! Brush
 
-  DO i = 1, N_brush
+  sum_mon_brush = 0
 
-     DO j = 1,M_brush
+  WRITE(45,*) "Polycation brush .."
 
-        k = (i-1)*M_brush + j
+  n_charg_polybrush = 0; n_charg_polyfree = 0
+
+  DO i = 1, nch_brush
+
+     fin_neut_brush = mon_tail_brush + INT(charge_frac&
+          &*(brush_mon_ptr(i,2)-mon_tail_brush)) +&
+          & mod(brush_mon_ptr(i,2),inv_charge)
+     !The reminder is for a generic charge fraction case.
+
+     WRITE(45,'(4(I0,1X))') i,brush_mon_ptr(i,2),fin_neut_brush&
+          &,brush_mon_ptr(i,2)-fin_neut_brush
+
+     DO j = 1,brush_mon_ptr(i,2)
+
+        k = sum_mon_brush + j
 
         aidvals(k,1) = k
         aidvals(k,2) = i
@@ -843,7 +999,7 @@ SUBROUTINE CREATE_ATTYPE()
         IF(j == 1) THEN
            aidvals(k,3) = 1
            charge(k)  = 0.0 
-        ELSEIF(j .LE. tail_brush) THEN
+        ELSEIF(j .LE. mon_tail_brush) THEN
            aidvals(k,3) = 2
            charge(k) = 0.0
         ELSEIF(arch .LE. 2) THEN
@@ -853,33 +1009,50 @@ SUBROUTINE CREATE_ATTYPE()
            ELSE
               aidvals(k,3) = 4
               charge(k) = 1.0
+              n_charg_polybrush = n_charg_polybrush + 1
            END IF
         ELSE
-           IF(mod(j-tail_brush,2) /= 0) THEN
+           IF(mod(j-mon_tail_brush,2) .NE. 0) THEN
               aidvals(k,3) = 3
               charge(k) = 0.0
            ELSE
               aidvals(k,3) = 4
               charge(k) = 1.0
+              n_charg_polybrush = n_charg_polybrush + 1
            END IF
         END IF
 
      END DO
 
+     sum_mon_brush = sum_mon_brush + brush_mon_ptr(i,2)
+
   END DO
+
+  IF(n_charg_polybrush .NE. ncntr_brush) THEN
+     PRINT *, "ERROR: Unequal brush and counterions .."
+     PRINT *, ncntr_brush, n_charg_polybrush
+     STOP
+  END IF
 
 ! Free
 
-  IF(arch == 1 .OR. arch == 3) fin_neut_free = INT(0.5*M)
+  WRITE(45,*) "Free polyanion .."
+  sum_mon_free = 0
 
-  DO i = 1,N
+  DO i = 1,nch_free
 
-     DO j = 1,M
+     fin_neut_free = INT(charge_frac*free_mon_ptr(i,2)) +&
+          & mod(free_mon_ptr(i,2),inv_charge)
 
-        k = (i-1)*M + j + N_brush*M_brush
+     WRITE(45,'(4(I0,1X))') i,free_mon_ptr(i,2),fin_neut_free&
+          &,free_mon_ptr(i,2)-fin_neut_free
+
+     DO j = 1,free_mon_ptr(i,2)
+
+        k = sum_mon_free + j + mw_tot_brush
 
         aidvals(k,1) = k
-        aidvals(k,2) = i + N_brush
+        aidvals(k,2) = i + nch_brush
 
         IF(arch == 1 .OR. arch == 3) THEN
            IF(j .LE. fin_neut_free) THEN
@@ -888,6 +1061,7 @@ SUBROUTINE CREATE_ATTYPE()
            ELSE
               aidvals(k,3) = 6
               charge(k) = -1.0
+              n_charg_polyfree = n_charg_polyfree + 1
            END IF
         ELSE
            IF(mod(j,2) /= 0) THEN
@@ -896,21 +1070,33 @@ SUBROUTINE CREATE_ATTYPE()
            ELSE
               aidvals(k,3) = 6
               charge(k) = -1.0
+              n_charg_polyfree = n_charg_polyfree + 1
            END IF
         END IF
 
      END DO
 
+     sum_mon_free = sum_mon_free + free_mon_ptr(i,2)
+
   END DO
+
+  CLOSE(45)
+
+  IF(n_charg_polyfree .NE. ncntr_free) THEN
+     PRINT *, "ERROR: Unequal freepoly and counterions .."
+     PRINT *, ncntr_free, n_charg_polyfree
+     STOP
+  END IF
+
 
 ! Salt
 
   DO i = 1,2*N_salt
 
-     k = i + N_brush*M_brush + N*M     
+     k = i + mw_tot_free + mw_tot_brush
 
      aidvals(k,1) = k
-     aidvals(k,2) = 1 + N_brush + N
+     aidvals(k,2) = 1 + nchains
 
      IF(mod(i,2) /=  0) THEN
         aidvals(k,3) = 7
@@ -926,20 +1112,20 @@ SUBROUTINE CREATE_ATTYPE()
 
   DO i = 1,ncntr_brush
 
-     k = i + N_brush*M_brush + N*M + 2*N_salt
+     k = i + mw_tot_free + mw_tot_brush + 2*N_salt
      aidvals(k,1) = k
-     aidvals(k,2) = 1 + N_brush + N
-     aidvals(k,3) = 7
+     aidvals(k,2) = 1 + nchains
+     aidvals(k,3) = 8
      charge(k) = -1.0
 
   END DO
 
   DO i = 1,ncntr_free
 
-     k = i + N_brush*M_brush + N*M + 2*N_salt + ncntr_brush
+     k = i + mw_tot_free + mw_tot_brush + 2*N_salt + ncntr_brush
      aidvals(k,1) = k
-     aidvals(k,2) = 1 + N_brush + N
-     aidvals(k,3) = 8
+     aidvals(k,2) = 1 + nchains
+     aidvals(k,3) = 7
      charge(k) = 1.0
 
   END DO
@@ -966,12 +1152,19 @@ SUBROUTINE CREATE_ATTYPE()
      
   ELSE
 
+     OPEN(unit = 77,file="charge_init.txt",action="write",status="repl&
+          &ace")
+
+     DO i = 1,totpart
+        WRITE(77,*), i,aidvals(i,3), charge(i)
+     END DO
+
      WRITE(logout,*) "Good Charge Neutrality ", csum
      PRINT *, "Good Charge Neutrality ", csum
 
   END IF
      
-END SUBROUTINE CREATE_ATTYPE
+END SUBROUTINE CREATE_ATOMTYPE_CHARGE
 
 !--------------------------------------------------------------------
 

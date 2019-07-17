@@ -27,7 +27,6 @@ MODULE PARAMS
   INTEGER :: totpart
   INTEGER :: nchains, npolyatoms
   INTEGER :: mw_tot_free, mw_tot_brush
-  INTEGER :: max_free_mw, max_brush_mw
   INTEGER :: ncntr_brush
   INTEGER :: ncntr_free
   REAL    :: pdi_free, pdi_brush
@@ -36,7 +35,7 @@ MODULE PARAMS
 
   CHARACTER(LEN = 256) :: data_fname, log_fname, inp_fname
   CHARACTER(LEN = 256) :: free_pdi_fname, brush_pdi_fname
-  INTEGER, PARAMETER :: outdata = 100, logout = 110, inpdata = 120
+  INTEGER, PARAMETER :: outdata = 100, logout = 110, inpread = 120
   INTEGER, PARAMETER :: freeread = 130, brushread = 140
 
 
@@ -55,7 +54,6 @@ MODULE PARAMS
   REAL,ALLOCATABLE,DIMENSION(:,:) :: rxyz, uxyz
   REAL,ALLOCATABLE,DIMENSION(:) :: charge
   INTEGER, ALLOCATABLE, DIMENSION(:,:) :: aidvals,ixyz
-  INTEGER, ALLOCATABLE, DIMENSION(:,:) :: free_mon_arr,brush_mon_arr
   INTEGER, ALLOCATABLE, DIMENSION(:,:) :: free_mon_ptr,brush_mon_ptr
 
 ! Random number generator
