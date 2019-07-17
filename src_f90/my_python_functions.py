@@ -40,7 +40,7 @@ def compile_and_run_pdi(destdir):
         
     # Generate PDI data
 
-    print( "Running FORTRAN script for generating New Datafile")
+    print( "Running FORTRAN script for generating PDI files")
     subprocess.call(["ifort","-r8","-check","-traceback",
                      "SZDist2.f90","-o","pdiinp.o"])
 
@@ -61,16 +61,16 @@ def create_paramfyl_for_datafyl(destdir,inpfyles,nch_free,archstr\
                                 nsalt,f_charge,ntail,iarch,pdi_files):
     
     os.chdir(destdir)
-    datafyle = "PEdata_"+str(free_chains[ifree])+"_" \
-               +fylstr+"_"+str(caselen+1)+".dat"
-    logout = "log_" + dataname
+    datafyle = "PEdata_"+str(nch_free)+"_" +archstr+ \
+               "_"+str(casenum+1)+".dat"
+    logout = "log_" + datafyle
 
     fr  = open(inpfyles[0],'r')
     fw  = open(inpfyles[1],'w')
 
     fid = fr.read().replace("py_dataname",datafyle).\
           replace("py_freepdi_dataname",pdi_files[0]).\
-          replace("py_graft_pdi_dataname",pdi_files[1]).\
+          replace("py_graftpdi_dataname",pdi_files[1]).\
           replace("py_numfree_chains", str(nch_free)).\
           replace("py_avgmw_free",str(mw_free)).\
           replace("py_numgraft_chains",str(nch_graft)).\
@@ -84,11 +84,11 @@ def create_paramfyl_for_datafyl(destdir,inpfyles,nch_free,archstr\
     fw.close()
     fr.close()
 
-    outfyle = launch_fyl
-
+    return datafyle
 
 def compile_and_run_inpgenfyles(launch_fyle,destdir):
 
+    os.chdir(destdir)
     if not os.path.exists('ran_numbers.f90'):
         print('ran_numbers.f90 not found')
         return
@@ -99,11 +99,43 @@ def compile_and_run_inpgenfyles(launch_fyle,destdir):
         print('lammps_inp.f90 not found')
         return
 
-    os.chdir(destdir)
-    subprocess.call(['ran_numbers.f90','lmp_params.f90','lammps_inp.f90'\
+    subprocess.call(['ifort','-r8','-qopenmp','-mkl','-check','-traceback',\
+                     'ran_numbers.f90','lmp_params.f90','lammps_inp.f90',\
                      '-o','inpgen.o'])
     subprocess.call(['./inpgen.o',launch_fyle])
 
+
+def edit_generate_input_lmp_files(lmp_infyle,lmp_datafyle):
+
+    if not os.path.exists(lmp_infyle):
+        print('ERROR: ', lmp_infyle, 'not found')
+        return
+
+    fr  = open(lmp_infyle,'r')
+    fw  = open('in.init','w')
+    fid = fr.read().replace("py_dataname",lmp_datafyle)
+    fw.write(fid)
+    fw.close()
+    fr.close()
+    
+
+def run_lammps(nch_free,pdifree,casenum,dirstr,inpjob,outjob):
+
+    if not os.path.exists(inpjob):
+        print('ERROR: ', inpjob,'not found')
+        return
+    
+    jobstr = "job_" + str(nch_free) + "_" + str(pdifree) + "_" \
+             + str(casenum) + "_" + dirstr
+    fr  = open(inpjob,'r')
+    fw  = open(outjob,'w')
+    fid = fr.read().replace("py_jobname",jobname)
+    fw.write(fid)
+    fw.close()
+    fr.close()
+
+    subprocess.call(["qsub", outjob])
+    
     
 def clean_backup_initfiles(f90_files,pdi_files,par_files,destdir):
     

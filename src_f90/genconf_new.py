@@ -13,7 +13,11 @@ from my_python_functions import cpy_main_files
 from my_python_functions import init_pdi_write
 from my_python_functions import compile_and_run_pdi
 from my_python_functions import check_pdi_files
-from my_python_functions import compute_total_particles
+from my_python_functions import create_paramfyl_for_datafyl
+from my_python_functions import compile_and_run_inpgenfyles
+from my_python_functions import edit_generate_input_lmp_files
+from my_python_functions import run_lammps
+from my_python_functions import clean_backup_initfiles
 
 #---------input flags------------------------------------------
 #0-initial run  1- production
@@ -24,7 +28,7 @@ restart = 0 # For restarting from given configurations
 free_chains  = [32]#,80,32,48]
 free_avg_mw  = 30
 graft_chains = 64
-graft_avg_mw = 33 
+graft_avg_mw = 35 
 tail_mons    = 5
 nsalt        = 510
 f_charge     = 0.5
@@ -35,9 +39,10 @@ pdi_graft    = 1.0
 
 #--------file_lists--------------------------------------------
 
-f90_files = ['ran_numbers.f90','lammps_inp.f90','lmp_params.f90'
+f90_files = ['ran_numbers.f90','lammps_inp.f90','lmp_params.f90'\
              ,'SZDist2.f90','init_pdi.txt','polyinp_var.dat']
-lmp_files = ['in.longrun','in.init_var','in.run1']
+lmp_files = ['in.longrun','in.init_var','in.run1','jobmain_var.sh']
+lmp_long  = ['in.longrun','jobmain_long_var.sh']
 pdi_files = ['FreeChains.dat','GraftChains.dat'] #Order: freepdi,graftpdi
 par_files = ['polyinp_var.dat','polyinp.txt'] #Order: varfile,oufyle
 
@@ -87,13 +92,17 @@ for ifree in range(len(free_chains)):
         if not os.path.isdir(workdir_arch):
             os.mkdir(workdir_arch)
 
-        workdir_headpdi = workdir_arch + '/pdi_' + str(pdi_free)
-        if not os.path.isdir(workdir_headpdi):
-            os.mkdir(workdir_headpdi)
+        workdir_freepdi = workdir_arch + '/pdi_free_' + str(pdi_free)
+        if not os.path.isdir(workdir_freepdi):
+            os.mkdir(workdir_freepdi)
+
+        workdir_graftpdi = workdir_freepdi + '/pdi_graft_' + str(pdi_graft)
+        if not os.path.isdir(workdir_graftpdi):
+            os.mkdir(workdir_graftpdi)
 
         for caselen in range(ncases_pdi):
 
-            workdir_subpdi = workdir_headpdi + '/Case_' + str(caselen+1)
+            workdir_subpdi = workdir_graftpdi + '/Case_' + str(caselen+1)
             if not os.path.isdir(workdir_subpdi):
                 os.mkdir(workdir_subpdi)
 
@@ -136,33 +145,33 @@ for ifree in range(len(free_chains)):
                 #----Generate input files-----
                 print( "Copy Successful - Generating Input Files")
                 
-                if not os.path.exists(inpgenfyl):
-                    print('ERROR:', inpgenfyl, 'not found!')
-                    continue
+                lmp_data_fyle = create_paramfyl_for_datafyl(destdir,\
+                                                      par_files,free_chains[ifree]\
+                                                      ,fylstr,caselen,free_avg_mw,\
+                                                      graft_chains,graft_avg_mw,nsalt,\
+                                                      f_charge,tail_mons,\
+                                                      archarr[iarch],pdi_files)
 
-                create_paramfyl_for_datafyl(destdir,par_files,free_chains[ifree]\
-                                            ,fylstr,caselen,mw_free,nch_graft,\
-                                            mw_graft,nsalt,f_charge,tail_mons,\
-                                            archarr[iarch],pdi_files)
-
-                compile_and_run_inpgenfyles(inpfyles[1],destdir)
-
-
-                #----Copy/Backup initial files---
-                clean_backup_initfiles(f90_files,pdi_files,par_files,destdir)
-                
+                compile_and_run_inpgenfyles(par_files[1],destdir)            
 
                 #---Run LAMMPS files-------------
+
+                edit_generate_input_lmp_files('in.init_var',lmp_data_fyle)
+#                run_lammps(free_chains[ifree],pdifree,caselen,fylstr,\
+#                           'jobmain_var.sh','jobmain.sh')
+                
+                #----Copy/Backup initial files---
+                clean_backup_initfiles(f90_files,pdi_files,par_files,destdir)
 
                 os.chdir(maindir)
 
             else:
 
-                os.chdir(workdir3)
+                os.chdir(workdir_subpdi)
                 destdir = os.getcwd()
 
-                if not os.path.isdir(workdir3):
-                    print( workdir3, "not found")
+                if not os.path.isdir(workdir_subpdi):
+                    print( workdir_subpdi, "not found")
                     continue
 
 
@@ -173,24 +182,19 @@ for ifree in range(len(free_chains)):
                     print("No archival files found in ", destdir)
                     continue
 
-                srcfyl = lmpdir + '/in.longrun'
-                desfyl = destdir + '/in.longrun'
-                shutil.copy2(srcfyl, desfyl)
 
-                srcfyl = lmpdir + '/jobmain2.sh'
-                desfyl = destdir + '/jobmain2.sh'
-                shutil.copy2(srcfyl, desfyl)
+                for fyllist in range(len(lmp_long)):
+                    cpy_main_files(lmp_dir,destdir,lmp_long[fyllist])
 
                 fylename = destdir + '/lmp_mesabi'
-
                 if not fylename: 
                     srcfyl = '/home/dorfmank/vsethura/mylammps/src/lmp_mesabi'
                     desfyl = destdir + '/lmp_mesabi'
                     shutil.copy2(srcfyl, desfyl)
 
-                print( "Submitting Jobs..")
+#                run_lammps(free_chains[ifree],pdifree,caselen,fylstr,\
+#                           'jobmain_long_var.sh','jobmain_long.sh')
 
-                subprocess.call(["qsub","jobmain2.sh"])
 
                 os.chdir(maindir)
 	 
