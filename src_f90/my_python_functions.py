@@ -131,7 +131,7 @@ def run_lammps(nch_free,pdifree,casenum,dirstr,inpjob,outjob):
         return
     
     jobstr = "job_" + str(nch_free) + "_" + str(pdifree) + "_" \
-             + str(casenum) + "_" + dirstr
+             + str(casenum+1) + "_" + dirstr
     fr  = open(inpjob,'r')
     fw  = open(outjob,'w')
     fid = fr.read().replace("py_jobname",jobstr)
