@@ -6,22 +6,22 @@ program SZdist
   integer,parameter::maxiteration = 10000 ! sets the maximum amount
   ! of times the program will  try to get a PDI within the tolerance
   ! before exiting
-  real,parameter::tol = 5 ! tolerance value for PDI(%)
+  real:: tol = 5 ! tolerance value for PDI(%). Value between 1-100
   real,parameter::range = 5 ! Max value of Sigma
-
+  
   !--------Other parameters------------------------------------------
   real::PDI1 ! PDI (polydispersive index) of FREE chains
   real::k1 ! Related to PDI [k=1/(PDI-1)]
   real::PDI2 ! PDI of GRAFT chains
   real::k2 ! Similar to k1
-
+  
   real::area1 = 0 ! Area under the curve for FREE chains
   real::area2 = 0 ! same but for GRAFT chains
   real::step ! Step size = range/maxsteps  
   real::randnum ! random number from 0 to 1
   real::average1 = 0 ! Sum of all free chain MW, to be divided by num
   real::average2 = 0 ! Sum of all graft chain MW, to be divided by num
-
+  
   real::PDIgen1 ! PDI of generated FREE polymer list
   real::PDIgen2 ! PDI of generated GRAFT polymer list
   integer::Mi = 0 ! used to calculate PDI of list
@@ -41,25 +41,24 @@ program SZdist
 
   character (len=100) :: dumchar
   integer :: ierr
-  real,dimension(1:maxsteps)::S ! Ratios of length of chain to mean length  
-
+  real,dimension(1:maxsteps)::S ! Ratios of chainlength to meanlength
 
   ! FREE CHAINS    
-
   real,dimension(1:maxsteps)::P1 ! Probability of SZ distribution 
   real,dimension(1:maxsteps)::Normal1 ! Normalized distributation 
-  real,dimension(1:maxsteps)::IntNormal1 ! Integrated Areas for Normalized Distribution 
-  integer,allocatable,dimension(:)::MolWt1 ! List of MW for N polymers
-
-
+  real,dimension(1:maxsteps)::IntNormal1 !Integrated area for normdist
+  integer,allocatable,dimension(:)::MolWt1 !List of MW for N polymers
 
   ! GRAFT CHAINS    
-
   real,dimension(1:maxsteps)::P2 ! Probability of SZ distribution 
   real,dimension(1:maxsteps)::Normal2 ! Normalized distributation 
-  real,dimension(1:maxsteps)::IntNormal2 ! Integrated Areas for Normalized Distribution 
+  real,dimension(1:maxsteps)::IntNormal2 !Integrated Area for normdist
   integer,allocatable,dimension(:)::MolWt2 ! List of MW for N polymers
 
+
+  !***********ANALYSIS BEGINS HERE************************************
+
+  tol = real(tol)/100.0 !convert tolerance to percentage
   step = range/maxsteps 
 
   ! Retrieve values of PDI and M from Readfile.dat, calculate
@@ -101,7 +100,8 @@ program SZdist
   if(PDI1 .GT. 1.0) then
      ! Calculate probability function
      do i=1,maxsteps
-        P1(i) = (k1**k1)*(GAMMA(S(i))**-1)*(S(i)**(k1-1))*(EXP(-1*k1*S(i)))
+        P1(i) = (k1**k1)*(GAMMA(S(i))**-1)*(S(i)**(k1-1))*(EXP(-1*k1&
+             &*S(i)))
      end do
 
      ! Calculate total area for normalization
@@ -124,14 +124,16 @@ program SZdist
      ! calculation
      
      do i=2,maxsteps
-        IntNormal1(i)=0.5*(Normal1(i)+Normal1(i-1))*(range/real(maxsteps))
+        IntNormal1(i)=0.5*(Normal1(i)+Normal1(i-1))*(range&
+             &/real(maxsteps))
      end do
 
   end if
      
   if(PDI2 .GT. 1.0) then
      do i=1,maxsteps
-        P2(i) = (k2**k2)*(GAMMA(S(i))**-1)*(S(i)**(k2-1))*(EXP(-1*k2*S(i)))
+        P2(i) = (k2**k2)*(GAMMA(S(i))**-1)*(S(i)**(k2-1))*(EXP(-1*k2&
+             &*S(i)))
      end do
 
      ! Calculate total area for normalization
@@ -152,7 +154,8 @@ program SZdist
      IntNormal2(1) = 0.5*Normal2(1)*(range/real(maxsteps))
      
      do i=2,maxsteps
-        IntNormal2(i)=0.5*(Normal2(i)+Normal2(i-1))*(range/real(maxsteps))
+        IntNormal2(i)=0.5*(Normal2(i)+Normal2(i-1))*(range&
+             &/real(maxsteps))
      end do
      
   end if
@@ -202,7 +205,7 @@ program SZdist
         end do
         
 
-        ! ===========================================================
+        !==============================================================
      
         ! Calculate PDI of list
         do i=1,num_free
@@ -352,7 +355,8 @@ program SZdist
   end do
 
   average1 = real(average1)/real(num_free)
-  print *, 'the number average molecular wt of the free chains is', average1 
+  print *, 'the number average molecular wt of the free chains is',&
+       & average1 
   print *, 'the PDI of the generated free chain list is', PDIgen1
 
   do i=1,num_graft
@@ -360,7 +364,8 @@ program SZdist
   end do
 
   average2 = average2/real(num_graft)
-  print *, 'the number average molecular wt of the graft chains is', average2 
+  print *, 'the number average molecular wt of the graft chains is',&
+       & average2 
   print *, 'the PDI of the generated graft chain list is', PDIgen2
 
   close(10)
