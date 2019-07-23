@@ -25,14 +25,14 @@ restart = 0 # For restarting from given configurations
 
 
 #---------input details----------------------------------------
-free_chains  = [32,80]#,80,32,48]
+free_chains  = [80]#,80,32,48]
 free_avg_mw  = 30
 graft_chains = 64
 graft_avg_mw = 35 
 tail_mons    = 5
 nsalt        = 510
 f_charge     = 0.5
-archarr      = [1,4]
+archarr      = [1,2,3,4]
 ncases_pdi   = 5
 pdi_free     = 1.2
 pdi_graft    = 1.0
@@ -111,7 +111,8 @@ for ifree in range(len(free_chains)):
                 os.chdir(workdir_subpdi)
                 destdir = os.getcwd()
 
-                print( "Starting new case for ", free_chains[ifree],dirstr)
+                print( "Starting case", caselen+1, "for ",\
+                       free_chains[ifree],dirstr)
 
                 #---Copying files------
                 print( "Current Dir ", destdir)
@@ -167,13 +168,12 @@ for ifree in range(len(free_chains)):
 
             else:
 
-                os.chdir(workdir_subpdi)
-                destdir = os.getcwd()
-
                 if not os.path.isdir(workdir_subpdi):
                     print( workdir_subpdi, "not found")
                     continue
 
+                os.chdir(workdir_subpdi)
+                destdir = os.getcwd()
 
                 archfiles = destdir + '/archival*'
                 list_of_files = glob.glob(archfiles)
@@ -181,7 +181,6 @@ for ifree in range(len(free_chains)):
                 if not list_of_files:
                     print("No archival files found in ", destdir)
                     continue
-
 
                 for fyllist in range(len(lmp_long)):
                     cpy_main_files(lmp_dir,destdir,lmp_long[fyllist])
@@ -192,8 +191,8 @@ for ifree in range(len(free_chains)):
                     desfyl = destdir + '/lmp_mesabi'
                     shutil.copy2(srcfyl, desfyl)
 
-#                run_lammps(free_chains[ifree],pdifree,caselen,fylstr,\
-#                           'jobmain_long_var.sh','jobmain_long.sh')
+                run_lammps(free_chains[ifree],pdifree,caselen,fylstr,\
+                           'jobmain_long_var.sh','jobmain_long.sh')
 
 
                 os.chdir(maindir)

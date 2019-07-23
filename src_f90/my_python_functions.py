@@ -186,3 +186,95 @@ def clean_backup_initfiles(f90_files,pdi_files,par_files,destdir):
         os.remove(fyl)
 
 
+def compile_anafiles():
+
+    if not os.path.exists('pe_params.f90'):
+        print('ERROR: pe_params.f90 not found')
+        return
+
+    if not os.path.exists('pe_analyze.f90'):
+        print('ERROR: pe_analyze.f90 not found')
+        return
+
+
+    subprocess.call(['ifort','-r8','-qopenmp','-mkl',\
+                     '-check','-traceback','pe_params.f90'\
+                     'pe_analyze.f90','-o','anainp.o'])
+
+def find_datafyle(nch_free,archstr,caseum,destdir):
+
+    os.chdir(destdir)
+    curr_dir = os.getcwd()
+    datafyle = "PEdata_"+str(nch_free)+"_" +archstr+ \
+               "_"+str(casenum+1)+".dat"
+
+    if not os.path.exists(datafyle):
+        print ("Trying to make datafile from restart files")
+        restart_fyles = glob.glob('archival_*')
+        
+        if restart_fyles = []:
+            print("ERROR: No restart files found")
+            return
+
+        if not os.path.exists('lmp_mesabi'):
+        
+            src_lmp = '/home/dorfmank/vsethura/mylammps/src/lmp_mesabi'
+            destfyle = curr_dir + '/lmp_mesabi'
+            shutil.copy2(src_lmp,destfyle)
+
+        subprocess.call(['./lmp_mesabi','-np','48','./lmp_mesabi','-r',restart_fyles[0],datafyle])
+        
+    return datafyle
+
+
+def find_latest_trajfyle(pref,destdir):
+    
+    os.chdir(destdir)
+    traj_arr = glob.glob(pref)
+    latest_fyle = max(traj_arr,key = os.path.getctime)
+    return latest_fyle
+
+
+def edit_generate_anainp_files(inpdata,inptraj,nch_tot,nch_free,\
+                               nch_graft):
+    
+    if not os.path.exists('anainp_var.txt'):
+        print('ERROR: pe_params not found')
+        return
+
+    fr  = open('anainp_var.txt','r')
+    fw  = open('anainp.txt','w')
+
+    datafyle = re.split('/',inpdata)
+    dataname = datafyle[len(datafyle)-1]
+
+    trajfyle = re.split('/',inptraj)
+    trajname = trajfyle[len(trajfyle)-1]
+    
+
+    fid = fr.read().replace("py_datafyl",dataname).\
+          replace("py_trajfyl",trajname).\
+          replace("py_ntotchains",str(nch_tot)).\
+          replace("py_nfrchains", str(nch_free)).\
+          replace("py_ngrchains",str(nch_graft))
+    fw.write(fid)
+    fw.close()
+    fr.close()
+
+def run_lammps(nch_free,pdifree,casenum,dirstr,inpjob,outjob):
+
+    if not os.path.exists(inpjob):
+        print('ERROR: ', inpjob,'not found')
+        return
+    
+    jobstr = "ana_" + str(nch_free) + "_" + str(pdifree) + "_" \
+             + str(casenum+1) + "_" + dirstr
+    fr  = open(inpjob,'r')
+    fw  = open(outjob,'w')
+    fid = fr.read().replace("py_jobname",jobstr)
+    fw.write(fid)
+    fw.close()
+    fr.close()
+
+    subprocess.call(["qsub", outjob])
+    
