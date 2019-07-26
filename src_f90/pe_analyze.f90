@@ -28,7 +28,6 @@ END PROGRAM PEMAIN
 
 !--------------------------------------------------------------------
 
-
 SUBROUTINE READ_ANA_IP_FILE()
 
   USE PARAMETERS_PE
@@ -186,17 +185,12 @@ SUBROUTINE READ_ANA_IP_FILE()
         IF(chainads) STOP "Chain details before monomer details"
         
         monads = 1
-        READ(anaread,*,iostat=ierr) nfreegrp, nfreemons,nadsgrp&
-             &,nadsmons,adscut
+        READ(anaread,*,iostat=ierr) nfreegrp,nadsgrp,adscut
         
         ALLOCATE(free_ptr(nfreegrp),stat = AllocateStatus)
         IF(AllocateStatus/=0) STOP "did not allocate free_ptr"
         ALLOCATE(ads_ptr(nadsgrp),stat = AllocateStatus)
         IF(AllocateStatus/=0) STOP "did not allocate ads_ptr"
-        ALLOCATE(free_grp(nfreemons),stat = AllocateStatus)
-        IF(AllocateStatus/=0) STOP "did not allocate free_grp"
-        ALLOCATE(ads_grp(nadsmons),stat = AllocateStatus)
-        IF(AllocateStatus/=0) STOP "did not allocate ads_grp"
         
         READ(anaread,*,iostat=ierr) (free_ptr(i),i=1,nfreegrp)
         READ(anaread,*,iostat=ierr) (ads_ptr(i),i=1,nadsgrp)
@@ -214,17 +208,12 @@ SUBROUTINE READ_ANA_IP_FILE()
         IF(monads == 0) THEN !If it is already there, use those
            ! details
 
-           READ(anaread,*,iostat=ierr) nfreegrp, nfreemons,nadsgrp&
-                &,nadsmons,adscut
+           READ(anaread,*,iostat=ierr) nfreegrp,nadsgrp
            
            ALLOCATE(free_ptr(nfreegrp),stat = AllocateStatus)
            IF(AllocateStatus/=0) STOP "did not allocate free_ptr"
            ALLOCATE(ads_ptr(nadsgrp),stat = AllocateStatus)
            IF(AllocateStatus/=0) STOP "did not allocate ads_ptr"
-           ALLOCATE(free_grp(nfreemons),stat = AllocateStatus)
-           IF(AllocateStatus/=0) STOP "did not allocate free_grp"
-           ALLOCATE(ads_grp(nadsmons),stat = AllocateStatus)
-           IF(AllocateStatus/=0) STOP "did not allocate ads_grp"
         
            READ(anaread,*,iostat=ierr) (free_ptr(i),i=1,nfreegrp)
            READ(anaread,*,iostat=ierr) (ads_ptr(i),i=1,nadsgrp)
@@ -279,7 +268,7 @@ SUBROUTINE DEFAULTVALUES()
 
   ! Initialzie Extra Structural Quantities
   rdomcut = 0;  rmaxbin = 0; ndentypes = 0; ngroups = 0
-  ngraftmons = 0
+  ngraftmons = 0; adscut = 0; chadscut = 0
 
   !Averages
   rvolavg = 0; rgavg = 0; avg_ch_adscnt = 0; acrvolavg = 0
@@ -671,8 +660,10 @@ SUBROUTINE OPEN_STRUCT_OUTPUT_FILES()
   IMPLICIT NONE
 
   CHARACTER(LEN=4) :: rcutchar
-  
+  CHARACTER(LEN=4) :: ch_rcutchar
+
   WRITE(rcutchar,'(F4.2)') adscut 
+  WRITE(ch_rcutchar,'(F4.2)') chadscut 
 
   IF(rgcalc) THEN
      
@@ -706,12 +697,12 @@ SUBROUTINE OPEN_STRUCT_OUTPUT_FILES()
   END IF
 
   IF(chainads) THEN
-     dum_fname = "adsfracchain_rcut_"//rcutchar//"_"&
+     dum_fname = "adsfracchain_rcut_"//ch_rcutchar//"_"&
           &//trim(adjustl(traj_fname))
      OPEN(unit =adschwrite,file =trim(dum_fname),action="write"&
           &,status="replace")
 
-     dum_fname = "chainadsval_rcut_"//rcutchar//"_"&
+     dum_fname = "chainadsval_rcut_"//ch_rcutchar//"_"&
           &//trim(adjustl(traj_fname))
      OPEN(unit =adschwrite2,file =trim(dum_fname),action="write"&
           &,status="replace")
@@ -823,160 +814,19 @@ SUBROUTINE STRUCT_INIT()
 
   END IF
 
-  IF(monads) THEN
+  IF(monads .OR. chainads) THEN
 
-     fcnt = 0; acnt = 0; avgadscnt = 0
-     DO i = 1,ntotatoms
+     avgadscnt = 0
+     CALL COUNT_FREE_AND_GRAFT_MONOMERS()
 
-        DO j = 1,nfreegrp
-
-           IF(aidvals(i,3) == free_ptr(j)) THEN
-
-              fcnt = fcnt + 1
-              free_grp(fcnt) = aidvals(i,1)
-             
-           END IF
-
-        END DO
-
-        DO j = 1,nadsgrp
-
-           IF(aidvals(i,3) == ads_ptr(j)) THEN
-
-              acnt = acnt + 1
-              ads_grp(acnt) = aidvals(i,1)
-
-           END IF
-
-        END DO
-        
-     END DO
-
-     IF(acnt .NE. nadsmons .OR. nfreemons .NE. fcnt) THEN
-        
-        PRINT *, "Unequal number of free/ads mons"
-        PRINT *, acnt, nadsmons, fcnt, nfreemons
-        STOP
-        
-     END IF
-
-  END IF
-
-  IF(chainads) THEN
-
-     IF(monads == 0) THEN
-
-        fcnt = 0; acnt = 0; avgadscnt = 0
-        DO i = 1,ntotatoms
-           
-           DO j = 1,nfreegrp
-              
-              IF(aidvals(i,3) == free_ptr(j)) THEN
-                 
-                 fcnt = fcnt + 1
-                 free_grp(fcnt) = aidvals(i,1)
-                 
-              END IF
-
-           END DO
-
-           DO j = 1,nadsgrp
-              
-              IF(aidvals(i,3) == ads_ptr(j)) THEN
-                 
-                 acnt = acnt + 1
-                 ads_grp(acnt) = aidvals(i,1)
-                 
-              END IF
-              
-           END DO
-        
-        END DO
-
-        IF(acnt .NE. nadsmons .OR. nfreemons .NE. fcnt) THEN
-        
-           PRINT *, "Unequal number of free/ads mons"
-           PRINT *, acnt, nadsmons, fcnt, nfreemons
-           STOP
-           
-        END IF
-
-     ELSE !Now we already know the number and type of adsorbed/free
-        !monomers. So just need to cross check whether the number of
-        ! free/adsorbed chains are correct
-
-        free_chainarr = -1
-        fcnt = 0; 
-        DO i = 1,nfreemons
-
-           a1id = free_grp(i)
-           molid = aidvals(a1id,2)
-           j = 1; flagpr = 0
-
-           ! Find the index to which free_chainarr is filled
-           DO WHILE(j .LE. nfreechains)
-              
-              IF(free_chainarr(j) == -1) THEN
-                 
-                 jmax = j
-                 flagpr = 1
-                 j = nfreechains + 1
-                 
-              ELSE
-                 
-                 j = j + 1
-                 
-
-              END IF
-              
-           END DO
-
-           flagch = 0
-           IF(flagpr == 1) THEN !Array is not fully filled. Now find
-              ! if the molid is already present 
-
-              j = 1
-              DO WHILE(j .LE. jmax)
-                 
-                 IF(molid == free_chainarr(j)) THEN
-                    
-                    flagch = 1
-                    j = jmax+1
-
-                 ELSE
-                    
-                    j = j + 1
-                    
-                 END IF
-
-              END DO
-              
-           END IF
- 
-           IF(flagpr == 1 .AND. flagch == 0) THEN !Molid not found in
-              ! the filled array list
-              fcnt = fcnt + 1
-              free_chainarr(fcnt) = molid
-
-           END IF
-
-        END DO
-
-        WRITE(logout,*) "Free chain details: ", free_chainarr
-
-        IF(fcnt .NE. nfreechains) THEN
-
-           PRINT *, "Unequal number of free chains: "
-           PRINT *, fcnt, nfreechains
-
-        END IF
-
-     END IF
+     !Now we already know the number and type of graft/free
+     !monomers. So just need to cross check whether the number of
+     !free/graft chains are correct. Same when monads==1
+     CALL FIND_MOLIDS_FOR_FREE_AND_GRAFT()
 
   END IF
 
   IF(avg_rgraft_calc) THEN
-
 
      DO i = 1, ntotatoms
 
@@ -1009,6 +859,193 @@ SUBROUTINE STRUCT_INIT()
   END IF
 
 END SUBROUTINE STRUCT_INIT
+
+!--------------------------------------------------------------------
+
+SUBROUTINE COUNT_FREE_AND_GRAFT_MONOMERS()
+
+  USE PARAMETERS_PE
+  IMPLICIT NONE
+
+  INTEGER :: i,j,AllocateStatus
+  INTEGER :: fcnt, grcnt
+
+  ! Count number of free and graft monomers
+  fcnt = 0; grcnt = 0; 
+  DO i = 1,ntotatoms
+     
+     DO j = 1,nfreegrp
+        
+        IF(aidvals(i,3) == free_ptr(j)) THEN
+           
+           fcnt = fcnt + 1
+
+        END IF
+        
+     END DO
+
+     DO j = 1,nadsgrp
+        
+        IF(aidvals(i,3) == ads_ptr(j)) THEN
+           
+           grcnt = grcnt + 1
+           
+        END IF
+        
+     END DO
+        
+  END DO
+
+
+  ! Allocate number of free and graft monomers
+  nfreemons = fcnt
+  nadsmons  = grcnt
+
+  WRITE(logout,*) "Number of free monomers: ", nfreemons
+  WRITE(logout,*) "Number of graft monomers: ", nadsmons
+
+  ALLOCATE(free_grp(nfreemons),stat = AllocateStatus)
+  IF(AllocateStatus/=0) STOP "did not allocate free_grp"
+  ALLOCATE(ads_grp(nadsmons),stat = AllocateStatus)
+  IF(AllocateStatus/=0) STOP "did not allocate ads_grp"
+
+  ! Find all free and graft monomers
+  free_grp = -1; ads_grp = -1
+  fcnt = 0; grcnt = 0
+ 
+  DO i = 1,ntotatoms
+     
+     DO j = 1,nfreegrp
+        
+        IF(aidvals(i,3) == free_ptr(j)) THEN
+           
+           fcnt = fcnt + 1
+           free_grp(fcnt) = aidvals(i,1)
+           
+           IF(fcnt .GT. nfreemons) THEN
+              
+              PRINT *, fcnt, nfreemons
+              STOP "Mismatch in total number of free monomers"
+
+           END IF
+
+        END IF
+        
+     END DO
+
+     DO j = 1,nadsgrp
+
+        IF(aidvals(i,3) == ads_ptr(j)) THEN
+           
+           grcnt = grcnt + 1
+           ads_grp(grcnt) = aidvals(i,1)
+           
+           IF(grcnt .GT. nadsmons) THEN
+              
+              PRINT *, grcnt, nadsmons
+              STOP "Mismatch in total number of graft monomers"
+              
+           END IF
+           
+        END IF
+        
+     END DO
+        
+  END DO
+
+  ! Check whether the free and graft arrays are filled
+  DO i = 1, nfreemons
+     IF(free_grp(i) == -1) THEN
+        PRINT *, "Free array not filled"
+        STOP
+     END IF
+  END DO
+
+  DO i = 1, nadsmons
+     IF(ads_grp(i) == -1) THEN
+        PRINT *, "Graft array not filled"
+        STOP
+     END IF
+  END DO
+
+END SUBROUTINE COUNT_FREE_AND_GRAFT_MONOMERS
+
+!--------------------------------------------------------------------
+
+SUBROUTINE FIND_MOLIDS_FOR_FREE_AND_GRAFT()
+
+  USE PARAMETERS_PE
+  IMPLICIT NONE
+
+  INTEGER :: i, j, a1id, molid, fcnt, flagpr, jmax, flagch
+  
+  free_chainarr = -1
+  fcnt = 0; 
+  DO i = 1,nfreemons
+
+     a1id = free_grp(i)
+     molid = aidvals(a1id,2)
+     j = 1; flagpr = 0
+
+     ! Find the index to which free_chainarr is filled
+     DO WHILE(j .LE. nfreechains)
+        
+        IF(free_chainarr(j) == -1) THEN
+           
+           jmax = j
+           flagpr = 1
+           j = nfreechains + 1
+           
+        ELSE
+           
+           j = j + 1
+           
+           
+        END IF
+        
+     END DO
+     
+     flagch = 0
+     IF(flagpr == 1) THEN !Array is not fully filled. Now find
+        ! if the molid is already present 
+        
+        j = 1
+        DO WHILE(j .LE. jmax)
+           
+           IF(molid == free_chainarr(j)) THEN
+              
+              flagch = 1
+              j = jmax+1
+              
+           ELSE
+              
+              j = j + 1
+              
+           END IF
+           
+        END DO
+        
+     END IF
+     
+     IF(flagpr == 1 .AND. flagch == 0) THEN !Molid not found in
+        ! the filled array list
+        fcnt = fcnt + 1
+        free_chainarr(fcnt) = molid
+        
+     END IF
+     
+  END DO
+  
+  WRITE(logout,*) "Free chain details: ", free_chainarr
+  
+  IF(fcnt .NE. nfreechains) THEN
+     
+     PRINT *, "Unequal number of free chains: "
+     PRINT *, fcnt, nfreechains
+     
+  END IF
+
+END SUBROUTINE FIND_MOLIDS_FOR_FREE_AND_GRAFT
 
 !--------------------------------------------------------------------
 
@@ -1813,8 +1850,8 @@ SUBROUTINE COMPUTE_FREEPENETRATE_CHAINS(iframe)
            
            rval = sqrt(rxval**2 + ryval**2 + rzval**2)
            
-           IF(rval .LE. adscut .AND. chainptr_adsorbed(indexval) == &
-                &-1) THEN
+           IF(rval .LE. chadscut .AND. chainptr_adsorbed(indexval) ==&
+                & -1) THEN
               
               dumads_ch_cnt = dumads_ch_cnt + 1
               chainptr_adsorbed(indexval) = 1
@@ -2337,7 +2374,7 @@ SUBROUTINE ALLOCATE_ARRAYS()
      DEALLOCATE(free_mols)
   END IF
 
-  IF(monads == 0) THEN
+  IF(monads == 0 .AND. chainads == 0) THEN
      ALLOCATE(free_ptr(1),stat = AllocateStatus)
      DEALLOCATE(free_ptr)
      ALLOCATE(ads_ptr(1),stat = AllocateStatus)
