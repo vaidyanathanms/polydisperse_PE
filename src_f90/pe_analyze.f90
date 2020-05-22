@@ -205,6 +205,12 @@ SUBROUTINE READ_ANA_IP_FILE()
         ALLOCATE(free_chainarr(nfreechains),stat = AllocateStatus)
         IF(AllocateStatus/=0) STOP "did not allocate free_chainarr"
 
+        ALLOCATE(adsfree_chainsarr(nfreechains),stat = AllocateStatus)
+        IF(AllocateStatus/=0) STOP "did not allocate adsfree_chainsarr&
+             &"
+
+        adsfree_chainsarr = 0
+
         IF(monads == 0) THEN !If it is already there, use those
            ! details
 
@@ -707,6 +713,16 @@ SUBROUTINE OPEN_STRUCT_OUTPUT_FILES()
      OPEN(unit =adschwrite2,file =trim(dum_fname),action="write"&
           &,status="replace")
 
+     WRITE(adschwrite2,'(A)') "frame ID,  graftatomID,   freeatomID,  &
+          &   freechainID, freechainMW"  
+
+
+
+     dum_fname = "avgadsfracchain_rcut_"//ch_rcutchar//"_"&
+          &//trim(adjustl(traj_fname))
+     OPEN(unit =avgadschwrite,file =trim(dum_fname),action="write"&
+          &,status="replace")
+
   END IF
 
   IF(avg_rgraft_calc) THEN
@@ -753,31 +769,32 @@ SUBROUTINE STRUCT_INIT()
 
   IF(acrcalc) THEN
 
-     acrdfarray = 0.0; ncations=0; nanions = 0
+     acrdfarray = 0.0; npol_cations=0; npol_anions = 0
      acrbinval = acrdomcut/REAL(acrmaxbin)
      
      DO i = 1, ntotatoms
 
         DO j = 1,ncatgrp
 
-           IF(aidvals(i,3) == catgrp(j)) ncations=ncations+1
+           IF(aidvals(i,3) == catgrp(j)) npol_cations=npol_cations+1
 
         END DO
 
         DO j = 1,nangrp
 
-           IF(aidvals(i,3) == angrp(j)) nanions=nanions+1
+           IF(aidvals(i,3) == angrp(j)) npol_anions=npol_anions+1
            
         END DO
 
      END DO
 
-     PRINT *, "Total Number of polyanions: ", nanions
-     PRINT *, "Total Number of polycations: ", ncations
+     PRINT *, "========================================="
+     PRINT *, "FOR RADIAL DISTRIBUTION CALCULATION ONLY"
+     PRINT *, "Total Number of polyanions: ", npol_anions
+     PRINT *, "Total Number of polycations: ", npol_cations
+     PRINT *, "========================================="
 
   END IF
-
-
 
   IF(denscalc) THEN
 
@@ -795,7 +812,6 @@ SUBROUTINE STRUCT_INIT()
      END DO
      
      normdens = 0.0; denbinavg = 0.0
-     
 
      IF(ngroups) THEN
 
@@ -823,6 +839,7 @@ SUBROUTINE STRUCT_INIT()
      !monomers. So just need to cross check whether the number of
      !free/graft chains are correct. Same when monads==1
      CALL FIND_MOLIDS_FOR_FREE_AND_GRAFT()
+     CALL FIND_MW_EACH_CHAIN()
 
   END IF
 
@@ -901,14 +918,23 @@ SUBROUTINE COUNT_FREE_AND_GRAFT_MONOMERS()
   nfreemons = fcnt
   nadsmons  = grcnt
 
-  WRITE(logout,*) "Number of free monomers: ", nfreemons
-  WRITE(logout,*) "Number of graft monomers: ", nadsmons
+  WRITE(logout,*) "============================================="
+  WRITE(logout,*) "FOR CHAIN ADSORPTION ANALYSIS ONLY"
+  WRITE(logout,*) "Number of charged free monomers: ", nfreemons
+  WRITE(logout,*) "Number of charged graft monomers: ", nadsmons
+  WRITE(logout,*) "============================================="
+
+  PRINT *, "===================================================="
+  PRINT *, "FOR CHAIN ADSORPTION ANALYSIS ONLY"
+  PRINT *, "Number of charged free monomers: ", nfreemons
+  PRINT *, "Number of charged graft monomers: ", nadsmons
+  PRINT *, "===================================================="
 
   ALLOCATE(free_grp(nfreemons),stat = AllocateStatus)
   IF(AllocateStatus/=0) STOP "did not allocate free_grp"
   ALLOCATE(ads_grp(nadsmons),stat = AllocateStatus)
   IF(AllocateStatus/=0) STOP "did not allocate ads_grp"
-
+  
   ! Find all free and graft monomers
   free_grp = -1; ads_grp = -1
   fcnt = 0; grcnt = 0
@@ -1041,11 +1067,63 @@ SUBROUTINE FIND_MOLIDS_FOR_FREE_AND_GRAFT()
   IF(fcnt .NE. nfreechains) THEN
      
      PRINT *, "Unequal number of free chains: "
+     PRINT *, "Counted, Input"
      PRINT *, fcnt, nfreechains
+     STOP
      
   END IF
 
 END SUBROUTINE FIND_MOLIDS_FOR_FREE_AND_GRAFT
+
+!--------------------------------------------------------------------
+
+SUBROUTINE FIND_MW_EACH_CHAIN()
+
+  USE PARAMETERS_PE
+  IMPLICIT NONE
+
+  INTEGER :: i
+  INTEGER :: max_chain_id, AllocateStatus, molid
+
+  PRINT *, "Assigning MW to each atom..."
+  WRITE(logout,*) "Assigning MW to each atom..."
+
+  !Find maximum chain ID
+  max_chain_id = 0
+  DO i = 1,ntotatoms
+     
+     IF(aidvals(i,2) > max_chain_id) max_chain_id = aidvals(i,2)
+
+  END DO
+
+  PRINT *, "Maximum Chain ID: ", max_chain_id
+  WRITE(logout,*) "Maximum Chain ID: ", max_chain_id
+
+  !Find MW for each chain
+  ALLOCATE(chain_id_to_mw_map(max_chain_id),stat = AllocateStatus)
+  IF(AllocateStatus/=0) STOP "did not allocate chain_id_to_mw_map"
+
+  chain_id_to_mw_map = 0
+  DO i = 1,ntotatoms
+
+     molid = aidvals(i,2)
+     chain_id_to_mw_map(molid)  = chain_id_to_mw_map(molid) + 1
+
+  END DO
+
+  dum_fname = "initmwdist_"//trim(adjustl(traj_fname))
+  OPEN(unit = init_mw_write,file =trim(dum_fname),action="write"&
+             &,status="replace")
+
+  WRITE(init_mw_write,'(A)') 'chainID      chainMW'
+
+  DO i = 1,max_chain_id
+
+     WRITE(init_mw_write,'(2(I0,1X))') i, chain_id_to_mw_map(i)
+
+  END DO
+
+END SUBROUTINE FIND_MW_EACH_CHAIN
 
 !--------------------------------------------------------------------
 
@@ -1253,7 +1331,7 @@ SUBROUTINE COMPUTE_ANCATRDF(iframe)
   DO i = 0,acrmaxbin-1
 
      acrdfarray(i) = acrdfarray(i) + REAL(dumrdfarray(i))&
-          &*acrvolval/(REAL(nanions*ncations))
+          &*acrvolval/(REAL(npol_anions*npol_cations))
         
   END DO
      
@@ -1478,7 +1556,7 @@ SUBROUTINE COMPUTE_DENS(iframe)
 
            inst_array(binval,arrindx)=inst_array(binval,arrindx)+1
            ch_instarray(binval,arrindx)=ch_instarray(binval,arrindx)&
-                &+INT(charge_lmp(dentyp_arr(j),1))
+                &+INT(charge_lmp(i,1))
 
         END IF
 
@@ -1586,7 +1664,7 @@ IF(ngroups /= 0) THEN
             IF(binval .LE. maxden_bin) THEN
                grp_inst_array(binval,arrindx)= grp_inst_array(binval,arrindx) + 1
                chgrpinst(binval,arrindx) = chgrpinst(binval,arrindx)&
-                    &+charge_lmp(dengrp_arr(j,k),1)
+                    &+charge_lmp(i,1)
 
             END IF
             
@@ -1855,8 +1933,10 @@ SUBROUTINE COMPUTE_FREEPENETRATE_CHAINS(iframe)
               
               dumads_ch_cnt = dumads_ch_cnt + 1
               chainptr_adsorbed(indexval) = 1
-
-              WRITE(adschwrite2,'(4(I0,1X))') iframe,a1id,molid,a2id
+              adsfree_chainsarr(indexval) =&
+                   & adsfree_chainsarr(indexval) + 1
+              WRITE(adschwrite2,'(5(I0,1X))') iframe,a2id,a1id,molid&
+                   &,chain_id_to_mw_map(molid)
 
               EXIT
 
@@ -1882,6 +1962,7 @@ SUBROUTINE ALLOUTPUTS()
 
   USE PARAMETERS_PE
   IMPLICIT NONE
+  INTEGER :: i
 
   PRINT *, "Number of frames from start to end: ", nframes/(freqfr+1)
   PRINT *, "Frequency of Frames: ", freqfr
@@ -1914,8 +1995,17 @@ SUBROUTINE ALLOUTPUTS()
   END IF
 
   IF(chainads) THEN
-     PRINT *, "Average adsorbed monomer fraction by monomer count and &
+     PRINT *, "Average adsorbed monomer fraction by chain count and &
           &distance criteria: ",avg_ch_adscnt/REAL(nfrcntr)
+
+     
+     DO i = 1,nfreechains
+
+        WRITE(avgadschwrite,'(I0,1X,F14.8)') i,&
+             & REAL(adsfree_chainsarr)/REAL(nfrcntr)
+
+     END DO
+
   END IF
 
 END SUBROUTINE ALLOUTPUTS
@@ -2374,6 +2464,7 @@ SUBROUTINE ALLOCATE_ARRAYS()
      DEALLOCATE(free_mols)
   END IF
 
+   
   IF(monads == 0 .AND. chainads == 0) THEN
      ALLOCATE(free_ptr(1),stat = AllocateStatus)
      DEALLOCATE(free_ptr)
@@ -2382,6 +2473,8 @@ SUBROUTINE ALLOCATE_ARRAYS()
      ALLOCATE(free_grp(1),stat = AllocateStatus)
      DEALLOCATE(free_grp)
      ALLOCATE(ads_grp(1),stat = AllocateStatus)
+     DEALLOCATE(ads_grp)
+     ALLOCATE(chain_id_to_mw_map(1), stat=AllocateStatus)
      DEALLOCATE(ads_grp)
   END IF
   PRINT *, "Successfully allocated memory"
