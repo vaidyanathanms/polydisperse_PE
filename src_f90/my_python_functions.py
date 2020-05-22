@@ -14,7 +14,7 @@ def cpy_main_files(dum_maindir,dum_destdir,fylname):
     srcfyl = dum_maindir + '/' + fylname
 
     if not os.path.exists(srcfyl):
-        print('ERROR', fylname, 'not found')
+        print('ERROR', srcfyl, 'not found')
         return
 
     desfyl = dum_destdir + '/' + fylname
@@ -63,11 +63,12 @@ def check_pdi_files(destdir,pdi_files,flagcheck):
 
 def create_paramfyl_for_datafyl(destdir,inpfyles,nch_free,archstr\
                                 ,casenum,mw_free,nch_graft,mw_graft,\
-                                nsalt,f_charge,ntail,iarch,pdi_files):
+                                nsalt,f_charge,ntail,iarch,pdi_files,\
+                                boxdata):
     
     os.chdir(destdir)
     datafyle = "PEdata_"+str(nch_free)+"_" +archstr+ \
-               "_"+str(casenum+1)+".dat"
+               "_"+str(casenum)+".dat"
     logout = "log_" + datafyle
 
     fr  = open(inpfyles[0],'r')
@@ -84,7 +85,10 @@ def create_paramfyl_for_datafyl(destdir,inpfyles,nch_free,archstr\
           replace("py_saltonespecies",str(nsalt)).\
           replace("py_chargfrac_perchain",str(f_charge)).\
           replace("py_arch",str(iarch)).\
-          replace("py_log_fylename",logout)
+          replace("py_log_fylename",logout).\
+          replace("py_xbox",str(boxdata[0])).\
+          replace("py_ybox",str(boxdata[1])).\
+          replace("py_zbox",str(boxdata[2]))
     fw.write(fid)
     fw.close()
     fr.close()
@@ -124,17 +128,22 @@ def edit_generate_input_lmp_files(lmp_infyle,lmp_datafyle):
     fr.close()
     
 
-def run_lammps(nch_free,pdifree,casenum,dirstr,inpjob,outjob):
+def run_lammps(nch_free,pdifree,casenum,dirstr,inpjob,outjob,\
+               tot_hrs,tot_nodes,tot_procs):
 
     if not os.path.exists(inpjob):
         print('ERROR: ', inpjob,'not found')
         return
     
     jobstr = "job_" + str(nch_free) + "_" + str(pdifree) + "_" \
-             + str(casenum+1) + "_" + dirstr
+             + str(casenum) + "_" + dirstr
     fr  = open(inpjob,'r')
     fw  = open(outjob,'w')
-    fid = fr.read().replace("py_jobname",jobstr)
+    fid = fr.read().replace("py_jobname",jobstr).\
+          replace("py_hours",str(tot_hrs)).\
+          replace("py_nodes",str(tot_nodes)).\
+          replace("py_procs",str(tot_procs)).\
+          replace("py_totnp",str(tot_procs*tot_nodes))
     fw.write(fid)
     fw.close()
     fr.close()
@@ -198,21 +207,22 @@ def compile_anafiles():
 
 
     subprocess.call(['ifort','-r8','-qopenmp','-mkl',\
-                     '-check','-traceback','pe_params.f90'\
+                     '-check','-traceback','pe_params.f90',\
                      'pe_analyze.f90','-o','anainp.o'])
 
-def find_datafyle(nch_free,archstr,caseum,destdir):
+def find_datafyle(nch_free,archstr,casenum,destdir):
 
     os.chdir(destdir)
     curr_dir = os.getcwd()
     datafyle = "PEdata_"+str(nch_free)+"_" +archstr+ \
-               "_"+str(casenum+1)+".dat"
+               "_"+str(casenum)+".dat"
 
     if not os.path.exists(datafyle):
-        print ("Trying to make datafile from restart files")
+        print ("Data file not found ..")
+        print ("Making datafile from restart files")
         restart_fyles = glob.glob('archival_*')
         
-        if restart_fyles = []:
+        if restart_fyles == []:
             print("ERROR: No restart files found")
             return
 
@@ -222,7 +232,7 @@ def find_datafyle(nch_free,archstr,caseum,destdir):
             destfyle = curr_dir + '/lmp_mesabi'
             shutil.copy2(src_lmp,destfyle)
 
-        subprocess.call(['./lmp_mesabi','-np','48','./lmp_mesabi','-r',restart_fyles[0],datafyle])
+        subprocess.call(['mpirun','-np','48','./lmp_mesabi','-r',restart_fyles[0],datafyle])
         
     return datafyle
 
@@ -236,7 +246,7 @@ def find_latest_trajfyle(pref,destdir):
 
 
 def edit_generate_anainp_files(inpdata,inptraj,nch_tot,nch_free,\
-                               nch_graft):
+                               nch_graft,cutoff):
     
     if not os.path.exists('anainp_var.txt'):
         print('ERROR: pe_params not found')
@@ -256,25 +266,42 @@ def edit_generate_anainp_files(inpdata,inptraj,nch_tot,nch_free,\
           replace("py_trajfyl",trajname).\
           replace("py_ntotchains",str(nch_tot)).\
           replace("py_nfrchains", str(nch_free)).\
-          replace("py_ngrchains",str(nch_graft))
+          replace("py_ngrchains",str(nch_graft)).\
+          replace("py_cutoff",str(cutoff))
     fw.write(fid)
     fw.close()
     fr.close()
 
-def run_lammps(nch_free,pdifree,casenum,dirstr,inpjob,outjob):
+def run_analysis(nch_free,pdifree,casenum,dirstr,inpjob,outjob):
 
     if not os.path.exists(inpjob):
         print('ERROR: ', inpjob,'not found')
         return
     
     jobstr = "ana_" + str(nch_free) + "_" + str(pdifree) + "_" \
-             + str(casenum+1) + "_" + dirstr
+             + str(casenum) + "_" + dirstr
     fr  = open(inpjob,'r')
     fw  = open(outjob,'w')
-    fid = fr.read().replace("py_jobname",jobstr)
+    fid = fr.read().replace("py_jobname",jobstr).\
+          replace("py_freech",str(nch_free)).\
+          replace("py_pdifree",str(pdifree)).\
+          replace("py_caselen",str(casenum))
     fw.write(fid)
     fw.close()
     fr.close()
 
     subprocess.call(["qsub", outjob])
+
+
+def find_recent_file(destdir,keyword): #A replica of find_recent_traj_file
+
+    fylnames = destdir + '/' + keyword
+    list_of_files = glob.glob(fylnames)
+    if list_of_files != []:
+        fyl_str = max(list_of_files, key=os.path.getctime)
+        fyl_arr = fyl_str.split("/")
+        print( "File Name: ", fyl_arr[len(fyl_arr)-1])
+        return fyl_arr[len(fyl_arr)-1]
+    else:
+        return "nil"
     
