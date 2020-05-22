@@ -1,4 +1,5 @@
-# To copy the resultant files for further analysis
+# Version: May-22-2020
+# To copy the results and restart files for further analysis
 
 import numpy
 import os
