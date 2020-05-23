@@ -24,18 +24,18 @@ restart_flag  = 0 #copy restart files
 fyl_flag      = 1 #copy output files
 
 #---------input details----------------------------------------
-free_chains  = [32,48,64,96,128,150]#,80]#,32,48]
+free_chains  = [32]#,48,64,96,128,150]#,80]#,32,48]
 free_avg_mw  = 30
 graft_chains = 32
 graft_avg_mw = 35 
 tail_mons    = 5
 nsalt        = 510
 f_charge     = 0.5
-archarr      = [1,2,4]#,2,3,4]
-ncases_pdi   = [1,2,3,4]
+archarr      = [1]#,2,3,4]
+ncases_pdi   = [1]#,2,3,4]
 pdi_free     = 1.5
 pdi_graft    = 1.0
-cutoff_dist  = 1.30 #use two decimal places
+cutoff_dist  = 1.50 #use two decimal places
 
 #--------file_lists--------------------------------------------
 #Give prefix for files to be copied followed by *
@@ -111,16 +111,16 @@ for ifree in range(len(free_chains)):
         #---Make global analysis files output directory-----
 
         if fyl_flag == 1:
-            out_dir = 'out_'+'pdifree_' + str(pdi_free) + \ 
-            '/pdigraft_' + str(pdi_graft)
+            out_dir = 'out_' + 'pdifree_' + str(pdi_free) + \
+                      '/pdigraft_' + str(pdi_graft)
         
             anafyl_main_dir = workdir_arch + '/' + out_dir
             if not os.path.isdir(anafyl_main_dir):
                 os.mkdir(anafyl_main_dir)
 
         if restart_flag == 1:
-            restart_main_dir = 'restart_' + str(pdi_free) + \ 
-            '/pdigraft_' + str(pdi_graft)
+            restart_main_dir = 'restart_' + str(pdi_free) + \
+                               '/pdigraft_' + str(pdi_graft)
 
         #---------------------------------------------------
 
