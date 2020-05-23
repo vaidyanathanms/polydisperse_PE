@@ -12,10 +12,8 @@ import glob
 
 from subprocess import call
 from my_python_functions import cpy_main_files 
-from my_python_functions import find_recent_traj_file
 from my_python_functions import write_to_file
 from my_python_functions import my_cpy_generic
-from my_python_functions import find_recent_file
 
 #---------input flags------------------------------------------
 analysis_type = 2 #1-polydisp_pe,2-newparams,3-mwchange,#4-oldsize
