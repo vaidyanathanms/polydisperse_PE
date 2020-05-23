@@ -12,7 +12,6 @@ import glob
 
 from subprocess import call
 from my_python_functions import cpy_main_files 
-from my_python_functions import find_datafyl
 from my_python_functions import find_recent_traj_file
 from my_python_functions import write_to_file
 from my_python_functions import my_cpy_generic
