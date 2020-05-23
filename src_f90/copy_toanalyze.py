@@ -15,8 +15,8 @@ from my_python_functions import my_cpy_generic
 
 #---------input flags------------------------------------------
 analysis_type  = 2 #1-polydisp_pe,2-newparams,3-mwchange,#4-oldsize
-rest_job_flag  = 0 #copy restart/job files
-fyl_flag       = 1 #copy output files
+rest_job_flag  = 1 #copy restart/job files
+fyl_flag       = 0 #copy output files
 
 #---------input details----------------------------------------
 free_chains  = [32]#,48,64,96,128,150]#,80]#,32,48]
@@ -149,11 +149,13 @@ for ifree in range(len(free_chains)):
 
             #----Make case directory in out_directory----------
             if fyl_flag == 1:
-                anafyl_dir = anafyl_main_dir + '/' + str(ncases_pdi[casenum])
+                anafyl_dir = anafyl_main_dir + '/' + \
+                             'Case_' + str(ncases_pdi[casenum])
                 if not os.path.isdir(anafyl_dir):
                     os.mkdir(anafyl_dir)
             if rest_job_flag == 1:
-                restart_dir = restart_main_dir + '/' + str(ncases_pdi[casenum])
+                restart_dir = restart_main_dir + '/' + \
+                              'Case_' + str(ncases_pdi[casenum])
                 if not os.path.isdir(restart_dir):
                     os.mkdir(restart_dir)
 
