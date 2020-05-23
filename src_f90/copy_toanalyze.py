@@ -208,7 +208,7 @@ for ifree in range(len(free_chains)):
                     #search only in main directory
                     os.chdir(workdir_subpdi)
                     destdir = os.getcwd()
-                    list_of_files = glob.glob(fyl_list[fylcnt])
+                    list_of_files = glob.glob(restart_list[fylcnt])
 
                     if list_of_files == []: #
                         print("Did not find files of type", \
