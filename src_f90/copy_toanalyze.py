@@ -14,9 +14,9 @@ from subprocess import call
 from my_python_functions import my_cpy_generic
 
 #---------input flags------------------------------------------
-analysis_type = 2 #1-polydisp_pe,2-newparams,3-mwchange,#4-oldsize
-restart_flag  = 0 #copy restart files
-fyl_flag      = 1 #copy output files
+analysis_type  = 2 #1-polydisp_pe,2-newparams,3-mwchange,#4-oldsize
+rest_job_flag  = 0 #copy restart/job files
+fyl_flag       = 1 #copy output files
 
 #---------input details----------------------------------------
 free_chains  = [32]#,48,64,96,128,150]#,80]#,32,48]
@@ -36,8 +36,8 @@ cutoff_dist  = 1.50 #use two decimal places
 #Give prefix for files to be copied followed by *
 fyl_list     = ['adsfrac*','tether_*','chainadsval*','log*',\
                 'dens*','chdens*','PErdf*','chgrpdens*','grpdens*'\
-                ,'polydens*','job*']
-restart_list = ['restart*','archival*']
+                ,'polydens*']
+restart_list = ['restart*','archival*','job*']
 
 #---------directory info---------------------------------------
 maindir = os.getcwd()
@@ -113,7 +113,7 @@ for ifree in range(len(free_chains)):
                 print("making", anafyl_main_dir)
                 os.mkdir(anafyl_main_dir)
 
-        if restart_flag == 1:
+        if rest_job_flag == 1:
             restart_dirname = 'restart_' + str(pdi_free) + \
                               '_pdigraft_' + str(pdi_graft)
 
@@ -152,7 +152,7 @@ for ifree in range(len(free_chains)):
                 anafyl_dir = anafyl_main_dir + '/' + str(ncases_pdi[casenum])
                 if not os.path.isdir(anafyl_dir):
                     os.mkdir(anafyl_dir)
-            if restart_flag == 1:
+            if rest_job_flag == 1:
                 restart_dir = restart_main_dir + '/' + str(ncases_pdi[casenum])
                 if not os.path.isdir(restart_dir):
                     os.mkdir(restart_dir)
@@ -162,7 +162,7 @@ for ifree in range(len(free_chains)):
 
             #------All copying/manipulations--------------------------
             result_dir = 'results_'+ str(free_chains[ifree]) + '_' \
-                         + str(pdi_free) + '_' + str(pdi_graft)
+                         + str(pdi_free) + '_' + str(ncases_pdi[casenum])
             workdir_results = workdir_subpdi + '/' + result_dir
             if not os.path.isdir(workdir_results):
                 print(workdir_results, " does not exist")
@@ -199,7 +199,7 @@ for ifree in range(len(free_chains)):
                         anafylname = fylname
                         my_cpy_generic(destdir,anafyl_dir,fylname,anafylname)
 
-            if restart_flag == 1:
+            if rest_job_flag == 1:
 
                 for fylcnt in range(len(restart_list)):
 
