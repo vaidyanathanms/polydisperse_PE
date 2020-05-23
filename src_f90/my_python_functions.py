@@ -305,3 +305,7 @@ def find_recent_file(destdir,keyword): #A replica of find_recent_traj_file
     else:
         return "nil"
     
+def my_cpy_generic(srcdir,destdir,inpfylname,destfylname):
+    src_fyl  = srcdir  + '/' + inpfylname
+    dest_fyl = destdir + '/' + destfylname
+    shutil.copy2(src_fyl, dest_fyl)
