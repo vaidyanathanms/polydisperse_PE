@@ -11,8 +11,6 @@ import glob
 #---------------Import Functions-----------------------------------
 
 from subprocess import call
-from my_python_functions import cpy_main_files 
-from my_python_functions import write_to_file
 from my_python_functions import my_cpy_generic
 
 #---------input flags------------------------------------------
@@ -106,18 +104,22 @@ for ifree in range(len(free_chains)):
             continue
 
         #---Make global analysis files output directory-----
-
         if fyl_flag == 1:
             out_dir = 'out_' + 'pdifree_' + str(pdi_free) + \
-                      '/pdigraft_' + str(pdi_graft)
+                      '_pdigraft_' + str(pdi_graft)
         
             anafyl_main_dir = workdir_arch + '/' + out_dir
             if not os.path.isdir(anafyl_main_dir):
+                print("making", anafyl_main_dir)
                 os.mkdir(anafyl_main_dir)
 
         if restart_flag == 1:
-            restart_main_dir = 'restart_' + str(pdi_free) + \
-                               '/pdigraft_' + str(pdi_graft)
+            restart_dirname = 'restart_' + str(pdi_free) + \
+                              '_pdigraft_' + str(pdi_graft)
+
+            restart_main_dir = workdir_arch + '/' + restart_dirname
+            if not os.path.isdir(restart_main_dir):
+                os.mkdir(restart_main_dir)
 
         #---------------------------------------------------
 
