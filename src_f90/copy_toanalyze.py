@@ -26,8 +26,8 @@ graft_avg_mw = 35
 tail_mons    = 5
 nsalt        = 510
 f_charge     = 0.5
-archarr      = [1]#,2,3,4]
-ncases_pdi   = [1]#,2,3,4]
+archarr      = [1,2,3,4]
+ncases_pdi   = [1,2,3,4]
 pdi_free     = 1.5
 pdi_graft    = 1.0
 cutoff_dist  = 1.50 #use two decimal places
@@ -36,7 +36,7 @@ cutoff_dist  = 1.50 #use two decimal places
 #Give prefix for files to be copied followed by *
 fyl_list     = ['adsfrac*','tether_*','chainadsval*','log*',\
                 'dens*','chdens*','PErdf*','chgrpdens*','grpdens*'\
-                ,'polydens*']
+                ,'polydens*','anainp*']
 restart_list = ['restart*','archival*','job*']
 
 #---------directory info---------------------------------------
@@ -206,7 +206,7 @@ for ifree in range(len(free_chains)):
 
                         #search in previous directory
                         os.chdir(workdir_subpdi)
-                        destdir = workdir_results
+                        destdir = os.getcwd()
                         list_of_files = glob.glob(fyl_list[fylcnt])
 
                         if list_of_files == []: #if list is empty here too
