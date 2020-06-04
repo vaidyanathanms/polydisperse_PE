@@ -29,9 +29,10 @@ num_hrs   = 24 # Total number of hours for run
 num_nodes = 2  # Number of nodes
 num_procs = 24 # Number of procs per node
 maxtime   = 40000000 # Maximum timesteps
+equiltime = 25000000 # Equilibrium timesteps
 
 #---------input details----------------------------------------
-free_chains  = [24]
+free_chains  = [32,64,128,150]
 free_avg_mw  = 30
 graft_chains = 32
 graft_avg_mw = 35 
@@ -40,17 +41,19 @@ nsalt        = 510
 f_charge     = 0.5
 archarr      = [1,2,3,4]
 ncases_pdi   = [1,2,3,4]
-pdi_free     = 1.5
+pdi_free     = 1.3
 pdi_graft    = 1.0
 
 box_data     = [35.0, 35.0, 120.0] #x-box, y-box, z-box
 
 #--------file_lists--------------------------------------------
 
-f90_files = ['ran_numbers.f90','lammps_inp.f90','lmp_params.f90'\
+f90_files = ['ran_numcdrs.f90','lammps_inp.f90','lmp_params.f90'\
              ,'SZDist2.f90','init_pdi.txt','polyinp_fordiffbox_var.dat']
 lmp_files = ['in.longrun','in.init_var','in.run1','jobmain_var.sh']
-lmp_long  = ['in.run2','in.longrun','jobmain_long_var.sh']
+lmp_long  = ['in.longrun','jobmain_long_var.sh']
+lmp_equil = ['in.run2','in.longrun','jobmain_equil_var.sh']
+
 pdi_files = ['FreeChains.dat','GraftChains.dat'] #Order: freepdi,graftpdi
 par_files = ['polyinp_fordiffbox_var.dat','polyinp.txt'] #Order: varfile,oufyle
 archive_file_style = 'archival*'
@@ -214,19 +217,43 @@ for ifree in range(len(free_chains)):
                     print('Max time reached: ', timeval, maxtime)
                     continue
 
-                for fyllist in range(len(lmp_long)):
-                    cpy_main_files(lmpdir,destdir,lmp_long[fyllist])
+                elif int(timeval) > equiltime:
 
-                fylename = destdir + '/lmp_mesabi'
-                if not fylename: 
-                    srcfyl = '/home/dorfmank/vsethura/mylammps/src/lmp_mesabi'
-                    desfyl = destdir + '/lmp_mesabi'
-                    shutil.copy2(srcfyl, desfyl)
+                    print('Running production cycle..')
+                    for fyllist in range(len(lmp_long)):
+                        cpy_main_files(lmpdir,destdir,lmp_long[fyllist])
 
-                run_lammps(free_chains[ifree],pdi_free,ncases_pdi[caselen],fylstr,\
-                           'jobmain_long_var.sh','jobmain_long.sh',num_hrs,\
-                           num_nodes,num_procs)
+                    fylename = destdir + '/lmp_mesabi'
+                    if not fylename: 
+                        srcfyl = '/home/dorfmank/vsethura/mylammps/src/lmp_mesabi'
+                        desfyl = destdir + '/lmp_mesabi'
+                        shutil.copy2(srcfyl, desfyl)
+
+                    run_lammps(free_chains[ifree],pdi_free,ncases_pdi[caselen],fylstr,\
+                               'jobmain_long_var.sh','jobmain_long.sh',num_hrs,\
+                               num_nodes,num_procs)
 
 
-                os.chdir(maindir)
-	 
+                    os.chdir(maindir)
+
+
+                else:
+
+                    print('Running long equilibrium cycle..')
+                    for fyllist in range(len(lmp_equil)):
+                        cpy_main_files(lmpdir,destdir,lmp_equil[fyllist])
+
+                    fylename = destdir + '/lmp_mesabi'
+                    if not fylename: 
+                        srcfyl = '/home/dorfmank/vsethura/mylammps/src/lmp_mesabi'
+                        desfyl = destdir + '/lmp_mesabi'
+                        shutil.copy2(srcfyl, desfyl)
+
+                    run_lammps(free_chains[ifree],pdi_free,ncases_pdi[caselen],fylstr,\
+                               'jobmain_equil_var.sh','jobmain_equil.sh',num_hrs,\
+                               num_nodes,num_procs)
+
+
+                    os.chdir(maindir)
+
+                    
