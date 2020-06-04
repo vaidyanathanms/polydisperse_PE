@@ -1,7 +1,5 @@
 %% To compute average adsorbed fraction of chains
-% 1) Use this first to find the errors in data and then use the
-% finplots_forpaper.m to plot using errorbars.
-% 2) Change path to filename (search for keyword filename) and other places
+% 1) Change path to filename (search for keyword filename) and other places
 % wherever necessary.
 
 clear;
@@ -9,167 +7,117 @@ clc;
 close all;
 format long;
 
-%% Inputs
-
-nmonfree = 30; nmongraft = 30; ngraft = 64;
-nfreearr = [16;32;48;64;72;80;100];
-cutoff = '2.00'; lz = 120; area=53^2;
-rhofree = nfreearr*30/(lz*area);
-
-
+%% Color codes
 green = [0 0.5 0.0]; gold = [0.9 0.75 0]; orange = [0.91 0.41 0.17];brown = [0.2 0 0];
 pclr = {'m',brown,green,'k','m', gold};
 lsty = {'-','--',':'};
 msty = {'d','s','o','x'};
 
-nadschain = zeros(length(nfreearr),4);
+%% Inputs
+nfreearr = [16;32;48;64;72;80;100];
+casearr  = [1,2,3,4];
+pdi_freearr = [1,1.3,1.5];
+arch_arr = {'bl_bl';'bl_al';'al_bl';'al_al'};
+pdigraft = 1.0;
+nmonfree = 30; nmongraft = 30; ngraft = 64;
+cutoff = '1.50';
+lz = 120; area=35^2;
+
+%% Input flags
 stddevon = 0;
-%% Plot adsorbed fraction as a function of number of ADSORBED CHAINS
-fout = fopen(sprintf('./../../all_txtfiles/adsorbed_chain_ave_rcut_%s.dat',cutoff),'w');
-fprintf(fout,'%s\t%s\t%s\n','N_f','Arch','fraction');
-fprintf('%s\t%s\t%s\n','N_f','Arch','fraction');
+adsflag  = 1;
 
-for ncnt = 1:length(nfreearr)
-    nval = nfreearr(ncnt);
-    for i = 1:4
-        if i == 1
-            dirstr = 'bl_bl';
-        elseif i == 2
-            dirstr = 'bl_al';
-        elseif i == 3
-            dirstr = 'al_bl';
-        else
-            dirstr = 'al_al';
-        end
-        
-        filename = sprintf('./../../results_adsfrac/all_cutoff/results_%d_%s/adsfracchain_rcut_%s.lammpstrj',...
-            nval,dirstr,cutoff);
-        data = importdata(filename);
-        if min(size(data)) == 0
-            fprintf('No data for %d\t%s', nval, dirstr)
-            continue;
-        end
-        nadschain(ncnt,i) = mean(data(:,3));
-        fprintf(fout,'%d\t%s\t%g\n',nval,dirstr,nadschain(ncnt,i));
-        fprintf('%d\t%s\t%g\n',nval,dirstr,nadschain(ncnt,i));
+%% Pre-calculations
+rhofree = nfreearr*30/(lz*area);
+pdigraft_str = num2str(pdigraft,'%1.1f');
+
+%% Main Analysis
+
+for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
+    pdifree     = pdi_freearr(pdi_cntr);
+    pdifree_str = num2str(pdifree,'%1.1f');
+    
+    %zero arrays for averages across cases
+    casecntr_arr  = zeros(length(nfreearr),length(arch_arr));
+    nadschain_all = zeros(length(nfreearr),length(arch_arr));
+    totsamples    = zeros(length(nfreearr),length(arch_arr));
+    
+    if adsflag %create average across all cases
+        fout_avg = fopen(sprintf('./../../outfiles/overall/adsorbed_chain_ave_allcases_rcut_%s_pdifree_%g.dat',...
+            cutoff,pdifree),'w');
+        fprintf(fout_avg,'%s\t%s\t%s\t%s\t%s\n','N_f','Arch','ncases','numsample_pts','avg_fraction');
     end
-end
-fclose(fout);
-
-h1 = figure;
-hold on
-box on
-set(gca,'FontSize',16)
-xlabel('$N_{pa}/N_{pc}$','FontSize',20,'Interpreter','Latex')
-ylabel('$f_{ads}$','FontSize',20,'Interpreter','Latex')
-
-plot(nfreearr/ngraft,nadschain(:,1),'color',pclr{1},'LineWidth',2,'LineStyle',lsty{3},'Marker',msty{1},'MarkerSize',8,'MarkerFaceColor',pclr{1})
-plot(nfreearr/ngraft,nadschain(:,3),'color',pclr{3},'LineWidth',2,'LineStyle',lsty{3},'Marker',msty{3},'MarkerSize',8,'MarkerFaceColor',pclr{3})
-plot(nfreearr/ngraft,nadschain(:,2),'color',pclr{2},'LineWidth',2,'LineStyle',lsty{3},'Marker',msty{2},'MarkerSize',8,'MarkerFaceColor',pclr{2})
-plot(nfreearr/ngraft,nadschain(:,4),'color',pclr{4},'LineWidth',2,'LineStyle',lsty{3},'Marker',msty{4},'MarkerSize',8,'MarkerFaceColor',pclr{4})
-
-legendinfo{1} = 'Block-Block';
-legendinfo{2} = 'Alter-Block';
-legendinfo{3} = 'Block-Alter';
-legendinfo{4} = 'Alter-Alter';
-
-
-%overlay y = x line
-
-x = 0:0.1:1.1; y = x;
-plot(x,y,'LineWidth',2,'Color',orange,'LineStyle','--')
-
-
-legend(legendinfo,'Interpreter','Latex','FontSize',16,'Location','Best')
-legend boxoff
-saveas(h1,sprintf('./../../all_figures/figs_repo/adsorbchain_rcut_%s.png',cutoff));
-
-%compute standard dev
-
-if stddevon
-    for ncnt = 1:length(nfreearr)
+    
+    for ncnt = 1:length(nfreearr) % begin nfree loop
         nval = nfreearr(ncnt);
-        h1 = figure;
-        hold on
-        box on
-        set(gca,'FontSize',16)
-        ylabel('BSE','FontSize',20,'Interpreter','Latex')
-        xlabel('Time','FontSize',20,'Interpreter','Latex')
-        %title(['$n =$ ' num2str(nval)], 'FontSize',20,'Interpreter','Latex')
-        for i = 1:4
-            if i == 1
-                dirstr = 'bl_bl';
-            elseif i == 2
-                dirstr = 'bl_al';
-            elseif i == 3
-                dirstr = 'al_bl';
-            else
-                dirstr = 'al_al';
-            end
-            filename = sprintf('./../../results_adsfrac/results_%d_%s/adsfracchain_rcut_%s.lammpstrj',...
-                nval,dirstr,cutoff);
-            data = importdata(filename);
-            nadschain(ncnt,i) = mean(data(:,3));
-            [bvar,svar] = blockave(data(:,3));
-            plot(svar,bvar.*sqrt(svar/length(data(:,3))))
-        end
-        legendinfo{1} = 'Block-Block';
-        legendinfo{2} = 'Alter-Block';
-        legendinfo{3} = 'Block-Alter';
-        legendinfo{4} = 'Alter-Alter';
-        legend(legendinfo,'Interpreter','Latex','FontSize',16,'Location','Best')
-        legend boxoff
-        saveas(h1,sprintf('./../../err_data/figs_err/stddev_adsfrac_n%d.fig',nval));
-        saveas(h1,sprintf('./../../err_data/figs_err/stddev_adsfrac_n%d.png',nval));
-    end
-end
-
-
-
-
-%% Plot adsorbed fraction as a function of number of ADSORBED MONOMERS
-fout = fopen(sprintf('./../../all_txtfiles/adsorbed_mon_ave_rcut_%s.dat',cutoff),'w');
-fprintf(fout,'%s\t%s\t%s\n','N_f','Arch','fraction');
-
-for ncnt = 1:length(nfreearr)
-    nval = nfreearr(ncnt);
-    for i = 1:4
-        if i == 1
-            dirstr = 'bl_bl';
-        elseif i == 2
-            dirstr = 'bl_al';
-        elseif i == 3
-            dirstr = 'al_bl';
-        else
-            dirstr = 'al_al';
-        end
         
-        filename = sprintf('./../../results_adsfrac/results_%d_%s/adsfracmon_rcut_%s.lammpstrj',...
-            nval,dirstr,cutoff);
-        data = importdata(filename);
-        nadschain(ncnt,i) = nval*mean(data(:,3))/ngraft;
-        fprintf(fout,'%d\t%s\t%g\n',nval,dirstr,nadschain(ncnt,i));
-    end
-end
-fclose(fout);
+        for i = length(arch_arr)  % begin arch loop
+            dirstr = arch_arr{i};
+            
+            if adsflag % create case-based avg outfiles
+                fout_case = fopen(sprintf('./../../outfiles/n_%d/adsorbed_chain_rcut_%s_pdifree_%g_%s.dat',...
+                    nval,cutoff,pdifree,dirstr),'w');
+                fprintf(fout_case,'%s\t%s\t%s\t%s\n','N_f','Casenum','numavgpoints','avg_fraction');
+            end
+            
+            for casecntr = 1:length(casearr) % begin case loop
+                casenum = casearr(casecntr);
+                
+                dirname = sprintf('./../../sim_results/ouresults_n_%d/%s/pdifree_%s_pdigraft_%s/Case_%d',...
+                    nval,dirstr,pdifree_str,pdigraft_str,casenum);
+                
+                if ~exist(dirname,'dir')
+                    fprintf('%s does not exist\n',dirname);
+                    continue
+                end
+                
+                if adsflag %begin adsorption calculation
+                    
+                    %check if file type exists
+                    ads_prefix = sprintf('adsfracchain_rcut_%s_config_*.lammpstrj',cutoff);
+                    ads_fylelist = dir(strcat(simdirname,'/',ads_prefix));
+                    if min(size(ads_fylelist)) == 0
+                        fprintf('No files/Empty files are found for %s\n',ads_prefix);
+                        continue;
+                    end
+                    
+                    nfyles = numel(ads_fylelist); %number of files of the type
+                    
+                    sum_across_files = 0; tot_cntr_across_files = 0;
+                    for fylcnt = 1:nfyles % begin running through all files of the given type
+                        ads_fylename = fylelist(fylcnt).name;
+                        if exist(ads_fylename,'file') ~= 2
+                            fprintf('%s does not exist/empty file\n',ads_fylename);
+                            continue;
+                        elseif struct(dir(ads_fylename)).bytes == 0
+                            fprintf('Empty file: %s \n',ads_fylename);
+                            continue;
+                        end
+                        
+                        data = importdata(ads_fylename);
+                        nads_fracchain = sum(data(:,3));
+                        sum_across_files = sum_across_files + nads_fracchain;
+                        tot_cntr_across_files = tot_cntr_across_files + length(data(:,3));
+                    end % end summing adsfrac across all files
+                    
+                    avg_for_each_casenum = sum_across_files/tot_cntr_across_files;
+                    fprintf(fout_case,'%d\t%s\t%d\t%g\n',nval,casenum,tot_cntr_across_files,avg_for_each_casenum);
+                    
+                    %save it to overall arrays
+                    casecntr_arr(ncnt,i)  = casecntr_arr(ncnt,i) + 1;
+                    nadschain_all(ncnt,i) = nadschain_all(ncnt,i) + avg_for_each_casenum;
+                    totsamples(ncnt,i)    = totsamples(ncnt,i) + tot_cntr_across_files;
+                    
+                end %end adsorption calculation
+                
+            end % end case loop
+    
+            avg_across_cases = nadschain_all(ncnt,i)/casecntr_arr(ncnt,i);
+            fprintf(fout_avg,'%d\t%s\t%d\t%d\t%g\n',nval,dirstr,casecntr_arr(ncnt,i),totsamples(ncnt,i),avg_across_cases);
+            
+        end % end arch loop
+        
+    end % end nfree loop
+    
+end % end pdi free loop
 
-h1 = figure;
-hold on
-box on
-set(gca,'FontSize',16)
-xlabel('$N_f/N_g$','FontSize',20,'Interpreter','Latex')
-ylabel('$f$','FontSize',20,'Interpreter','Latex')
-
-plot(nfreearr/ngraft,nadschain(:,1),'color',pclr{1},'LineWidth',2,'LineStyle',lsty{3},'Marker',msty{1},'MarkerSize',8,'MarkerFaceColor',pclr{1})
-plot(nfreearr/ngraft,nadschain(:,3),'color',pclr{3},'LineWidth',2,'LineStyle',lsty{3},'Marker',msty{3},'MarkerSize',8,'MarkerFaceColor',pclr{3})
-plot(nfreearr/ngraft,nadschain(:,2),'color',pclr{2},'LineWidth',2,'LineStyle',lsty{3},'Marker',msty{2},'MarkerSize',8,'MarkerFaceColor',pclr{2})
-plot(nfreearr/ngraft,nadschain(:,4),'color',pclr{4},'LineWidth',2,'LineStyle',lsty{3},'Marker',msty{4},'MarkerSize',8,'MarkerFaceColor',pclr{4})
-
-legendinfo{1} = 'Block-Block';
-legendinfo{2} = 'Alter-Block';
-legendinfo{3} = 'Block-Alter';
-legendinfo{4} = 'Alter-Alter';
-
-legend(legendinfo,'Interpreter','Latex','FontSize',16,'Location','Best')
-legend boxoff
-saveas(h1,sprintf('./../../all_figures/figs_repo/adsorbmon_rcut_%s.png',cutoff));
