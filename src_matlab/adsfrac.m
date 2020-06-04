@@ -14,7 +14,7 @@ lsty = {'-','--',':'};
 msty = {'d','s','o','x'};
 
 %% Inputs
-nfreearr = [16;32;64;72;80;100];
+nfreearr = [16;32;64;96;128;150];
 casearr  = [1,2,3,4];
 pdi_freearr = [1,1.3,1.5];
 arch_arr = {'bl_bl','bl_al','al_bl','al_al'};
@@ -33,6 +33,14 @@ rhofree = nfreearr*30/(lz*area);
 pdigraft_str = num2str(pdigraft,'%1.1f');
 
 %% Main Analysis
+
+if adsflag % create consolidated list
+    fout_cons = fopen(sprintf('./../../outfiles/overall/adsorbed_chain_consolidated_rcut_%s.dat',...
+        cutoff),'w');
+    fprintf(fout_cons,'%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n','PDI_free','N_f','Arch',...
+        'Case_num','numsample_pts','min_time','max_time','avg_fraction');
+end
+
 
 for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
     pdifree     = pdi_freearr(pdi_cntr);
@@ -123,9 +131,15 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                     
                     avg_for_each_casenum = sum_across_files/tot_cntr_across_files;
                     if maxtime > set_tmax
-                        fprintf(fout_case,'%d\t%s\t%d\t%d\t%d\t%g\n',nval,casenum,mintime,maxtime,tot_cntr_across_files,avg_for_each_casenum);
+                        fprintf(fout_case,'%d\t%s\t%d\t%d\t%d\t%g\n',nval,casenum,...
+                            mintime,maxtime,tot_cntr_across_files,avg_for_each_casenum);   
+                        fprintf(fout_cons,'%g\t%d\t%s\t%d\t%d\t%d\t%d\t%g\n',pdifree,nval,...
+                            dirstr,casenum,mintime,maxtime,tot_cntr_across_files,avg_for_each_casenum);
                     else
-                        fprintf(fout_case,'%d\t%s\t%d\t%d\t%d\t%g\t%s\n',nval,casenum,mintime,maxtime,tot_cntr_across_files,avg_for_each_casenum,'Incomplete sampling');
+                        fprintf(fout_case,'%d\t%s\t%d\t%d\t%d\t%g\t%s\n',nval,casenum,...
+                            mintime,maxtime,tot_cntr_across_files,avg_for_each_casenum,'Incomplete sampling');
+                        fprintf(fout_cons,'%g\t%d\t%s\t%d\t%d\t%d\t%d\t%g\t%s\n',pdifree,nval,...
+                            dirstr,casenum,mintime,maxtime,tot_cntr_across_files,avg_for_each_casenum,'Incomplete sampling');
                     end
                     
                     %save it to overall arrays
@@ -136,7 +150,9 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                 end %end adsorption calculation
                 
             end % end case loop
-    
+            
+            fclose(fout_case);
+            
             avg_across_cases = nadschain_all(ncnt,arch_cnt)/casecntr_arr(ncnt,arch_cnt);
             fprintf(fout_avg,'%d\t%s\t%d\t%d\t%g\n',nval,dirstr,casecntr_arr(ncnt,arch_cnt),totsamples(ncnt,arch_cnt),avg_across_cases);
             
@@ -144,5 +160,8 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
         
     end % end nfree loop
     
+    fclose(fout_avg);
+    
 end % end pdi free loop
 
+fclose(fout_cons);
