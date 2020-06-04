@@ -1935,8 +1935,8 @@ SUBROUTINE COMPUTE_FREEPENETRATE_CHAINS(iframe)
               chainptr_adsorbed(indexval) = 1
               adsfree_chainsarr(indexval) =&
                    & adsfree_chainsarr(indexval) + 1
-              WRITE(adschwrite2,'(5(I0,1X))') iframe,a2id,a1id,molid&
-                   &,chain_id_to_mw_map(molid)
+              WRITE(adschwrite2,'(5(I0,1X))') timestep,a2id,a1id&
+                   &,molid,chain_id_to_mw_map(molid)
 
               EXIT
 
@@ -1948,8 +1948,8 @@ SUBROUTINE COMPUTE_FREEPENETRATE_CHAINS(iframe)
 
   END DO
   
-  WRITE(adschwrite,*) iframe, dumads_ch_cnt, REAL(dumads_ch_cnt)&
-       &/REAL(ngraftchains)
+  WRITE(adschwrite,'(2(I0,1X),F14.8)') timestep, dumads_ch_cnt,&
+       & REAL(dumads_ch_cnt)/REAL(ngraftchains)
      
   avg_ch_adscnt = avg_ch_adscnt + REAL(dumads_ch_cnt)&
        &/REAL(ngraftchains)
