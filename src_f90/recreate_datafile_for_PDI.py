@@ -110,8 +110,13 @@ for ifree in range(len(free_chains)):
             continue
 
         #------------------Make global analysis files output directory-----
-        data_dirname = 'data_all_dir_n_' + str(free_chains[ifree])
-        data_main_dir = workdir2 + '/' + restart_dirname
+        
+        data_superdir = workdir1 + '/data_all_dir'
+        if not os.path.isdir(data_superdir):
+            os.mkdir(data_superdir)
+        
+        data_dirname = 'n_' + str(free_chains[ifree])
+        data_main_dir = data_superdir + '/' + data_dirname
         if not os.path.isdir(data_main_dir):
             os.mkdir(data_main_dir)
 
@@ -151,7 +156,7 @@ for ifree in range(len(free_chains)):
 
             #------All copying/manipulations--------------------------
 
-            print("Copying output files from", workdir_results)
+            print("Copying output files from", workdir_subpdi)
 
             #search for restart files in the directory
             os.chdir(workdir_subpdi)
@@ -166,10 +171,11 @@ for ifree in range(len(free_chains)):
             print( "Copying file: ", list_of_files[0])
 
             fylname = list_of_files[0]
-            anafylname = fylname
+            dataname = 'PEinitdata.txt'
             if not os.path.exists(lmp_fyle):
                 my_cpy_generic(lmp_dir,destdir,lmp_fyle,lmp_fyle)
 
-            gen_datafile(
-            my_cpy_generic(destdir,anafyl_dir,fylname,anafylname)
+            subprocess.call(["mpirun","-np","48","./lmp_mesabi","-r"\
+                             ,fylname,dataname])
+            my_cpy_generic(destdir,data_dir,dataname,dataname)
             
