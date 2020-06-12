@@ -8,21 +8,28 @@ if fid <= 0
     return
 end
 
+fprintf('Analyzing %s\n', dataname);
 natom_flag = -1; % to see natoms keyword is read before reading Atoms
-molcnt = zeros(nfree_ch,1); 
+molcnt = zeros(nfree_ch,1);
 
 % Start reading file
-while fid < 0
-    tline = fgetl(finp);
-    if ~ischar(tline)
+fgetl(fid); % skip first line;
+
+while true
+    
+    tline = fgetl(fid);
+    if ~ischar(tline) || isempty(tline)
         continue;
     end
     spl_tline = strsplit(strtrim(tline));
-    
-    if strcmp(spl_tline{2},'natoms') % check for natoms keyword
         
-        num_atoms = str2double(spl_tline{1});
-        natom_flag = 1;
+    if length(spl_tline) > 1 % for double keywords check this first
+        if strcmp(spl_tline{2},'atoms') % check for atoms keyword
+        
+            num_atoms = str2double(spl_tline{1});
+            natom_flag = 1;
+            
+        end
         
     elseif strcmp(spl_tline{1},'Atoms') % check for Atoms keyword
         
@@ -32,10 +39,13 @@ while fid < 0
         end
         
         for i = 1:num_atoms % increment molcnt counter based on molid
+            tline = fgetl(fid); spl_tline = strsplit(strtrim(tline));
             molid = str2double(spl_tline{2});
             molcnt(molid) = molcnt(molid) + 1;
-        end 
+        end
+        
+        break; % no need to read the rest of the file
         
     end
-        
+    
 end
