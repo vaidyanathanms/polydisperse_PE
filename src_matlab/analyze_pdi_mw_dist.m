@@ -23,13 +23,13 @@ pdigraft = 1.0;
 cutoff = '1.50';
 lz = 120; area=35^2;
 set_tmax = 3e7; % maximum timestep for analysis;
-nfreemons = 30; 
+nfreemons = 30; % this is average value or for PDI = 1.0 only.
 
 %% Graft details
 
-ncharge_mons_graft = 30;
-ntail_mons_graft = 5; 
-ntot_mons_graft  = ncharge_mons_graft + ntail_mons_graft;
+ncharge_mons_graft = 30; % per graft chain details
+ntail_mons_graft = 5;    % per graft chain details
+ntot_mons_graft  = ncharge_mons_graft + ntail_mons_graft; 
 nch_graft = 32; 
 
 %% Input flags
@@ -121,10 +121,11 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                     end
                     
                     % analyze and write molecule details
-                    molarr_cnt = analyze_datafile(ads_fylename,nval);
+                    molarr_cnt = analyze_datafile(ads_fylename,nval,nch_graft);
                     moloutfyle = strcat(dirname,'/','init_mol_details.dat');
                     fmol = fopen(moloutfyle,'w');
-                    fprintf(fmol,'%d\t%d\n',(1:nval)',molarr_cnt(:));
+                    fprintf(fmol,'%s\t%s\t%s\n','Actual_MolID','Remapped_MolID', 'Mol_Wt');
+                    fprintf(fmol,'%d\t%d\t%d\n',[molarr_cnt(:,1) molarr_cnt(:,2) molarr_cnt(:,3)]');
                     fclose(fmol);
                     
                     
