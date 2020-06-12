@@ -117,14 +117,14 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                     
                     %average adsorption values
                     fprintf('Analyzing %s\n', ads_fylename);
-                    analyze_datafile(ads_fylename);
-                    compute_init_pdi();
-                    compute_init_mwdist();
+                    molarr_cnt = analyze_datafile(ads_fylename,nval);
+                    %compute_init_pdi();
+                    %compute_mwdist();
                     
                     %save it to overall arrays
-                    casecntr_arr(ncnt,arch_cnt)  = casecntr_arr(ncnt,arch_cnt) + 1;
-                    nadschain_all(ncnt,arch_cnt) = nadschain_all(ncnt,arch_cnt) + avg_for_each_casenum;
-                    totsamples(ncnt,arch_cnt)    = totsamples(ncnt,arch_cnt) + tot_cntr_across_files;
+                    %casecntr_arr(ncnt,arch_cnt)  = casecntr_arr(ncnt,arch_cnt) + 1;
+                    %nadschain_all(ncnt,arch_cnt) = nadschain_all(ncnt,arch_cnt) + avg_for_each_casenum;
+                    %totsamples(ncnt,arch_cnt)    = totsamples(ncnt,arch_cnt) + tot_cntr_across_files;
                     
                 end %end adsorption calculation
                 
