@@ -60,7 +60,6 @@ while true
             
         end
         
-        molcnt_arr
         break; % no need to read the rest of the file
         
     elseif length(spl_tline) > 1 % for double keywords check this first
