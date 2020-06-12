@@ -14,26 +14,33 @@ lsty = {'-','--',':'};
 msty = {'d','s','o','x'};
 
 %% Inputs
-nfreearr = [16]%;32;64;96;128;150];
+nch_freearr = [16]%;32;64;96;128;150];
 casearr  = [1]%,2,3,4];
 pdi_freearr = [1.5];
 arch_arr = {'bl_bl','bl_al','al_bl','al_al'};
 leg_arr  = {'Block-Block','Block-Alter','Alter-Block','Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr
 pdigraft = 1.0;
-nmonfree = 30; nmongraft = 30; ngraft = 32;
 cutoff = '1.50';
 lz = 120; area=35^2;
 set_tmax = 3e7; % maximum timestep for analysis;
+nfreemons = 30; 
+
+%% Graft details
+
+ncharge_mons_graft = 30;
+ntail_mons_graft = 5; 
+ntot_mons_graft  = ncharge_mons_graft + ntail_mons_graft;
+nch_graft = 32; 
 
 %% Input flags
 pdiflag  = 1;
 mwdflag  = 1;
 
 %% Zero arrays
-avg_across_cases = zeros(length(nfreearr),length(arch_arr),length(pdi_freearr));
+avg_across_cases = zeros(length(nch_freearr),length(arch_arr),length(pdi_freearr));
 
 %% Pre-calculations
-rhofree = nfreearr*nmonfree/(lz*area);
+rhofree = nch_freearr*nfreemons/(lz*area);
 pdigraft_str = num2str(pdigraft,'%1.1f');
 
 %% Main Analysis
@@ -50,9 +57,9 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
     pdifree_str = num2str(pdifree,'%1.1f');
     
     %zero arrays for averages across cases
-    casecntr_arr  = zeros(length(nfreearr),length(arch_arr));
-    nadschain_all = zeros(length(nfreearr),length(arch_arr));
-    totsamples    = zeros(length(nfreearr),length(arch_arr));
+    casecntr_arr  = zeros(length(nch_freearr),length(arch_arr));
+    nadschain_all = zeros(length(nch_freearr),length(arch_arr));
+    totsamples    = zeros(length(nch_freearr),length(arch_arr));
     
     if pdiflag %create average across all cases
         fout_avg = fopen(sprintf('./../../outfiles/overall/pdi_ave_allcases_rcut_%s.dat',...
@@ -60,8 +67,8 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
         fprintf(fout_avg,'%s\t%s\t%s\t%s\n','N_f','Arch','ncases','pdi_avg');
     end
     
-    for ncnt = 1:length(nfreearr) % begin nfree loop
-        nval = nfreearr(ncnt);
+    for ncnt = 1:length(nch_freearr) % begin nfree loop
+        nval = nch_freearr(ncnt);
         
         for arch_cnt = 1:length(arch_arr)  % begin arch loop
             dirstr = arch_arr{arch_cnt};
@@ -113,8 +120,14 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                         continue;
                     end
                     
-                    %average adsorption values
+                    % analyze and write molecule details
                     molarr_cnt = analyze_datafile(ads_fylename,nval);
+                    moloutfyle = strcat(dirname,'/','init_mol_details.dat');
+                    fmol = fopen(moloutfyle,'w');
+                    fprintf(fmol,'%d\t%d\n',(1:nval)',molarr_cnt(:));
+                    fclose(fmol);
+                    
+                    
                     %compute_init_pdi();
                     %compute_mwdist();
                     
