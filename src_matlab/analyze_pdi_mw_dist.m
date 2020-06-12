@@ -14,9 +14,9 @@ lsty = {'-','--',':'};
 msty = {'d','s','o','x'};
 
 %% Inputs
-nfreearr = [16;32;64;96;128;150];
-casearr  = [1,2,3,4];
-pdi_freearr = [1,1.3,1.5];
+nfreearr = [16]%;32;64;96;128;150];
+casearr  = [1]%,2,3,4];
+pdi_freearr = [1.5];
 arch_arr = {'bl_bl','bl_al','al_bl','al_al'};
 leg_arr  = {'Block-Block','Block-Alter','Alter-Block','Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr
 pdigraft = 1.0;
@@ -24,7 +24,6 @@ nmonfree = 30; nmongraft = 30; ngraft = 32;
 cutoff = '1.50';
 lz = 120; area=35^2;
 set_tmax = 3e7; % maximum timestep for analysis;
-nfreemons = 30;
 
 %% Input flags
 pdiflag  = 1;
@@ -34,7 +33,7 @@ mwdflag  = 1;
 avg_across_cases = zeros(length(nfreearr),length(arch_arr),length(pdi_freearr));
 
 %% Pre-calculations
-rhofree = nfreearr*nfreemons/(lz*area);
+rhofree = nfreearr*nmonfree/(lz*area);
 pdigraft_str = num2str(pdigraft,'%1.1f');
 
 %% Main Analysis
@@ -67,7 +66,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
         for arch_cnt = 1:length(arch_arr)  % begin arch loop
             dirstr = arch_arr{arch_cnt};
             
-            dirname = sprintf('./../../data_all_dir/n_%d/%s/pdifree_%s_pdigraft_%s',...
+            dirname = sprintf('./../../data_all_dir/n_%d/%s/pdifree%s_pdigraft_%s',...
                 nval,dirstr,pdifree_str,pdigraft_str);
             
             if ~exist(dirname,'dir')
@@ -78,7 +77,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
             for casecntr = 1:length(casearr) % begin case loop
                 casenum = casearr(casecntr);
                 
-                dirname = sprintf('./../../sim_results/outresults_dir_n_%d/%s/pdifree_%s_pdigraft_%s/Case_%d',...
+                dirname = sprintf('./../../data_all_dir/n_%d/%s/pdifree%s_pdigraft_%s/Case_%d',...
                     nval,dirstr,pdifree_str,pdigraft_str,casenum);
                 
                 if ~exist(dirname,'dir')
@@ -87,10 +86,10 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                 end
                 
                 fprintf('Analyzing pdi/nfree/arch/case: %g\t%d\t%s\t%d\n', pdifree,nval,dirstr,casenum);
-                if adsflag % begin adsorption calculation
+                if pdiflag % begin adsorption calculation
                     
                     %check if file type exists
-                    ads_prefix = sprintf('PEinitdata');
+                    ads_prefix = sprintf('PEinitdata.txt');
                     ads_fylelist = dir(strcat(dirname,'/',ads_prefix));
                     if min(size(ads_fylelist)) == 0
                         fprintf('No files/Empty files are found for %s\n',ads_prefix);
@@ -104,9 +103,8 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                         continue;
                     end
                     
-                    sum_across_files = 0; tot_cntr_across_files = 0; mintime = 10^10; maxtime = 0;
                     % begin running through the datafile
-                    ads_fylename = strcat(dirname,'/',ads_fylelist(fylcnt).name);
+                    ads_fylename = strcat(dirname,'/',ads_fylelist(1).name);
                     if exist(ads_fylename,'file') ~= 2
                         fprintf('%s does not exist/empty file\n',ads_fylename);
                         continue;
@@ -116,7 +114,6 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                     end
                     
                     %average adsorption values
-                    fprintf('Analyzing %s\n', ads_fylename);
                     molarr_cnt = analyze_datafile(ads_fylename,nval);
                     %compute_init_pdi();
                     %compute_mwdist();
@@ -130,79 +127,16 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                 
             end % end case loop
             
-            fclose(fout_case);
-            
-            avg_across_cases(ncnt,arch_cnt,pdi_cntr) = nadschain_all(ncnt,arch_cnt)/casecntr_arr(ncnt,arch_cnt);
-            fprintf(fout_avg,'%d\t%s\t%d\t%d\t%g\n',nval,dirstr,casecntr_arr(ncnt,arch_cnt),totsamples(ncnt,arch_cnt),avg_across_cases(ncnt,arch_cnt,pdi_cntr));
-            
+%             
+%             avg_across_cases(ncnt,arch_cnt,pdi_cntr) = nadschain_all(ncnt,arch_cnt)/casecntr_arr(ncnt,arch_cnt);
+%             fprintf(fout_avg,'%d\t%s\t%d\t%d\t%g\n',nval,dirstr,casecntr_arr(ncnt,arch_cnt),totsamples(ncnt,arch_cnt),avg_across_cases(ncnt,arch_cnt,pdi_cntr));
+%             
         end % end arch loop
         
     end % end nfree loop
     
-    fclose(fout_avg);
-    
-    if plotads
-        h1 = figure;
-        hold on
-        box on
-        set(gca,'FontSize',16)
-        xlabel('$N_{pa}/N_{pc}$','FontSize',20,'Interpreter','Latex')
-        ylabel('$f_{ads}$','FontSize',20,'Interpreter','Latex')
-        
-        for plcnt = 1:length(arch_arr)
-            plot(nfreearr/ngraft,avg_across_cases(:,plcnt,pdi_cntr),'color',pclr{plcnt},...
-                'Marker',msty{plcnt},'MarkerSize',8,'MarkerFaceColor',pclr{plcnt},'LineStyle','None')
-            legendinfo{plcnt} = leg_arr{plcnt};
-        end
-        %overlay y = x line
-        %         x = 0:0.5:5; y = x;
-        %         plot(x,y,'LineWidth',2,'Color',orange,'LineStyle','--')
-        %         ylim([min(min(avg_across_cases(:,:,pdi_cntr))) 1.2*max(max(avg_across_cases(:,:,pdi_cntr)))])
-        legend(legendinfo,'FontSize',16,'Location','Best')
-        legend boxoff
-        saveas(h1,sprintf('./../../all_figures/adsorbchain_rcut_%s_pdi_%g.png',cutoff,pdifree));
-        clear legendinfo
-    end
+%     fclose(fout_avg);
     
 end % end pdi free loop
 
 fclose(fout_cons);
-
-
-%% Plot as a function of PDI for each nval
-
-if plotads
-    
-    for ncnt = 1:length(nfreearr) % begin nfree loop
-        nval = nfreearr(ncnt);
-        
-        h1 = figure;
-        hold on
-        box on
-        set(gca,'FontSize',16)
-        xlabel('PDI','FontSize',20,'Interpreter','Latex')
-        ylabel('$f_{ads}$','FontSize',20,'Interpreter','Latex')
-        
-        for plcnt = 1:length(arch_arr)  % begin arch loop
-            
-            dirstr = arch_arr{plcnt};
-            data_to_plot = zeros(length(pdi_freearr),1);
-            for pdicntr = 1:length(pdi_freearr)
-                data_to_plot(pdicntr) = avg_across_cases(ncnt,plcnt,pdicntr);
-            end
-            data_to_plot(isnan(data_to_plot)) = 0; %to avoid NaNs
-            
-            plot(pdi_freearr,data_to_plot,'color',pclr{plcnt},...
-                'Marker',msty{plcnt},'MarkerSize',8,'MarkerFaceColor',pclr{plcnt},'LineStyle','None')
-            legendinfo{plcnt} = leg_arr{plcnt};
-            
-        end
-        
-        legend(legendinfo,'FontSize',16,'Location','Best')
-        legend boxoff
-        saveas(h1,sprintf('./../../all_figures/adsorbchain_rcut_%s_nval_%g.png',cutoff,nval));
-        clear legendinfo
-        
-    end
-    
-end
