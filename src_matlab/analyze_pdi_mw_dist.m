@@ -121,15 +121,16 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                     end
                     
                     % analyze and write molecule details
-                    molarr_cnt = analyze_datafile(ads_fylename,nval,nch_graft);
+                    molarr = analyze_datafile(ads_fylename,nval,nch_graft);
                     moloutfyle = strcat(dirname,'/','init_mol_details.dat');
                     fmol = fopen(moloutfyle,'w');
                     fprintf(fmol,'%s\t%s\t%s\n','Actual_MolID','Remapped_MolID', 'Mol_Wt');
-                    fprintf(fmol,'%d\t%d\t%d\n',[molarr_cnt(:,1) molarr_cnt(:,2) molarr_cnt(:,3)]');
+                    fprintf(fmol,'%d\t%d\t%d\n',[molarr(:,1) molarr(:,2) molarr(:,3)]');
                     fclose(fmol);
                     
+                    % compite the initial pdi
+                    pdiarr = compute_pdi(molarr,nval,nch_graft);
                     
-                    %compute_init_pdi();
                     %compute_mwdist();
                     
                     %save it to overall arrays
