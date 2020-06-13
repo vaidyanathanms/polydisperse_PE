@@ -46,7 +46,7 @@ pdigraft_str = num2str(pdigraft,'%1.1f');
 %% Main Analysis
 
 if pdiflag % create consolidated list
-    fout_cons = fopen(sprintf('./../../outfiles/overall/pdi_%s.dat',...
+    fout_cons = fopen(sprintf('./../../outfiles/overall/pdi_consolidate_rcut_%s.dat',...
         cutoff),'w');
     fprintf(fout_cons,'%s\t%s\t%s\t%s\t%s\t%s\n','N_f','Arch','Case_num',...
         'Mw_free','Mn_free','PDI_free');
@@ -58,8 +58,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
     
     %zero arrays for averages across cases
     casecntr_arr  = zeros(length(nch_freearr),length(arch_arr));
-    nadschain_all = zeros(length(nch_freearr),length(arch_arr));
-    totsamples    = zeros(length(nch_freearr),length(arch_arr));
+    npdi_all = zeros(length(nch_freearr),length(arch_arr));
     
     if pdiflag %create average across all cases
         fout_avg = fopen(sprintf('./../../outfiles/overall/pdi_ave_allcases_rcut_%s.dat',...
@@ -93,7 +92,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                 end
                 
                 fprintf('Analyzing pdi/nfree/arch/case: %g\t%d\t%s\t%d\n', pdifree,nval,dirstr,casenum);
-                if pdiflag % begin adsorption calculation
+                if pdiflag % begin pdi calculation
                     
                     %check if file type exists
                     ads_prefix = sprintf('PEinitdata.txt');
@@ -127,30 +126,30 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                     fprintf(fmol,'%s\t%s\t%s\n','Actual_MolID','Remapped_MolID', 'Mol_Wt');
                     fprintf(fmol,'%d\t%d\t%d\n',[molarr(:,1) molarr(:,2) molarr(:,3)]');
                     fclose(fmol);
-                    
-                    % compite the initial pdi
-                    pdiarr = compute_pdi(molarr,nval,nch_graft);
+                 
+                    % compute and write the initial pdi. Store avg arrays
+                    [pdifree,mnfree,mwfree] = compute_pdi(molarr,nval);
+                    fprintf(fout_cons,'%d\t%s\t%d\t%g\t%g\t%g\n',nval,dirstr,casenum,mnfree,mwfree,pdifree);
+                    casecntr_arr(ncnt,arch_cnt)  = casecntr_arr(ncnt,arch_cnt) + 1;
+                    npdi_all(ncnt,arch_cnt) = npdi_all(ncnt,arch_cnt) + pdifree;               
                     
                     %compute_mwdist();
                     
                     %save it to overall arrays
-                    %casecntr_arr(ncnt,arch_cnt)  = casecntr_arr(ncnt,arch_cnt) + 1;
-                    %nadschain_all(ncnt,arch_cnt) = nadschain_all(ncnt,arch_cnt) + avg_for_each_casenum;
-                    %totsamples(ncnt,arch_cnt)    = totsamples(ncnt,arch_cnt) + tot_cntr_across_files;
                     
-                end %end adsorption calculation
+                end %end pdi calculation calculation
                 
             end % end case loop
-            
-%             
-%             avg_across_cases(ncnt,arch_cnt,pdi_cntr) = nadschain_all(ncnt,arch_cnt)/casecntr_arr(ncnt,arch_cnt);
-%             fprintf(fout_avg,'%d\t%s\t%d\t%d\t%g\n',nval,dirstr,casecntr_arr(ncnt,arch_cnt),totsamples(ncnt,arch_cnt),avg_across_cases(ncnt,arch_cnt,pdi_cntr));
-%             
+
+            % write avg pdi across cases 
+            avg_across_cases(ncnt,arch_cnt,pdi_cntr) = npdi_all(ncnt,arch_cnt)/casecntr_arr(ncnt,arch_cnt);
+            fprintf(fout_avg,'%d\t%s\t%d\t%g\n',nval,dirstr,casecntr_arr(ncnt,arch_cnt),avg_across_cases(ncnt,arch_cnt,pdi_cntr));
+             
         end % end arch loop
         
     end % end nfree loop
     
-%     fclose(fout_avg);
+    fclose(fout_avg);
     
 end % end pdi free loop
 
