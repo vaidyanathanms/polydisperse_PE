@@ -8,9 +8,9 @@ function [distout] = compute_mwdist(molarr,column_num)
 % So for uniform dist, every 4 mol.wt will contribute to one bin.
 % Filter out ZERO molecular weight
 
-filt_dist = molarr(find(molarr,column_num),column_num);
+[~,~,filt_dist] = find(molarr(:,column_num))
 numbins   = floor(0.25*max(filt_dist))
-distout   = histogram(molarr(:,column_num),numbins);
+distout   = histogram(filt_dist,numbins);
 
 
 
