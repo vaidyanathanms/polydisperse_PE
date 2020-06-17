@@ -1,5 +1,7 @@
 %% To compare between architectures and within the same architecture for correlation
 
+% V2.0: Use ref1 and ref2 (fix n_f and pdi_free and check for different
+% correlations). Read from ttest_dir
 % Added two sample unequal variance t-test
 % Ref: https://www.mathworks.com/help/stats/ttest2.html#btrj_js-1
 
@@ -17,9 +19,9 @@ lsty = {'-','--',':'};
 msty = {'d','s','o','x'};
 
 %% Inputs
-nfreearr = [16;32;64;96;128;150];
+nfreearr = [16]%;32;64;96;128;150];
 casearr  = [1,2,3,4];
-pdi_freearr = [1,1.3,1.5];
+pdi_freearr = [1.5];
 arch_arr = {'bl_bl','bl_al','al_bl','al_al'};
 leg_arr  = {'Block-Block','Block-Alter','Alter-Block','Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr
 pdigraft = 1.0;
@@ -29,6 +31,7 @@ lz = 120; area=35^2;
 set_tmax = 3e7; % maximum timestep for analysis;
 
 %% Input flags
+write_tofile = 0; % to write avg_fraction for all cases to ttest_dir for various n and pdi.
 ttest_1_flag = 0;
 ttest_2_flag = 0;
 
@@ -45,123 +48,45 @@ err_tol = 1e-10; % for finding elements in a real array
 
 %% Main Analysis
 
-for rcutcntr = 1:length(rcut_arr) % begin rcut loop
-    cutoff = cutoff_arr{rcutcntr};
-    
-    % read main file
-    fylename = sprintf(sprintf('./../../outfiles/overall/adsorbed_chain_consolidated_rcut_%s.dat',...
-        cutoff));
-    fin_cons = fopen(fylename,'r');
-    
-    if fin_cons <= 0 % check for average list
-        fprintf('%s does not exist', fylename);
-        continue;
-    end
-    
-    % read main file
-    fylename = sprintf(sprintf('./../../outfiles/overall/cross_check_adsorbed_chain_consolidated_rcut_%s.dat',...
+for ncntr = 1:length(nfree_arr)
+    nval = nfree_arr(ncntr);
+    % write t-test file
+    fylename = sprintf(sprintf('./../../ttest_dir/n_%d/ttestvals_rcut_%s.dat',...
         cutoff));
     fout_vals = fopen(fylename,'w');
     
+    %out format:
+    %pdival arch1 c1 .. c4 cavg tab tab arch2 tab tab arch2 c1 .. c4 cavg
+    %tab tab tvalue
     
-    headerflag = -1; % find headerflag
-    pdi_col = -1; nf_col = -1; arch_col = -1; casenum_col = -1;
-    numsam_col = -1; avgf_col = -1;
+    fprintf('%s\t%s\t%s\t%s\t%s\t%s\t%s\t\t%s\t%s\t%s\t%s\t%s\t%s\t\t%s\n',...
+        'pdival','arch1','c1','c2','c3','c4','cavg',...
+        'arch2','c1','c2','c3','c4','cavg','tvalue')
     
-    while true
+    for pdicntr = 1:length(pdi_freearr)
+        pdival = pdi_freearr(pdicntr);
         
-        if headerflag == -1
+        for rcutcntr = 1:length(rcut_arr) % begin rcut loop
+            cutoff = cutoff_arr{rcutcntr};
+
+            % read file written by adsfrac
+            fylename = sprintf(sprintf('./../../ttest_dir/n_%d/adsfrac_rcut_%s_pdifree_%g_arch_%s.dat',...
+                nval,cutoff,pdifree,dirstr));
+            fin_main = fopen(fylename,'r');
             
-            tline = fgetl(fout_cons);
-            if ~ischar(tline) || isempty(tline)
+            if fin_main <= 0 % check for average list
+                fprintf('%s does not exist', fylename);
                 continue;
             end
             
-            spl_tline = strsplit(strtrim(tline));
-            len_tline = length(spl_tline);
             
-            if len_tline ~= 8
-                fprintf('Unknown number of keywords in %s \n', tline);
-                continue;
-            end
             
-            for word_cnt = 1:len_tline % add more if keywords are added
-                
-                if strcmp(spl_tline{word_cnt},'PDI_free') % for pdi_free keyword
-                    pdi_col = word_cnt;
-                elseif strcmp(spl_tline{word_cnt},'N_f') % for N_f keyword
-                    nf_col = word_cnt;
-                elseif strcmp(spl_tline{word_cnt},'Arch') % for Arch keyword
-                    arch_col = word_cnt;
-                elseif strcmp(spl_tline{word_cnt},'Case_num') % for Case_num keyword
-                    casenum_col = word_cnt;
-                elseif strcmp(spl_tline{word_cnt},'numsample_pts') % for number of samples keyword
-                    numsam_col = word_cnt;
-                elseif strcmp(spl_tline{word_cnt},'avg_fraction') % for avg_fraction keyword
-                    avgf_col = word_cnt;
-                end
-                
-            end
             
-            headerflag = 1; % found headerflag
             
-        else
             
-            tline = fgetl(fout_cons);
-            spl_tline = strsplit(strtrim(tline));
-            if ~ischar(tline) || isempty(tline)
-                continue;
-            end
             
-            spl_tline = strsplit(strtrim(tline));
-            len_tline = length(spl_tline);
-            
-            if len_tline ~= 8 && len_tline ~= 9
-                fprintf('Unknown number of keywords in %s \n', tline);
-                continue;
-            end
-            
-            % parse elements
-            nval   = str2double(spl_tline{nf_col});
-            dirstr = spl_tline{arch_col};
-            pdival = str2double(spl_tline{pdi_col});
-            
-            % cross check with the main array
-            if ismember(nval, nfreearr)
-                nval_index = find(nval==nfreearr);
-            else
-                fprintf('did not find %d in nfreearr\n', nval_index)
-                continue;
-            end
-            
-            if contains(arch_arr,dirstr)
-                arch_index = find(contains(arch_arr,dirstr));
-            else
-                fprintf('did not find %s in arch_arr\n', dirstr)
-                continue;
-            end
-            
-            if ismembertol(pdival,pdi_freearr,err_tol)
-                pdi_index = find(pdival,pdi_freearr);
-            else
-               fprintf('did not find %g in pdifree within a tolerance of %g\n', pdival,err_tol)
-               continue;
-            end 
-            
-            avg_across_cases(nval_index,arch_index,pdi_index) = str2double(spl_tline{avgf_col});
-            nval_from_fyle(nval_index,arch_index,pdi_index) = nval;
-            pdi_from_fyle(nval_index,arch_index,pdi_index) = pdival;
-            num_of_cases(nval_index,arch_index,pdi_index) = num_cases(nval_index,arch_index,pdi_index) + 1;
-            
-            fin_vals('%g\t%d\t%s\t%s\t%g\n',pdi_from_fyle(nval_index,arch_index,pdi_index),...
-                nval_from_fyle(nval_index,arch_index,pdi_index),dirstr,...
-                num_of_cases(nval_index,arch_index,pdi_index)
-                
-            
-        end % end if loop for reading lines
-            
-    end % end file-read loop
-    
-    fclose(fin_cons);
-    
-end % end rcut loop
+        end % end file-read loop
+        
+        fclose(fin_main);
+        
+    end % end rcut loop
