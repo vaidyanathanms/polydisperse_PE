@@ -2,7 +2,7 @@
 
 % V2.0: Use ref1 and ref2 (fix n_f and pdi_free and check for different
 % correlations). Read from ttest_dir
-% Added two sample unequal variance t-test
+% Added one/two sample unequal variance t-test
 % Ref: https://www.mathworks.com/help/stats/ttest2.html#btrj_js-1
 
 % Need to add one sample equal variance t-test
@@ -22,8 +22,8 @@ msty = {'d','s','o','x'};
 nfreearr = [16]%;32;64;96;128;150];
 casearr  = [1,2,3,4];
 pdi_freearr = [1.5];
-arch_arr = {'bl_bl','bl_al','al_bl','al_al'};
-leg_arr  = {'Block-Block','Block-Alter','Alter-Block','Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr
+ref_arch_arr1 = {'bl_bl','bl_al','al_bl','al_al'};
+ref_arch_arr2 = {'bl_bl','bl_al','al_bl','al_al'};
 pdigraft = 1.0;
 nmonfree = 30; nmongraft = 30; ngraft = 32;
 cutoff_arr = {'1.30','1.50'};
@@ -31,10 +31,10 @@ lz = 120; area=35^2;
 set_tmax = 3e7; % maximum timestep for analysis;
 
 %% Zero arrays
-avg_across_cases = zeros(length(nfreearr),length(arch_arr),length(pdi_freearr));
-num_of_cases     = zeros(length(nfreearr),length(arch_arr),length(pdi_freearr));
-nval_from_fyle   = zeros(length(nfreearr),length(arch_arr),length(pdi_freearr));
-pdi_from_fyle    = zeros(length(nfreearr),length(arch_arr),length(pdi_freearr));
+avg_across_cases = zeros(length(nfreearr),length(ref_arch_arr1),length(pdi_freearr));
+num_of_cases     = zeros(length(nfreearr),length(ref_arch_arr1),length(pdi_freearr));
+nval_from_fyle   = zeros(length(nfreearr),length(ref_arch_arr1),length(pdi_freearr));
+pdi_from_fyle    = zeros(length(nfreearr),length(ref_arch_arr1),length(pdi_freearr));
 
 %% Pre-calculations
 rhofree = nfreearr*30/(lz*area);
@@ -64,10 +64,9 @@ for ncntr = 1:length(nfree_arr)
         for rcutcntr = 1:length(rcut_arr) % begin rcut loop
             cutoff = cutoff_arr{rcutcntr};
 
-            if write_tofile % if the output needs to be written in ttest_dir
+            for arch_cntr_1 = 1:length(ref_arch_arr1) % begin arch loop
 
-                for arch_cntr_1 = 1:length(arch_arr) % begin arch loop
-
+                for arch_cntr_2 = 1:length(ref_arch_arr1)
                     % read file written by adsfrac
                     fylename = sprintf(sprintf('./../../ttest_dir/n_%d/adsfrac_rcut_%s_pdifree_%g_arch_%s.dat',...
                         nval,cutoff,pdifree,dirstr));
