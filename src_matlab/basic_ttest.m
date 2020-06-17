@@ -31,7 +31,6 @@ lz = 120; area=35^2;
 set_tmax = 3e7; % maximum timestep for analysis;
 
 %% Input flags
-write_tofile = 0; % to write avg_fraction for all cases for given archs to ttest_dir for various n and pdi.
 ttest_1_flag = 0;
 ttest_2_flag = 0;
 
@@ -70,28 +69,31 @@ for ncntr = 1:length(nfree_arr)
             cutoff = cutoff_arr{rcutcntr};
 
             if write_tofile % if the output needs to be written in ttest_dir
-                % read file written by adsfrac
-                fylename = sprintf(sprintf('./../../ttest_dir/n_%d/adsfrac_rcut_%s_pdifree_%g_arch_%s.dat',...
-                    nval,cutoff,pdifree,dirstr));
-                fin_main = fopen(fylename,'r');
-                
-                if fin_main <= 0 % check for average list
-                    fprintf('%s does not exist', fylename);
-                    continue;
-                end
-                
-                fgetl(fin_main); %skip first line
-                tline = fgetl(fin_main);
-                spl_tline = strsplit(strtrim(tline));
-                len_tline = length(spl_tline);
-                
-                avg_fvals = zeros(len_tline,1); % corresponding to num of cases in the file.
-                
-                for colcntr = 1:len_tline
-                    avg_fvals(col_cntr)   = str2double(spl_tline{colcntr});
-                end
-                
-                
+
+                for arch_cntr_1 = 1:length(arch_arr) % begin arch loop
+
+                    % read file written by adsfrac
+                    fylename = sprintf(sprintf('./../../ttest_dir/n_%d/adsfrac_rcut_%s_pdifree_%g_arch_%s.dat',...
+                        nval,cutoff,pdifree,dirstr));
+                    fin_main = fopen(fylename,'r');
+                    
+                    if fin_main <= 0 % check for average list
+                        fprintf('%s does not exist', fylename);
+                        continue;
+                    end
+                    
+                    fgetl(fin_main); %skip first line
+                    tline = fgetl(fin_main);
+                    spl_tline = strsplit(strtrim(tline));
+                    len_tline = length(spl_tline);
+                    
+                    avg_fvals = zeros(len_tline,1); % corresponding to num of cases in the file.
+                    
+                    for colcntr = 1:len_tline
+                        avg_fvals(col_cntr)   = str2double(spl_tline{colcntr});
+                    end
+                    
+                end    
                 
                 
             
