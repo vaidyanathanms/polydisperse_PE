@@ -82,7 +82,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
             
             if ttestflag %write all cases into separate folders in ttest_dir
             
-                fout_ttest = fopen(sprintf('./../../outfiles/n_%d/adsfrac_rcut_%s_pdifree_%g_arch_%s.dat',...
+                fout_ttest = fopen(sprintf('./../../ttest_dir/n_%d/adsfrac_rcut_%s_pdifree_%g_arch_%s.dat',...
                     nval,cutoff,pdifree,dirstr),'w');
                 fprintf(fout_ttest,'%s\n','avg_fraction: #of columns correspond to the number of cases');
                 
