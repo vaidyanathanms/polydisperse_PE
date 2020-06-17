@@ -33,12 +33,15 @@ ttest_1_flag = 0;
 ttest_2_flag = 0;
 
 %% Zero arrays
-avg_across_cases = zeros(length(nfreearr),length(arch_arr));
-num_of_cases     = zeros(length(nfreearr),length(arch_arr));
+avg_across_cases = zeros(length(nfreearr),length(arch_arr),length(pdi_freearr));
+num_of_cases     = zeros(length(nfreearr),length(arch_arr),length(pdi_freearr));
+nval_from_fyle   = zeros(length(nfreearr),length(arch_arr),length(pdi_freearr));
+pdi_from_fyle    = zeros(length(nfreearr),length(arch_arr),length(pdi_freearr));
 
 %% Pre-calculations
 rhofree = nfreearr*30/(lz*area);
 pdigraft_str = num2str(pdigraft,'%1.1f');
+err_tol = 1e-10; % for finding elements in a real array
 
 %% Main Analysis
 
@@ -48,83 +51,117 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
     % read main file
     fylename = sprintf(sprintf('./../../outfiles/overall/adsorbed_chain_consolidated_rcut_%s.dat',...
         cutoff));
-    fout_cons = fopen(fylename,'r');
+    fin_cons = fopen(fylename,'r');
     
-    if fout_cons <= 0 % check for average list
+    if fin_cons <= 0 % check for average list
         fprintf('%s does not exist', fylename);
         continue;
     end
     
-    for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
-        pdifree     = pdi_freearr(pdi_cntr);
-        pdifree_str = num2str(pdifree,'%1.1f');
-        
-        headerflag = -1; % find headerflag 
-        nf_col = -1; arch_col = -1; case_col = -1; numsam_col = -1; avgf_col = -1;
-        
-        while true
+    % read main file
+    fylename = sprintf(sprintf('./../../outfiles/overall/cross_check_adsorbed_chain_consolidated_rcut_%s.dat',...
+        cutoff));
+    fout_vals = fopen(fylename,'w');
     
-            if headerflag == -1
+    
+    headerflag = -1; % find headerflag
+    pdi_col = -1; nf_col = -1; arch_col = -1; casenum_col = -1;
+    numsam_col = -1; avgf_col = -1;
+    
+    while true
+        
+        if headerflag == -1
+            
+            tline = fgetl(fout_cons);
+            if ~ischar(tline) || isempty(tline)
+                continue;
+            end
+            
+            spl_tline = strsplit(strtrim(tline));
+            len_tline = length(spl_tline);
+            
+            if len_tline ~= 8
+                fprintf('Unknown number of keywords in %s \n', tline);
+                continue;
+            end
+            
+            for word_cnt = 1:len_tline % add more if keywords are added
                 
-                tline = fgetl(fid);
-                if ~ischar(tline) || isempty(tline)
-                    continue;
+                if strcmp(spl_tline{word_cnt},'PDI_free') % for pdi_free keyword
+                    pdi_col = word_cnt;
+                elseif strcmp(spl_tline{word_cnt},'N_f') % for N_f keyword
+                    nf_col = word_cnt;
+                elseif strcmp(spl_tline{word_cnt},'Arch') % for Arch keyword
+                    arch_col = word_cnt;
+                elseif strcmp(spl_tline{word_cnt},'Case_num') % for Case_num keyword
+                    casenum_col = word_cnt;
+                elseif strcmp(spl_tline{word_cnt},'numsample_pts') % for number of samples keyword
+                    numsam_col = word_cnt;
+                elseif strcmp(spl_tline{word_cnt},'avg_fraction') % for avg_fraction keyword
+                    avgf_col = word_cnt;
                 end
                 
-                spl_tline = strsplit(strtrim(tline));
-                len_tline = length(spl_tline);
-                
-                if len_tline ~= 5
-                    fprintf('Unknown number of keywords in %s \n', tline);
-                    continue;
-                end
-                
-                for word_cnt = 1:len_tline
-                    
-                    if strcmp(spl_tline{word_cnt},'N_f') % for N_f keyword
-                        nf_col = word_cnt;
-                    elseif strcmp(spl_tline{word_cnt},'Arch') % for Arch keyword
-                        arch_col = word_cnt;
-                    elseif strcmp(spl_tline{word_cnt},'ncases') % for ncases keyword
-                        case_col = word_cnt;
-                    elseif strcmp(spl_tline{word_cnt},'numsample_pts') % for number of samples keyword
-                        numsam_col = word_cnt;
-                    elseif strcmp(spl_tline{word_cnt},'avg_fraction') % for avg_fraction keyword
-                        avgf_col = word_cnt;
-                    end
-                    
-                end
-                
-                headerflag = 1; % found headerflag
-                
-            else
-                
-                tline = fgetl(fid);
-                spl_tline = strsplit(strtrim(tline));
-                if ~ischar(tline) || isempty(tline)
-                    continue;
-                end
-                
-                spl_tline = strsplit(strtrim(tline));
-                len_tline = length(spl_tline);
-                
-                if len_tline ~= 5
-                    fprintf('Unknown number of keywords in %s \n', tline);
-                    continue;
-                end
-                
-                nval   = str2double(spl_tline{nf_col});
-                dirstr = spl_tline{arch_col};
-                
+            end
+            
+            headerflag = 1; % found headerflag
+            
+        else
+            
+            tline = fgetl(fout_cons);
+            spl_tline = strsplit(strtrim(tline));
+            if ~ischar(tline) || isempty(tline)
+                continue;
+            end
+            
+            spl_tline = strsplit(strtrim(tline));
+            len_tline = length(spl_tline);
+            
+            if len_tline ~= 8 && len_tline ~= 9
+                fprintf('Unknown number of keywords in %s \n', tline);
+                continue;
+            end
+            
+            % parse elements
+            nval   = str2double(spl_tline{nf_col});
+            dirstr = spl_tline{arch_col};
+            pdival = str2double(spl_tline{pdi_col});
+            
+            % cross check with the main array
+            if ismember(nval, nfreearr)
                 nval_index = find(nval==nfreearr);
-                arch_index = find(not(cellfun('isempty',strfind(arch_arr,dirstr))));  
-
-                avg_across_cases(nval_index,arch_index) = spl_tline{avgf_col};
-
-            end % end major loop
+            else
+                fprintf('did not find %d in nfreearr\n', nval_index)
+                continue;
+            end
+            
+            if contains(arch_arr,dirstr)
+                arch_index = find(contains(arch_arr,dirstr));
+            else
+                fprintf('did not find %s in arch_arr\n', dirstr)
+                continue;
+            end
+            
+            if ismembertol(pdival,pdi_freearr,err_tol)
+                pdi_index = find(pdival,pdi_freearr);
+            else
+               fprintf('did not find %g in pdifree within a tolerance of %g\n', pdival,err_tol)
+               continue;
+            end 
+            
+            avg_across_cases(nval_index,arch_index,pdi_index) = str2double(spl_tline{avgf_col});
+            nval_from_fyle(nval_index,arch_index,pdi_index) = nval;
+            pdi_from_fyle(nval_index,arch_index,pdi_index) = pdival;
+            num_of_cases(nval_index,arch_index,pdi_index) = num_cases(nval_index,arch_index,pdi_index) + 1;
+            
+            fin_vals('%g\t%d\t%s\t%s\t%g\n',pdi_from_fyle(nval_index,arch_index,pdi_index),...
+                nval_from_fyle(nval_index,arch_index,pdi_index),dirstr,...
+                num_of_cases(nval_index,arch_index,pdi_index)
                 
-    end % end pdi free loop
+            
+        end % end if loop for reading lines
+            
+    end % end file-read loop
     
-    fclose(fout_cons);
+    fclose(fin_cons);
     
-end
+end % end rcut loop
