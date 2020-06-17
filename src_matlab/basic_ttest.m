@@ -30,10 +30,6 @@ cutoff_arr = {'1.30','1.50'};
 lz = 120; area=35^2;
 set_tmax = 3e7; % maximum timestep for analysis;
 
-%% Input flags
-ttest_1_flag = 0;
-ttest_2_flag = 0;
-
 %% Zero arrays
 avg_across_cases = zeros(length(nfreearr),length(arch_arr),length(pdi_freearr));
 num_of_cases     = zeros(length(nfreearr),length(arch_arr),length(pdi_freearr));
