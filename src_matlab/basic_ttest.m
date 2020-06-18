@@ -3,7 +3,7 @@
 % V2.0: Use ref1 and ref2 (fix n_f and pdi_free and check for different
 % correlations). Read from ttest_dir
 % Added one/two sample unequal variance t-test
-% USE TAB DELIMITER WHEN USING EXCEL TO CHECK OUTPUTS.
+% USE TAB AS DELIMITER WHEN USING TEXT TO COLUMNS IN EXCEL TO CHECK OUTPUTS.
 
 
 % Ref: https://www.mathworks.com/help/stats/ttest2.html#btrj_js-1
