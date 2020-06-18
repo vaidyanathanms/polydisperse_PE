@@ -84,7 +84,6 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
                 tline = fgetl(fin_main);
                 spl_tline = strsplit(strtrim(tline));
                 len_tline = length(spl_tline);
-                
                 avg_fvals = zeros(len_tline,1); % corresponding to num of cases in the file.
                 
                 for colcntr = 1:len_tline
@@ -97,8 +96,10 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
                         fprintf(fout_compare,'\t');
                     end
                 end
+                fprintf(fout_compare,'%g\t \t', mean(avg_fvals));
                 fclose(fin_main); % CLOSE fin_main
-
+                clear avg_fvals tline spl_tline len_tline% clear this so that it is not overwritten
+                
                 for arch_cntr_2 = 1:length(ref_arch_arr2)
                     
                     % read file written by adsfrac for the first arch_arr
@@ -116,7 +117,6 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
                     tline = fgetl(fin_main);
                     spl_tline = strsplit(strtrim(tline));
                     len_tline = length(spl_tline);
-                    
                     avg_fvals = zeros(len_tline,1); % corresponding to num of cases in the file.
                     
                     for colcntr = 1:len_tline
@@ -129,7 +129,9 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
                             fprintf(fout_compare,'\t');
                         end
                     end
+                    fprintf(fout_compare,'%g\t \t', mean(avg_fvals));
                     fclose(fin_main); % CLOSE fin_main
+                    clear avg_fvals tline spl_tline len_tline% clear this so that it is not overwritten
                     
                 end
                 
