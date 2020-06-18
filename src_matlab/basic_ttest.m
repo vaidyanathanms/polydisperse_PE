@@ -1,10 +1,10 @@
 %% To compare between architectures and within the same architecture for correlation
 
-% V2.0: Use ref1 and ref2 (fix n_f and pdi_free and check for different
+% V2.0: Use ref1 and read like RDF calculations. For a fixed n_f and pdi_free and check for different
 % correlations). Read from ttest_dir
-% Added one/two sample unequal variance t-test
-% USE TAB AS DELIMITER WHEN USING TEXT TO COLUMNS IN EXCEL TO CHECK OUTPUTS.
-
+% Added two sample unequal variance t-test (to be done: one sample)
+% USE TAB AS DELIMITER WHEN USING TEXT TO COLUMNS IN EXCEL TO CHECK
+% OUTPUTS. (If it is written as one column).
 
 % Ref: https://www.mathworks.com/help/stats/ttest2.html#btrj_js-1
 
@@ -22,7 +22,7 @@ lsty = {'-','--',':'};
 msty = {'d','s','o','x'};
 
 %% Inputs
-nfree_arr = [16,150]%;32;64;96;128;150];
+nfree_arr = [16;32;64;96;128;150];
 max_numcases = 4; % how many MAXIMUM cases are available per n_pa
 pdi_freearr = [1.5];
 ref_arch_arr1 = {'bl_bl','bl_al','al_bl','al_al'};
@@ -31,12 +31,6 @@ nmonfree = 30; nmongraft = 30; ngraft = 32;
 cutoff_arr = {'1.50'};
 lz = 120; area=35^2;
 set_tmax = 3e7; % maximum timestep for analysis;
-
-%% Zero arrays
-avg_across_cases = zeros(length(nfree_arr),length(ref_arch_arr1),length(pdi_freearr));
-num_of_cases     = zeros(length(nfree_arr),length(ref_arch_arr1),length(pdi_freearr));
-nval_from_fyle   = zeros(length(nfree_arr),length(ref_arch_arr1),length(pdi_freearr));
-pdi_from_fyle    = zeros(length(nfree_arr),length(ref_arch_arr1),length(pdi_freearr));
 
 %% Pre-calculations
 rhofree = nfree_arr*30/(lz*area);
@@ -47,11 +41,17 @@ err_tol = 1e-10; % for finding elements in a real array
 for rcutcntr = 1:length(cutoff_arr) % begin rcut loop
     cutoff = cutoff_arr{rcutcntr};
     fprintf('Analyzing rcut = %s\n', cutoff);
+    fylename = sprintf(sprintf('./../../ttest_dir/overall/alltruehypothesis_rcut_%s.dat',...
+        cutoff));
+    fout_true = fopen(fylename,'w');
+    
+    fprintf(fout_true,'%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n',...
+        'nval','pdival','dirstr1','num_cases1','dirstr2','num_cases2','nullHyp','tvalue');
     
     for ncntr = 1:length(nfree_arr) % begin nfree loop
         nval = nfree_arr(ncntr);
         % write t-test file
-        fylename = sprintf(sprintf('./../../ttest_dir/ttestvals_n_%d_rcut_%s.dat',...
+        fylename = sprintf(sprintf('./../../ttest_dir/overall/ttestvals_n_%d_rcut_%s.dat',...
             nval,cutoff));
         fout_compare = fopen(fylename,'w');
         
@@ -134,7 +134,7 @@ for rcutcntr = 1:length(cutoff_arr) % begin rcut loop
                     
                     fprintf(fout_compare,'%s\t',dirstr2);
                     for colcntr = 1:len_tline2
-                        avg_fvals_ref2(colcntr)   = str2double(spl_tline{colcntr});
+                        avg_fvals_ref2(colcntr) = str2double(spl_tline{colcntr});
                         fprintf(fout_compare,'%g\t',avg_fvals_ref2(colcntr));
                     end
                     
@@ -151,6 +151,11 @@ for rcutcntr = 1:length(cutoff_arr) % begin rcut loop
                     
                     fprintf(fout_compare,'%d\t%g\t%g\t%g\n',hnull,pnull,cinull(1),cinull(2)); % write the ttest results
                     
+                    if hnull
+                        fprintf(fout_true,'%d\t%g\t%s\t%d\t%g\t%s\t%d\t%g\t%d\t%g\n',...
+                            nval,pdival,dirstr1,len_tline1,dirstr2,len_tline2,hnull,pnull);
+                    end
+                    
                 end % end arch_cntr_2 (dirstr2)
                 
                 clear len_tline1
@@ -158,9 +163,11 @@ for rcutcntr = 1:length(cutoff_arr) % begin rcut loop
             end % end arch_cntr_1 (dirstr1)
    
         end % end pdi_cntr
-                
-    end % end nval loop
             
-    fclose(fout_compare); % close outfile
+        fclose(fout_compare); % close outfile
+
+    end % end nval loop
+
+    fclose(fout_true);
     
 end % end rcut loop
