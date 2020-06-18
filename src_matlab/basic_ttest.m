@@ -103,7 +103,7 @@ for rcutcntr = 1:length(cutoff_arr) % begin rcut loop
                 
 %                 [hnull,pnull,cinull,statsnull] = ttest(avg_fvals_ref1); % ttest for equal variances and from same sample
                 
-                for arch_cntr_2 = arch_cntr_1:length(ref_arch_arr1) % begin ref_arch1 second loop
+                for arch_cntr_2 = 1+arch_cntr_1:length(ref_arch_arr1) % begin ref_arch1 second loop
                     
                     dirstr2 = ref_arch_arr1{arch_cntr_2};
                     fprintf('Analyzing n = %d, pdi = %g, arch1 = %s, arch2 = %s \n', ...
@@ -140,9 +140,7 @@ for rcutcntr = 1:length(cutoff_arr) % begin rcut loop
                     fclose(fin_main); % CLOSE fin_main
                     clear tline spl_tline len_tline% clear this so that it is not overwritten
                     
-                    
                     [hnull,pnull,cinull,statsnull] = ttest2(avg_fvals_ref1,avg_fvals_ref2,'Vartype','unequal'); % ttest for unequal variances and different samples
-                    
                     
                     fprintf(fout_compare,'%d\t%g\t%g\n',hnull,pnull,cinull); % write the ttest results
                     
