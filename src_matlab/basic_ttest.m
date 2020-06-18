@@ -84,11 +84,11 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
                 tline = fgetl(fin_main);
                 spl_tline = strsplit(strtrim(tline));
                 len_tline = length(spl_tline);
-                avg_fvals = zeros(len_tline,1); % corresponding to num of cases in the file.
+                avg_fvals_ref1 = zeros(len_tline,1); % corresponding to num of cases in the file.
                 
                 for colcntr = 1:len_tline
-                    avg_fvals(col_cntr)   = str2double(spl_tline{colcntr});
-                    fprintf(fout_compare,'%g\t',avg_fvals(col_cntr));
+                    avg_fvals_ref1(col_cntr)   = str2double(spl_tline{colcntr});
+                    fprintf(fout_compare,'%g\t',avg_fvals_ref1(col_cntr));
                 end
                 
                 if len_tline ~= max_numcases % to fill the uncomputed cases with tabs so that it can be viewed easily in EXCEL sheets.
@@ -96,7 +96,7 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
                         fprintf(fout_compare,'\t');
                     end
                 end
-                fprintf(fout_compare,'%g\t \t', mean(avg_fvals));
+                fprintf(fout_compare,'%g\t \t', mean(avg_fvals_ref1)); % write mean value
                 fclose(fin_main); % CLOSE fin_main
                 clear avg_fvals tline spl_tline len_tline% clear this so that it is not overwritten
                 
@@ -117,11 +117,11 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
                     tline = fgetl(fin_main);
                     spl_tline = strsplit(strtrim(tline));
                     len_tline = length(spl_tline);
-                    avg_fvals = zeros(len_tline,1); % corresponding to num of cases in the file.
+                    avg_fvals_ref2 = zeros(len_tline,1); % corresponding to num of cases in the file.
                     
                     for colcntr = 1:len_tline
-                        avg_fvals(col_cntr)   = str2double(spl_tline{colcntr});
-                        fprintf(fout_compare,'%g\t',avg_fvals(col_cntr));
+                        avg_fvals_ref2(col_cntr)   = str2double(spl_tline{colcntr});
+                        fprintf(fout_compare,'%g\t',avg_fvals_ref2(col_cntr));
                     end
                     
                     if len_tline ~= max_numcases % to fill the uncomputed cases with tabs so that it can be viewed easily in EXCEL sheets.
@@ -129,7 +129,7 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
                             fprintf(fout_compare,'\t');
                         end
                     end
-                    fprintf(fout_compare,'%g\t \t', mean(avg_fvals));
+                    fprintf(fout_compare,'%g\t \t', mean(avg_fvals_ref2)); % write mean value
                     fclose(fin_main); % CLOSE fin_main
                     clear avg_fvals tline spl_tline len_tline% clear this so that it is not overwritten
                     
