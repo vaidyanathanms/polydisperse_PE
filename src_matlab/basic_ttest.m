@@ -24,7 +24,7 @@ msty = {'d','s','o','x'};
 %% Inputs
 nfree_arr = [16;32;64;96;128;150];
 max_numcases = 4; % how many MAXIMUM cases are available per n_pa
-pdi_freearr = [1.5];
+pdi_freearr = [1];
 ref_arch_arr1 = {'bl_bl','bl_al','al_bl','al_al'};
 pdigraft = 1.0;
 nmonfree = 30; nmongraft = 30; ngraft = 32;
@@ -77,7 +77,7 @@ for rcutcntr = 1:length(cutoff_arr) % begin rcut loop
                 fin_main = fopen(fylename,'r'); % use same file ID so that no two files are opened at the same time to avoid confusion.
                 
                 if fin_main <= 0 % check for average list
-                    fprintf('%s does not exist', fylename);
+                    fprintf('%s does not exist\n', fylename);
                     continue;
                 end
                 
@@ -123,7 +123,7 @@ for rcutcntr = 1:length(cutoff_arr) % begin rcut loop
                     fin_main = fopen(fylename,'r');
                     
                     if fin_main <= 0 % check for average list
-                        fprintf('%s does not exist', fylename);
+                        fprintf('%s does not exist\n', fylename);
                         continue;
                     end
                     
