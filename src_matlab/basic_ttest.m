@@ -59,9 +59,9 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
         %pdival arch1 c1 .. c4 cavg tab tab arch2 tab tab arch2 c1 .. c4 cavg
         %tab tab tvalue
         
-        fprintf('%s\t%s\t%s\t%s\t%s\t%s\t%s\t\t%s\t%s\t%s\t%s\t%s\t%s\t\t%s\n',...
+        fprintf('%s\t%s\t%s\t%s\t%s\t%s\t%s\t\t%s\t%s\t%s\t%s\t%s\t%s\t\t%s\t%s\n',...
             'pdival','arch1','c1','c2','c3','c4','cavg',...
-            'arch2','c1','c2','c3','c4','cavg','tvalue')
+            'arch2','c1','c2','c3','c4','cavg','nullhypothesis','tvalue')
         
         for pdicntr = 1:length(pdi_freearr) % begin pdival loop
             pdival = pdi_freearr(pdicntr);
@@ -98,7 +98,7 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
                 end
                 fprintf(fout_compare,'%g\t \t', mean(avg_fvals_ref1)); % write mean value
                 fclose(fin_main); % CLOSE fin_main
-                clear avg_fvals tline spl_tline len_tline% clear this so that it is not overwritten
+                clear tline spl_tline len_tline% clear this so that it is not overwritten
                 
                 for arch_cntr_2 = 1:length(ref_arch_arr2) % begin ref_arch2 loop
                     
@@ -131,7 +131,10 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
                     end
                     fprintf(fout_compare,'%g\t \t', mean(avg_fvals_ref2)); % write mean value
                     fclose(fin_main); % CLOSE fin_main
-                    clear avg_fvals tline spl_tline len_tline% clear this so that it is not overwritten
+                    clear tline spl_tline len_tline% clear this so that it is not overwritten
+                    
+                    if strcmp(dirstr1,dirstr2)
+                        ttest(
                     
                 end % end ref_arch2
                 
