@@ -100,9 +100,9 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
                 fclose(fin_main); % CLOSE fin_main
                 clear avg_fvals tline spl_tline len_tline% clear this so that it is not overwritten
                 
-                for arch_cntr_2 = 1:length(ref_arch_arr2)
+                for arch_cntr_2 = 1:length(ref_arch_arr2) % begin ref_arch2 loop
                     
-                    % read file written by adsfrac for the first arch_arr
+                    % read file written by adsfrac for the second arch_arr
                     dirstr2 = ref_arch_arr1{arch_cntr_2};
                     fylename = sprintf('./../../ttest_dir/n_%d/adsfrac_rcut_%s_pdifree_%g_arch_%s.dat',...
                         nval,cutoff,pdifree,dirstr2);
@@ -133,15 +133,14 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
                     fclose(fin_main); % CLOSE fin_main
                     clear avg_fvals tline spl_tline len_tline% clear this so that it is not overwritten
                     
-                end
+                end % end ref_arch2
                 
+            end % end ref_arch2
+   
+        end % end pdi_cntr
                 
-                
-                
-                
-                
-            end % end file-read loop
+    end % end nval loop
             
-            fclose(fin_main);
-            
-        end % end rcut loop
+    close(fout_compare) % close outfile
+    
+end % end rcut loop
