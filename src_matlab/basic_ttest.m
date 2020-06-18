@@ -59,9 +59,9 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
         %pdival arch1 c1 .. c4 cavg tab tab arch2 tab tab arch2 c1 .. c4 cavg
         %tab tab tvalue
         
-        fprintf('%s\t%s\t%s\t%s\t%s\t%s\t%s\t\t%s\t%s\t%s\t%s\t%s\t%s\t\t%s\t%s\n',...
+        fprintf('%s\t%s\t%s\t%s\t%s\t%s\t%s\t\t%s\t%s\t%s\t%s\t%s\t%s\t\t%s\t%s\t%s\n',...
             'pdival','arch1','c1','c2','c3','c4','cavg',...
-            'arch2','c1','c2','c3','c4','cavg','nullhypothesis','tvalue')
+            'arch2','c1','c2','c3','c4','cavg','nullhypothesis','tvalue','conf_interval')
         
         for pdicntr = 1:length(pdi_freearr) % begin pdival loop
             pdival = pdi_freearr(pdicntr);
@@ -86,6 +86,7 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
                 len_tline = length(spl_tline);
                 avg_fvals_ref1 = zeros(len_tline,1); % corresponding to num of cases in the file.
                 
+                fprintf(fout_compare,'%s\t',dirstr1);
                 for colcntr = 1:len_tline
                     avg_fvals_ref1(col_cntr)   = str2double(spl_tline{colcntr});
                     fprintf(fout_compare,'%g\t',avg_fvals_ref1(col_cntr));
@@ -119,6 +120,7 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
                     len_tline = length(spl_tline);
                     avg_fvals_ref2 = zeros(len_tline,1); % corresponding to num of cases in the file.
                     
+                    fprintf(fout_compare,'%s\t',dirstr2);
                     for colcntr = 1:len_tline
                         avg_fvals_ref2(col_cntr)   = str2double(spl_tline{colcntr});
                         fprintf(fout_compare,'%g\t',avg_fvals_ref2(col_cntr));
@@ -134,7 +136,12 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
                     clear tline spl_tline len_tline% clear this so that it is not overwritten
                     
                     if strcmp(dirstr1,dirstr2)
-                        ttest(
+                        [hnull,pnull,cinull,statsnull] = ttest(avg_fvals_ref1,avg_fvals_ref2); % ttest for equal variances and from same sample
+                    else
+                        [hnull,pnull,cinull,statsnull] = ttest(avg_fvals_ref1,avg_fvals_ref2,'Vartype','unequal'); % ttest for unequal variances and different samples
+                    end
+                    
+                    fprintf(fout_compare,'%d\t%g\t%g\n',hnull,pnull,cinull); % write the ttest results
                     
                 end % end ref_arch2
                 
