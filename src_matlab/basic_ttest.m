@@ -45,8 +45,9 @@ for rcutcntr = 1:length(cutoff_arr) % begin rcut loop
         cutoff));
     fout_true = fopen(fylename,'w');
     
-    fprintf(fout_true,'%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n',...
-        'nval','pdival','dirstr1','num_cases1','dirstr2','num_cases2','nullHyp','tvalue');
+    fprintf(fout_true,'%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n',...
+        'nval','pdival','dirstr1','num_cases1','avg_case1',...
+        'dirstr2','num_cases2','avg_case2','nullHyp','tvalue');
     
     for ncntr = 1:length(nfree_arr) % begin nfree loop
         nval = nfree_arr(ncntr);
@@ -84,10 +85,10 @@ for rcutcntr = 1:length(cutoff_arr) % begin rcut loop
                 tline = fgetl(fin_main);
                 spl_tline = strsplit(strtrim(tline));
                 len_tline1 = length(spl_tline); % use this as a separate number for writing into consolidated file
-                avg_fvals_ref1 = zeros(len_tline1,1); % corresponding to num of cases in the file.
+                fvals_ref1 = zeros(len_tline1,1); % corresponding to num of cases in the file.
                 
                 for colcntr = 1:len_tline1
-                    avg_fvals_ref1(colcntr)   = str2double(spl_tline{colcntr});
+                    fvals_ref1(colcntr)   = str2double(spl_tline{colcntr});
                 end
                 
                 fclose(fin_main); % CLOSE fin_main
@@ -102,14 +103,14 @@ for rcutcntr = 1:length(cutoff_arr) % begin rcut loop
                     fprintf(fout_compare,'%g\t',pdival);
                     fprintf(fout_compare,'%s\t',dirstr1);
                     for colcntr = 1:len_tline1
-                        fprintf(fout_compare,'%g\t',avg_fvals_ref1(colcntr)); % the values are already stored.
+                        fprintf(fout_compare,'%g\t',fvals_ref1(colcntr)); % the values are already stored.
                     end
                     if len_tline1 ~= max_numcases % to fill the uncomputed cases with tabs so that it can be viewed easily in EXCEL sheets.
                         for fill_cntr = 1:max_numcases-len_tline1
                             fprintf(fout_compare,'\t');
                         end
                     end
-                    fprintf(fout_compare,'%g\t \t', mean(avg_fvals_ref1)); % write mean value
+                    fprintf(fout_compare,'%g\t \t', mean(fvals_ref1)); % write mean value
                     
                     % Now read dirstr2 data (arch_cntr_2)
                     dirstr2 = ref_arch_arr1{arch_cntr_2};
@@ -130,12 +131,12 @@ for rcutcntr = 1:length(cutoff_arr) % begin rcut loop
                     tline = fgetl(fin_main);
                     spl_tline = strsplit(strtrim(tline));
                     len_tline2 = length(spl_tline); % should be different so that len_tline1 is not overwritten for outfile requirements
-                    avg_fvals_ref2 = zeros(len_tline2,1); % corresponding to num of cases in the file.
+                    fvals_ref2 = zeros(len_tline2,1); % corresponding to num of cases in the file.
                     
                     fprintf(fout_compare,'%s\t',dirstr2);
                     for colcntr = 1:len_tline2
-                        avg_fvals_ref2(colcntr) = str2double(spl_tline{colcntr});
-                        fprintf(fout_compare,'%g\t',avg_fvals_ref2(colcntr));
+                        fvals_ref2(colcntr) = str2double(spl_tline{colcntr});
+                        fprintf(fout_compare,'%g\t',fvals_ref2(colcntr));
                     end
                     
                     if len_tline2 ~= max_numcases % to fill the uncomputed cases with tabs so that it can be viewed easily in EXCEL sheets.
@@ -143,22 +144,23 @@ for rcutcntr = 1:length(cutoff_arr) % begin rcut loop
                             fprintf(fout_compare,'\t');
                         end
                     end
-                    fprintf(fout_compare,'%g\t \t', mean(avg_fvals_ref2)); % write mean value
+                    fprintf(fout_compare,'%g\t \t', mean(fvals_ref2)); % write mean value
                     fclose(fin_main); % CLOSE fin_main
-                    clear tline spl_tline len_tline2% clear this so that it is not overwritten
-                    
-                    [hnull,pnull,cinull,statsnull] = ttest2(avg_fvals_ref1,avg_fvals_ref2,'Vartype','unequal'); % ttest for unequal variances and different samples
+                    [hnull,pnull,cinull,statsnull] = ttest2(fvals_ref1,fvals_ref2,'Vartype','unequal'); % ttest for unequal variances and different samples
                     
                     fprintf(fout_compare,'%d\t%g\t%g\t%g\n',hnull,pnull,cinull(1),cinull(2)); % write the ttest results
                     
                     if hnull
                         fprintf(fout_true,'%d\t%g\t%s\t%d\t%g\t%s\t%d\t%g\t%d\t%g\n',...
-                            nval,pdival,dirstr1,len_tline1,dirstr2,len_tline2,hnull,pnull);
+                            nval,pdival,dirstr1,len_tline1,mean(fvals_ref1),...
+                            dirstr2,len_tline2,mean(fvals_ref2),hnull,pnull);
                     end
+                    
+                    clear tline spl_tline len_tline2 fvals_ref2% clear this so that it is not overwritten
                     
                 end % end arch_cntr_2 (dirstr2)
                 
-                clear len_tline1
+                clear len_tline1 fvals_ref1
                 
             end % end arch_cntr_1 (dirstr1)
    
