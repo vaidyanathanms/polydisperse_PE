@@ -70,9 +70,9 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
             for arch_cntr_1 = 1:length(ref_arch_arr1) % begin ref_arch1 loop
             
                 % read file written by adsfrac for the first arch_arr
-                dirstr1 = ref_arch_arr1(arch_cntr_1);
-                fylename = sprintf(sprintf('./../../ttest_dir/n_%d/adsfrac_rcut_%s_pdifree_%g_arch_%s.dat',...
-                    nval,cutoff,pdifree,dirstr1));
+                dirstr1 = ref_arch_arr1{arch_cntr_1};
+                fylename = sprintf('./../../ttest_dir/n_%d/adsfrac_rcut_%s_pdifree_%g_arch_%s.dat',...
+                    nval,cutoff,pdifree,dirstr1);
                 fin_main = fopen(fylename,'r'); % use same file ID so that no two files are opened at the same time to avoid confusion.
                 
                 if fin_main <= 0 % check for average list
@@ -102,9 +102,9 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
                 for arch_cntr_2 = 1:length(ref_arch_arr2)
                     
                     % read file written by adsfrac for the first arch_arr
-                    dirstr2 = ref_arch_arr1(arch_cntr_2);
-                    fylename = sprintf(sprintf('./../../ttest_dir/n_%d/adsfrac_rcut_%s_pdifree_%g_arch_%s.dat',...
-                        nval,cutoff,pdifree,dirstr2));
+                    dirstr2 = ref_arch_arr1{arch_cntr_2};
+                    fylename = sprintf('./../../ttest_dir/n_%d/adsfrac_rcut_%s_pdifree_%g_arch_%s.dat',...
+                        nval,cutoff,pdifree,dirstr2);
                     fin_main = fopen(fylename,'r');
                     
                     if fin_main <= 0 % check for average list
