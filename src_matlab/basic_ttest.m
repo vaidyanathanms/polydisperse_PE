@@ -22,46 +22,47 @@ lsty = {'-','--',':'};
 msty = {'d','s','o','x'};
 
 %% Inputs
-nfreearr = [16]%;32;64;96;128;150];
-maxnum_cases = 4; % how many MAXIMUM cases are available per n_pa
+nfree_arr = [16]%;32;64;96;128;150];
+max_numcases = 4; % how many MAXIMUM cases are available per n_pa
 pdi_freearr = [1.5];
 ref_arch_arr1 = {'bl_bl','bl_al','al_bl','al_al'};
 ref_arch_arr2 = {'bl_bl','bl_al','al_bl','al_al'};
 pdigraft = 1.0;
 nmonfree = 30; nmongraft = 30; ngraft = 32;
-cutoff_arr = {'1.30','1.50'};
+cutoff_arr = {'1.50'};
 lz = 120; area=35^2;
 set_tmax = 3e7; % maximum timestep for analysis;
 
 %% Zero arrays
-avg_across_cases = zeros(length(nfreearr),length(ref_arch_arr1),length(pdi_freearr));
-num_of_cases     = zeros(length(nfreearr),length(ref_arch_arr1),length(pdi_freearr));
-nval_from_fyle   = zeros(length(nfreearr),length(ref_arch_arr1),length(pdi_freearr));
-pdi_from_fyle    = zeros(length(nfreearr),length(ref_arch_arr1),length(pdi_freearr));
+avg_across_cases = zeros(length(nfree_arr),length(ref_arch_arr1),length(pdi_freearr));
+num_of_cases     = zeros(length(nfree_arr),length(ref_arch_arr1),length(pdi_freearr));
+nval_from_fyle   = zeros(length(nfree_arr),length(ref_arch_arr1),length(pdi_freearr));
+pdi_from_fyle    = zeros(length(nfree_arr),length(ref_arch_arr1),length(pdi_freearr));
 
 %% Pre-calculations
-rhofree = nfreearr*30/(lz*area);
+rhofree = nfree_arr*30/(lz*area);
 pdigraft_str = num2str(pdigraft,'%1.1f');
 err_tol = 1e-10; % for finding elements in a real array
 
 %% Main Analysis
-for rcutcntr = 1:length(rcut_arr) % begin rcut loop
+for rcutcntr = 1:length(cutoff_arr) % begin rcut loop
     cutoff = cutoff_arr{rcutcntr};
+    fprintf('Analyzing rcut = %s\n', cutoff);
     
     for ncntr = 1:length(nfree_arr) % begin nfree loop
         nval = nfree_arr(ncntr);
         % write t-test file
         fylename = sprintf(sprintf('./../../ttest_dir/n_%d/ttestvals_rcut_%s.dat',...
-            cutoff));
+            nval,cutoff));
         fout_compare = fopen(fylename,'w');
         
         %out format:
         %pdival arch1 c1 .. c4 cavg tab tab arch2 tab tab arch2 c1 .. c4 cavg
         %tab tab tvalue
         
-        fprintf('%s\t%s\t%s\t%s\t%s\t%s\t%s\t\t%s\t%s\t%s\t%s\t%s\t%s\t\t%s\t%s\t%s\n',...
+        fprintf(fout_compare,'%s\t%s\t%s\t%s\t%s\t%s\t%s\t\t%s\t%s\t%s\t%s\t%s\t%s\t\t%s\t%s\t%s\n',...
             'pdival','arch1','c1','c2','c3','c4','cavg',...
-            'arch2','c1','c2','c3','c4','cavg','nullhypothesis','tvalue','conf_interval')
+            'arch2','c1','c2','c3','c4','cavg','nullhypothesis','tvalue','conf_interval');
         
         for pdicntr = 1:length(pdi_freearr) % begin pdival loop
             pdival = pdi_freearr(pdicntr);
@@ -72,7 +73,7 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
                 % read file written by adsfrac for the first arch_arr
                 dirstr1 = ref_arch_arr1{arch_cntr_1};
                 fylename = sprintf('./../../ttest_dir/n_%d/adsfrac_rcut_%s_pdifree_%g_arch_%s.dat',...
-                    nval,cutoff,pdifree,dirstr1);
+                    nval,cutoff,pdival,dirstr1);
                 fin_main = fopen(fylename,'r'); % use same file ID so that no two files are opened at the same time to avoid confusion.
                 
                 if fin_main <= 0 % check for average list
@@ -88,8 +89,8 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
                 
                 fprintf(fout_compare,'%s\t',dirstr1);
                 for colcntr = 1:len_tline
-                    avg_fvals_ref1(col_cntr)   = str2double(spl_tline{colcntr});
-                    fprintf(fout_compare,'%g\t',avg_fvals_ref1(col_cntr));
+                    avg_fvals_ref1(colcntr)   = str2double(spl_tline{colcntr});
+                    fprintf(fout_compare,'%g\t',avg_fvals_ref1(colcntr));
                 end
                 
                 if len_tline ~= max_numcases % to fill the uncomputed cases with tabs so that it can be viewed easily in EXCEL sheets.
@@ -103,10 +104,13 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
                 
                 for arch_cntr_2 = 1:length(ref_arch_arr2) % begin ref_arch2 loop
                     
-                    % read file written by adsfrac for the second arch_arr
                     dirstr2 = ref_arch_arr1{arch_cntr_2};
+                    fprintf('Analyzing n = %d, pdi = %g, arch1 = %s, arch2 = %s \n', ...
+                        nval, pdival, dirstr1, dirstr2);
+                    
+                    % read file written by adsfrac for the second arch_arr
                     fylename = sprintf('./../../ttest_dir/n_%d/adsfrac_rcut_%s_pdifree_%g_arch_%s.dat',...
-                        nval,cutoff,pdifree,dirstr2);
+                        nval,cutoff,pdival,dirstr2);
                     fin_main = fopen(fylename,'r');
                     
                     if fin_main <= 0 % check for average list
@@ -122,8 +126,8 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
                     
                     fprintf(fout_compare,'%s\t',dirstr2);
                     for colcntr = 1:len_tline
-                        avg_fvals_ref2(col_cntr)   = str2double(spl_tline{colcntr});
-                        fprintf(fout_compare,'%g\t',avg_fvals_ref2(col_cntr));
+                        avg_fvals_ref2(colcntr)   = str2double(spl_tline{colcntr});
+                        fprintf(fout_compare,'%g\t',avg_fvals_ref2(colcntr));
                     end
                     
                     if len_tline ~= max_numcases % to fill the uncomputed cases with tabs so that it can be viewed easily in EXCEL sheets.
@@ -138,7 +142,7 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
                     if strcmp(dirstr1,dirstr2)
                         [hnull,pnull,cinull,statsnull] = ttest(avg_fvals_ref1,avg_fvals_ref2); % ttest for equal variances and from same sample
                     else
-                        [hnull,pnull,cinull,statsnull] = ttest(avg_fvals_ref1,avg_fvals_ref2,'Vartype','unequal'); % ttest for unequal variances and different samples
+                        [hnull,pnull,cinull,statsnull] = ttest2(avg_fvals_ref1,avg_fvals_ref2,'Vartype','unequal'); % ttest for unequal variances and different samples
                     end
                     
                     fprintf(fout_compare,'%d\t%g\t%g\n',hnull,pnull,cinull); % write the ttest results
@@ -151,6 +155,6 @@ for rcutcntr = 1:length(rcut_arr) % begin rcut loop
                 
     end % end nval loop
             
-    close(fout_compare) % close outfile
+    fclose(fout_compare); % close outfile
     
 end % end rcut loop
