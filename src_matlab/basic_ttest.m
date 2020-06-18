@@ -41,32 +41,33 @@ err_tol = 1e-10; % for finding elements in a real array
 for rcutcntr = 1:length(cutoff_arr) % begin rcut loop
     cutoff = cutoff_arr{rcutcntr};
     fprintf('Analyzing rcut = %s\n', cutoff);
-    fylename = sprintf(sprintf('./../../ttest_dir/overall/alltruehypothesis_rcut_%s.dat',...
-        cutoff));
-    fout_true = fopen(fylename,'w');
-    
-    fprintf(fout_true,'%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n',...
-        'nval','pdival','dirstr1','num_cases1','avg_case1',...
-        'dirstr2','num_cases2','avg_case2','nullHyp','tvalue');
-    
-    for ncntr = 1:length(nfree_arr) % begin nfree loop
-        nval = nfree_arr(ncntr);
-        % write t-test file
-        fylename = sprintf(sprintf('./../../ttest_dir/overall/ttestvals_n_%d_rcut_%s.dat',...
-            nval,cutoff));
-        fout_compare = fopen(fylename,'w');
+
+    for pdicntr = 1:length(pdi_freearr) % begin pdival loop
+        pdival = pdi_freearr(pdicntr);
         
-        %out format:
-        %pdival arch1 c1 .. c4 cavg tab tab arch2 tab tab arch2 c1 .. c4 cavg
-        %tab tab tvalue
+        fylename = sprintf(sprintf('./../../ttest_dir/overall/alltruehypothesis_pdi_%g_rcut_%s.dat',...
+            pdival,cutoff));
+        fout_true = fopen(fylename,'w');
         
-        fprintf(fout_compare,'%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t\t%s\t%s\t%s\t%s\t%s\t%s\t\t%s\t%s\t%s\t%s\n',...
-            'nval','pdival','arch1','c1','c2','c3','c4','cavg',...
-            'arch2','c1','c2','c3','c4','cavg','nullHyp','tvalue','ci_lo','ci_hi');
+        fprintf(fout_true,'%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n',...
+            'nval','pdival','dirstr1','num_cases1','avg_case1',...
+            'dirstr2','num_cases2','avg_case2','nullHyp','tvalue');
         
-        for pdicntr = 1:length(pdi_freearr) % begin pdival loop
-            pdival = pdi_freearr(pdicntr);
+        
+        for ncntr = 1:length(nfree_arr) % begin nfree loop
+            nval = nfree_arr(ncntr);
+            % write t-test file
+            fylename = sprintf(sprintf('./../../ttest_dir/overall/ttestvals_n_%d_pdi_%g_rcut_%s.dat',...
+                nval,pdival,cutoff));
+            fout_compare = fopen(fylename,'w');
             
+            %out format:
+            %pdival arch1 c1 .. c4 cavg tab tab arch2 tab tab arch2 c1 .. c4 cavg
+            %tab tab tvalue
+            
+            fprintf(fout_compare,'%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t\t%s\t%s\t%s\t%s\t%s\t%s\t\t%s\t%s\t%s\t%s\n',...
+                'nval','pdival','arch1','c1','c2','c3','c4','cavg',...
+                'arch2','c1','c2','c3','c4','cavg','nullHyp','tvalue','ci_lo','ci_hi');
             
             for arch_cntr_1 = 1:length(ref_arch_arr1)-1 % begin ref_arch1 first loop
                 
@@ -96,7 +97,7 @@ for rcutcntr = 1:length(cutoff_arr) % begin rcut loop
                 %                 [hnull,pnull,cinull,statsnull] = ttest(avg_fvals_ref1); % ttest for equal variances and from same sample
                 
                 for arch_cntr_2 = 1+arch_cntr_1:length(ref_arch_arr1) % begin ref_arch1 second loop
-            
+                    
                     % Do all the file out operations for the first
                     % architecture before moving to the second one.
                     fprintf(fout_compare,'%g\t',nval);
@@ -163,13 +164,13 @@ for rcutcntr = 1:length(cutoff_arr) % begin rcut loop
                 clear len_tline1 fvals_ref1
                 
             end % end arch_cntr_1 (dirstr1)
-   
-        end % end pdi_cntr
             
+        end % end nval loop
+        
         fclose(fout_compare); % close outfile
-
-    end % end nval loop
-
+        
+    end % end pdival loop
+    
     fclose(fout_true);
     
 end % end rcut loop
