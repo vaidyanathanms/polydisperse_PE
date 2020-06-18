@@ -26,7 +26,6 @@ nfree_arr = [16]%;32;64;96;128;150];
 max_numcases = 4; % how many MAXIMUM cases are available per n_pa
 pdi_freearr = [1.5];
 ref_arch_arr1 = {'bl_bl','bl_al','al_bl','al_al'};
-ref_arch_arr2 = {'bl_bl','bl_al','al_bl','al_al'};
 pdigraft = 1.0;
 nmonfree = 30; nmongraft = 30; ngraft = 32;
 cutoff_arr = {'1.50'};
@@ -68,7 +67,7 @@ for rcutcntr = 1:length(cutoff_arr) % begin rcut loop
             pdival = pdi_freearr(pdicntr);
             fprintf(fout_compare,'%g\t',pdival);
             
-            for arch_cntr_1 = 1:length(ref_arch_arr1) % begin ref_arch1 loop
+            for arch_cntr_1 = 1:length(ref_arch_arr1)-1 % begin ref_arch1 first loop
             
                 % read file written by adsfrac for the first arch_arr
                 dirstr1 = ref_arch_arr1{arch_cntr_1};
@@ -102,7 +101,7 @@ for rcutcntr = 1:length(cutoff_arr) % begin rcut loop
                 fclose(fin_main); % CLOSE fin_main
                 clear tline spl_tline len_tline% clear this so that it is not overwritten
                 
-                for arch_cntr_2 = 1:length(ref_arch_arr2) % begin ref_arch2 loop
+                for arch_cntr_2 = arch_cntr_1:length(ref_arch_arr1) % begin ref_arch1 second loop
                     
                     dirstr2 = ref_arch_arr1{arch_cntr_2};
                     fprintf('Analyzing n = %d, pdi = %g, arch1 = %s, arch2 = %s \n', ...
