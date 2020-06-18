@@ -22,7 +22,7 @@ lsty = {'-','--',':'};
 msty = {'d','s','o','x'};
 
 %% Inputs
-nfree_arr = [16]%;32;64;96;128;150];
+nfree_arr = [16,150]%;32;64;96;128;150];
 max_numcases = 4; % how many MAXIMUM cases are available per n_pa
 pdi_freearr = [1.5];
 ref_arch_arr1 = {'bl_bl','bl_al','al_bl','al_al'};
@@ -51,7 +51,7 @@ for rcutcntr = 1:length(cutoff_arr) % begin rcut loop
     for ncntr = 1:length(nfree_arr) % begin nfree loop
         nval = nfree_arr(ncntr);
         % write t-test file
-        fylename = sprintf(sprintf('./../../ttest_dir/n_%d/ttestvals_rcut_%s.dat',...
+        fylename = sprintf(sprintf('./../../ttest_dir/ttestvals_n_%d_rcut_%s.dat',...
             nval,cutoff));
         fout_compare = fopen(fylename,'w');
         
@@ -59,17 +59,17 @@ for rcutcntr = 1:length(cutoff_arr) % begin rcut loop
         %pdival arch1 c1 .. c4 cavg tab tab arch2 tab tab arch2 c1 .. c4 cavg
         %tab tab tvalue
         
-        fprintf(fout_compare,'%s\t%s\t%s\t%s\t%s\t%s\t%s\t\t%s\t%s\t%s\t%s\t%s\t%s\t\t%s\t%s\t%s\n',...
-            'pdival','arch1','c1','c2','c3','c4','cavg',...
-            'arch2','c1','c2','c3','c4','cavg','nullhypothesis','tvalue','conf_interval');
+        fprintf(fout_compare,'%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t\t%s\t%s\t%s\t%s\t%s\t%s\t\t%s\t%s\t%s\t%s\n',...
+            'nval','pdival','arch1','c1','c2','c3','c4','cavg',...
+            'arch2','c1','c2','c3','c4','cavg','nullHyp','tvalue','ci_lo','ci_hi');
         
         for pdicntr = 1:length(pdi_freearr) % begin pdival loop
             pdival = pdi_freearr(pdicntr);
-            fprintf(fout_compare,'%g\t',pdival);
+            
             
             for arch_cntr_1 = 1:length(ref_arch_arr1)-1 % begin ref_arch1 first loop
-            
-                % read file written by adsfrac for the first arch_arr
+                
+                % read file written by adsfrac for dirstr1 (arch_cntr_1)
                 dirstr1 = ref_arch_arr1{arch_cntr_1};
                 fylename = sprintf('./../../ttest_dir/n_%d/adsfrac_rcut_%s_pdifree_%g_arch_%s.dat',...
                     nval,cutoff,pdival,dirstr1);
@@ -83,33 +83,40 @@ for rcutcntr = 1:length(cutoff_arr) % begin rcut loop
                 fgetl(fin_main); %skip first line
                 tline = fgetl(fin_main);
                 spl_tline = strsplit(strtrim(tline));
-                len_tline = length(spl_tline);
-                avg_fvals_ref1 = zeros(len_tline,1); % corresponding to num of cases in the file.
+                len_tline1 = length(spl_tline); % use this as a separate number for writing into consolidated file
+                avg_fvals_ref1 = zeros(len_tline1,1); % corresponding to num of cases in the file.
                 
-                fprintf(fout_compare,'%s\t',dirstr1);
-                for colcntr = 1:len_tline
+                for colcntr = 1:len_tline1
                     avg_fvals_ref1(colcntr)   = str2double(spl_tline{colcntr});
-                    fprintf(fout_compare,'%g\t',avg_fvals_ref1(colcntr));
                 end
                 
-                if len_tline ~= max_numcases % to fill the uncomputed cases with tabs so that it can be viewed easily in EXCEL sheets.
-                    for fill_cntr = 1:max_numcases-len_tline
-                        fprintf(fout_compare,'\t');
-                    end
-                end
-                fprintf(fout_compare,'%g\t \t', mean(avg_fvals_ref1)); % write mean value
                 fclose(fin_main); % CLOSE fin_main
-                clear tline spl_tline len_tline% clear this so that it is not overwritten
-                
-%                 [hnull,pnull,cinull,statsnull] = ttest(avg_fvals_ref1); % ttest for equal variances and from same sample
+                clear tline spl_tline% clear this so that it is not overwritten
+                %                 [hnull,pnull,cinull,statsnull] = ttest(avg_fvals_ref1); % ttest for equal variances and from same sample
                 
                 for arch_cntr_2 = 1+arch_cntr_1:length(ref_arch_arr1) % begin ref_arch1 second loop
+            
+                    % Do all the file out operations for the first
+                    % architecture before moving to the second one.
+                    fprintf(fout_compare,'%g\t',nval);
+                    fprintf(fout_compare,'%g\t',pdival);
+                    fprintf(fout_compare,'%s\t',dirstr1);
+                    for colcntr = 1:len_tline1
+                        fprintf(fout_compare,'%g\t',avg_fvals_ref1(colcntr)); % the values are already stored.
+                    end
+                    if len_tline1 ~= max_numcases % to fill the uncomputed cases with tabs so that it can be viewed easily in EXCEL sheets.
+                        for fill_cntr = 1:max_numcases-len_tline1
+                            fprintf(fout_compare,'\t');
+                        end
+                    end
+                    fprintf(fout_compare,'%g\t \t', mean(avg_fvals_ref1)); % write mean value
                     
+                    % Now read dirstr2 data (arch_cntr_2)
                     dirstr2 = ref_arch_arr1{arch_cntr_2};
                     fprintf('Analyzing n = %d, pdi = %g, arch1 = %s, arch2 = %s \n', ...
                         nval, pdival, dirstr1, dirstr2);
                     
-                    % read file written by adsfrac for the second arch_arr
+                    % read file written by adsfrac for dirstr2
                     fylename = sprintf('./../../ttest_dir/n_%d/adsfrac_rcut_%s_pdifree_%g_arch_%s.dat',...
                         nval,cutoff,pdival,dirstr2);
                     fin_main = fopen(fylename,'r');
@@ -122,31 +129,33 @@ for rcutcntr = 1:length(cutoff_arr) % begin rcut loop
                     fgetl(fin_main); %skip first line
                     tline = fgetl(fin_main);
                     spl_tline = strsplit(strtrim(tline));
-                    len_tline = length(spl_tline);
-                    avg_fvals_ref2 = zeros(len_tline,1); % corresponding to num of cases in the file.
+                    len_tline2 = length(spl_tline); % should be different so that len_tline1 is not overwritten for outfile requirements
+                    avg_fvals_ref2 = zeros(len_tline2,1); % corresponding to num of cases in the file.
                     
                     fprintf(fout_compare,'%s\t',dirstr2);
-                    for colcntr = 1:len_tline
+                    for colcntr = 1:len_tline2
                         avg_fvals_ref2(colcntr)   = str2double(spl_tline{colcntr});
                         fprintf(fout_compare,'%g\t',avg_fvals_ref2(colcntr));
                     end
                     
-                    if len_tline ~= max_numcases % to fill the uncomputed cases with tabs so that it can be viewed easily in EXCEL sheets.
-                        for fill_cntr = 1:max_numcases-len_tline
+                    if len_tline2 ~= max_numcases % to fill the uncomputed cases with tabs so that it can be viewed easily in EXCEL sheets.
+                        for fill_cntr = 1:max_numcases-len_tline2
                             fprintf(fout_compare,'\t');
                         end
                     end
                     fprintf(fout_compare,'%g\t \t', mean(avg_fvals_ref2)); % write mean value
                     fclose(fin_main); % CLOSE fin_main
-                    clear tline spl_tline len_tline% clear this so that it is not overwritten
+                    clear tline spl_tline len_tline2% clear this so that it is not overwritten
                     
                     [hnull,pnull,cinull,statsnull] = ttest2(avg_fvals_ref1,avg_fvals_ref2,'Vartype','unequal'); % ttest for unequal variances and different samples
                     
-                    fprintf(fout_compare,'%d\t%g\t%g\n',hnull,pnull,cinull); % write the ttest results
+                    fprintf(fout_compare,'%d\t%g\t%g\t%g\n',hnull,pnull,cinull(1),cinull(2)); % write the ttest results
                     
-                end % end ref_arch2
+                end % end arch_cntr_2 (dirstr2)
                 
-            end % end ref_arch2
+                clear len_tline1
+                
+            end % end arch_cntr_1 (dirstr1)
    
         end % end pdi_cntr
                 
