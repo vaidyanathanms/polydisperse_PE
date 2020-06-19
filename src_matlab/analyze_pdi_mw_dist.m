@@ -46,29 +46,30 @@ num_cases = length(casearr);
 
 %% Main Analysis
 
-if pdiflag % create consolidated list
-    fout_cons = fopen(sprintf('./../../outfiles/overall/pdi_consolidate_rcut_%s.dat',...
-        cutoff),'w');
-    fprintf(fout_cons,'%s\t%s\t%s\t%s\t%s\t%s\n','N_f','Arch','Case_num',...
-        'Mw_free','Mn_free','PDI_free');
-end
-
-for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
-    pdifree     = pdi_freearr(pdi_cntr);
-    pdifree_str = num2str(pdifree,'%1.1f');
+for ncnt = 1:length(nch_freearr) % begin nfree loop
+    nval = nch_freearr(ncnt);
     
-    %zero arrays for averages across cases
-    casecntr_arr  = zeros(length(nch_freearr),length(arch_arr));
-    npdi_all = zeros(length(nch_freearr),length(arch_arr));
-    
-    if pdiflag %create average across all cases
+    if pdiflag 
+        % create consolidated list
+        fout_cons = fopen(sprintf('./../../outfiles/overall/pdi_consolidate_n_%d_rcut_%s.dat',...
+            nval,cutoff),'w');
+        fprintf(fout_cons,'%s\t%s\t%s\t%s\t%s\t%s\t%s\n','N_f','Arch','Ref_PDI','Case_num',...
+            'Mw_free','Mn_free','PDI_Simulated');
+        
+        %create average across all cases
         favg_pdi = fopen(sprintf('./../../outfiles/overall/pdi_ave_allcases_rcut_%s.dat',...
             cutoff),'w');
-        fprintf(favg_pdi,'%s\t%s\t%s\t%s\n','N_f','Arch','ncases','pdi_avg');
+        fprintf(favg_pdi,'%s\t%s\t%s\t%s\n','N_f','Arch','ncases','PDI_avg');
+        
     end
-      
-    for ncnt = 1:length(nch_freearr) % begin nfree loop
-        nval = nch_freearr(ncnt);
+    
+    for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
+        ref_pdifree     = pdi_freearr(pdi_cntr);
+        pdifree_str     = num2str(ref_pdifree,'%1.1f');
+        
+        %zero arrays for averages across cases
+        casecntr_arr  = zeros(length(nch_freearr),length(arch_arr));
+        npdi_all = zeros(length(nch_freearr),length(arch_arr));
         
         for arch_cnt = 1:length(arch_arr)  % begin arch loop
             dirstr = arch_arr{arch_cnt};
@@ -80,8 +81,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                 fprintf('%s does not exist\n',dirname);
                 continue
             end
-            
-            
+
             if mwdflag %create average across all cases
                 avgmolarr = zeros(num_cases*nval,1); % to compute average distribution
                 favg_dist = fopen(sprintf('./../../outfiles/overall/avgdist_allcases_%s_rcut_%s.dat',...
@@ -99,7 +99,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                     continue
                 end
                 
-                fprintf('Analyzing pdi/nfree/arch/case: %g\t%d\t%s\t%d\n', pdifree,nval,dirstr,casenum);
+                fprintf('Analyzing pdi/nfree/arch/case: %g\t%d\t%s\t%d\n', ref_pdifree,nval,dirstr,casenum);
                 
                 %check if file type exists
                 ads_prefix = sprintf('PEinitdata.txt');
@@ -138,10 +138,10 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                     fclose(fmol);
                     
                     % compute and write the initial pdi. Store avg arrays
-                    [pdifree,mnfree,mwfree] = compute_pdi(molarr,nval);
-                    fprintf(fout_cons,'%d\t%s\t%d\t%g\t%g\t%g\n',nval,dirstr,casenum,mnfree,mwfree,pdifree);
+                    [pdi_sim,mnfree,mwfree] = compute_pdi(molarr,nval);
+                    fprintf(fout_cons,'%d\t%s\t%g\t%d\t%g\t%g\t%g\n',nval,dirstr,ref_pdifree,casenum,mnfree,mwfree,pdi_sim);
                     casecntr_arr(ncnt,arch_cnt)  = casecntr_arr(ncnt,arch_cnt) + 1;
-                    npdi_all(ncnt,arch_cnt) = npdi_all(ncnt,arch_cnt) + pdifree;
+                    npdi_all(ncnt,arch_cnt) = npdi_all(ncnt,arch_cnt) + pdi_sim;
                 end % end pdi calculation
                 
                 if mwdflag % begin molecular weight distribution calculation
