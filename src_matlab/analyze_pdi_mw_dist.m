@@ -139,7 +139,8 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                     
                     % compute and write the initial pdi. Store avg arrays
                     [pdi_sim,mnfree,mwfree] = compute_pdi(molarr,nval);
-                    fprintf(fout_cons,'%d\t%s\t%g\t%d\t%g\t%g\t%g\n',nval,dirstr,ref_pdifree,casenum,mnfree,mwfree,pdi_sim);
+                    fprintf(fout_cons,'%d\t%s\t%g\t%d\t%g\t%g\t%g\n',...
+                        nval,dirstr,ref_pdifree,casenum,mnfree,mwfree,pdi_sim);
                     casecntr_arr(ncnt,arch_cnt)  = casecntr_arr(ncnt,arch_cnt) + 1;
                     npdi_all(ncnt,arch_cnt) = npdi_all(ncnt,arch_cnt) + pdi_sim;
                 end % end pdi calculation
