@@ -19,22 +19,23 @@ rest_job_flag  = 0 #copy restart/job files
 fyl_flag       = 1 #copy output files
 
 #---------input details----------------------------------------
-free_chains  = [32]#,48,64,96,128,150]#,80]#,32,48]
+free_chains  = [16]#[16,24,32,64,96,128,150]
 free_avg_mw  = 30
 graft_chains = 32
 graft_avg_mw = 35 
 tail_mons    = 5
 nsalt        = 510
 f_charge     = 0.5
-archarr      = [1,2,3,4]
-ncases_pdi   = [1,2,3,4]
-pdi_free     = 1.5
+archarr      = [1]#,2,3,4]
+ncases_pdi   = [1]#,2,3,4]
+pdi_free     = 1.0
 pdi_graft    = 1.0
 cutoff_dist  = 1.50 #use two decimal places
 
+
 #--------file_lists--------------------------------------------
 #Give prefix for files to be copied followed by *
-fyl_list     = ['adsfrac*','tether_*','chainadsval*','log*',\
+fyl_list     = ['adsfrac*','tether*','chainadsval*','log*',\
                 'dens*','chdens*','PErdf*','chgrpdens*','grpdens*'\
                 ,'polydens*','anainp*']
 restart_list = ['restart*','archival*','job*']
@@ -116,7 +117,7 @@ for ifree in range(len(free_chains)):
         #------------------Make global analysis files output directory-----
         if fyl_flag == 1:
 
-            out_dir = 'outresults_dir'         
+            out_dir = 'outresults_dir_n_' + str(free_chains[ifree])         
             anafyl_main_dir = workdir2 + '/' + out_dir
             if not os.path.isdir(anafyl_main_dir):
                 print("making", anafyl_main_dir)
@@ -136,7 +137,7 @@ for ifree in range(len(free_chains)):
 
         if rest_job_flag == 1:
 
-            restart_dirname = 'restart_all_dir'
+            restart_dirname = 'restart_all_dir_n_' + str(free_chains[ifree])
             restart_main_dir = workdir2 + '/' + restart_dirname
             if not os.path.isdir(restart_main_dir):
                 os.mkdir(restart_main_dir)
