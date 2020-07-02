@@ -1,4 +1,5 @@
 %% To plot output MW distribution
+% V2.0 changed binning algorithm, see NOTE 2 and NOTE 3
 
 clc;
 close all;
@@ -15,8 +16,8 @@ msty = {'d','s','o','x'};
 nch_freearr = [32]%;64;128;150];
 casearr  = [1]%;2;3;4];
 pdi_freearr = [1.5];
-arch_arr  = {'bl_bl';'bl_al';'al_bl';'al_al'};
-leg_arr   = {'Block-Block';'Block-Alter';'Alter-Block';'Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr for legends
+arch_arr  = {'bl_bl'}%;'bl_al';'al_bl';'al_al'};
+leg_arr   = {'Block-Block'}%;'Block-Alter';'Alter-Block';'Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr for legends
 pdigraft  = 1.0;
 nfreemons = 30; 
 ngraft_ch = 32; % Number of graft chains
@@ -66,10 +67,15 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
             end
     
             % Output MWD averaged across cases
+            % avgads_molarr consists of the total number a chain of a given
+            % MW is adsorbed and is totalled across all the files for a
+            % given case and across cases for a given graft-free
+            % architecure.
             avgads_molarr = zeros(max_mw_free,2); % to compute average distribution; maximum size of the array should be equal to the expected max MW
             avgads_molarr(:,1) = 1:max_mw_free;
             favg_dist = fopen(sprintf('./../../outfiles/overall/out_mwdist_n_%d_pdi_%g_%s_rcut_%s.dat',...
                 nval,ref_pdifree,dirstr,cutoff),'w');
+            nframes_arch = 0; % Total frames per arch: sum across different cases and different files.
 
             for casecntr = 1:length(casearr) % begin case loop
                 casenum = casearr(casecntr);
@@ -104,6 +110,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 end
                 
                 nfyles = numel(ads_fylelist); %number of files of the type
+                nframes_case = 0; % total frames per case: sum across all files.
                 
                 % begin running through the chainadsfile
                 for fylcnt = 1:nfyles 
@@ -117,16 +124,16 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                     end
                     
                     % extract adsorbed chain details
-                    adsfreechains_arr = extract_adschain(ads_fylename,max_mw_free);
+                    [adsfreechains_arr,all_ads_mw_arr,num_frames] = extract_adschain(ads_fylename,max_mw_free);
+                    nframes_case = nframes_case + num_frames;
                     
                     %For compute_mwdist(), the size of the array will be
                     %equal to the maximum MW and the IDs corresponding to
                     %the chains do not matter -- especially while taking an
-                    %average since for each case, the distribution of MWs
+                    %average, since for each case, the distribution of MWs
                     %will be different.
                     
-                    %NOTE 2: bin_lims do not matter for individual cases.
-                    %Output is anyway not added with respect to anything.
+                    %NOTE 2: For individual cases, Output is not added with respect to anything.
                     %If the output distribution is compared to the input,
                     %the height of the curve will show the difference
                     %between the input and output distributions.
@@ -135,30 +142,38 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                     fdist = fopen(distoutfyle,'w');
                     left_edges = outdist.BinEdges(1:outdist.NumBins);
                     right_edges = outdist.BinEdges(2:outdist.NumBins+1);
+                    all_values  = outdist.Values;
                     fprintf(fdist,'%s\t%d\n','NumBins',outdist.NumBins);
                     fprintf(fdist,'%s\t%s\t%s\n','leftEdge','RightEdge', 'Normalized Value');
                     fprintf(fdist,'%d\t%d\t%d\n',[left_edges' right_edges' outdist.Values']');
                     fclose(fdist);
                     
                     % Store into avg arrays
-                    % NOTE 3: For computing averages, the bin width and number of
-                    % bins along with the range of the bins need to be constant or
-                    % else adding different cases can go wrong.
-                    [foravg_out,edges,bin] = histcounts(adsfreechains_arr(:,2),'binwid',bin_wid,'BinLimits',bin_lims);
-                    avgads_molarr(:,2) = avgads_molarr(:,2) + foravg_out(:,2);
-                    clear adsfreechain_arr foravg_out
+                    % NOTE 3: No point in binning. Add
+                    % adsfreechains_arr(:,2) to avgads_molarr. The domain
+                    % which is adschains_arr(:,1) is identical across cases
+                    % and different ads_fylenmae. Hence adding won't cause
+                    % any problem. Now, better than histogramming, it will
+                    % be easier to write a separate function to compute
+                    % probability of adsorption.
+                    
+                    % Normalization (division by number of frames in a
+                    % file) need not be done here. Adding a larger
+                    % simulation with a smaller length simulation is not
+                    % incorrect.
+                    avgads_molarr(:,2) = avgads_molarr(:,2) + adsfreechains_arr(:,2);
+                    clear adsfreechain_arr outdist
                     
                 end % end mol. wt distribution calculation
                 
+                nframes_arch = nframes_arch + nframes_case;
+                
             end % end case loop
             
-            % find avg mw distribution across cases
-            avgoutdist = compute_mwdist(avgads_molarr,2);
-            left_edges = avgoutdist.BinEdges(1:avgoutdist.NumBins);
-            right_edges = avgoutdist.BinEdges(2:avgoutdist.NumBins+1);
-            fprintf(favg_dist,'%s\t%d\n','NumBins',avgoutdist.NumBins);
-            fprintf(favg_dist,'%s\t%s\t%s\n','leftEdge','RightEdge', 'Normalized Value');
-            fprintf(favg_dist,'%d\t%d\t%d\n',[left_edges' right_edges' avgoutdist.Values']');
+            [avgoutdist,avgprob] = find_distribution_of_mw(avgads_molarr,molarr(:,3),nframes_arch);
+           
+            
+            % find avg probability of adsorption
             fclose(favg_dist);
         
         end % end arch loop
