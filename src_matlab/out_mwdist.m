@@ -147,30 +147,22 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                     
                     % copy all data into an average array
                     len_ads_arr = length(all_ads_mw_arr);
-                    fin_index_avgads = init_index_avg_ads + len_ads_arr - 1;
-                    avg_of_all_ads_mw_arr(init_index_avgads:fin_index_avgads) = all_ads_mw_arr(:,1); % contains the MW of all adsorbed chains
-                    init_index_avg_ads = init_index_avg_ads + len_ads_arr; 
+                    fin_index_avgads = init_index_avgads + len_ads_arr - 1;
+                    avg_of_all_ads_mw_arr(init_index_avgads:fin_index_avgads,1) = all_ads_mw_arr(:,1); % contains the MW of all adsorbed chains
+                    init_index_avgads = init_index_avgads + len_ads_arr; 
                     
                     %average across files for a given case
                     avgads_molarr(:,2) = avgads_molarr(:,2) + adsfreechains_arr(:,2);
                     
                 end % end mol. wt distribution calculation
                 
-                %NOTE 2: For compute_mwdist(), the size of the array will be
-                %equal to the maximum MW and the IDs corresponding to
-                %the chains do not matter since the first column is
-                %identical. For each casenum, Output is added across
+                %NOTE 2: For each casenum, Output is added across
                 %different time frames. Think of it as a big file. So
                 %adding is OK!
                 
-                outdist = compute_mwdist(avgads_molarr,2); % compute and write individual distribution
                 distoutfyle = strcat(dirname,'/','ads_distout_details.dat');
                 fdist = fopen(distoutfyle,'w');
-                left_edges = outdist.BinEdges(1:outdist.NumBins);
-                right_edges = outdist.BinEdges(2:outdist.NumBins+1);
-                all_values  = outdist.Values;
-                fprintf(fdist,'%s\t%d\n','NumBins',outdist.NumBins);
-                fprintf(fdist,'%s\t%s\t%s\n','leftEdge','RightEdge', 'Normalized Value');
+                fprintf(fdist,'%s\t%s\n','Adsorbed chain MW', 'Adsorbed chain counts');
                 fprintf(fdist,'%d\t%d\t%d\n',[left_edges' right_edges' outdist.Values']');
                 fclose(fdist);
                 
@@ -184,8 +176,9 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
             % number of times they occur in the initial configuration. The
             % normalized output corresponds to the normalization with the
             % initial repeats of a given MW.
-            [norm_avgprob] = find_distribution_of_mw(avg_of_all_ads_mw_arr(:,1),all_INIT_mw_arr(:,1),nframes_arch,bin_wid);
-            
+            [norm_avgprob,init_all_counts] = find_distribution_of_mw(avg_of_all_ads_mw_arr(:,1),all_INIT_mw_arr(:,1),nframes_arch);
+            fprintf(favg_dist,'%s\t%s\t%s\n','MW','initial numbers','Normalized adsorption probability');
+            fprintf(favg_dist,'%d\t%d\t%g\n',[init_all_counts(:,1) init_all_counts(:,2) norm_avgprob(:,2)]);
             
             % find avg probability of adsorption
             fclose(favg_dist);
