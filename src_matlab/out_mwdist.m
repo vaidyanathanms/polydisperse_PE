@@ -74,16 +74,17 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
             % given case and across cases for a given graft-free
             % architecure.
             avgads_molarr = zeros(max_mw_free,2); % to compute average distribution; maximum size of the array should be equal to the expected max MW
-            avgads_molarr(:,1) = 1:max_mw_free; init_index_avgads = 1;
-            avg_of_all_ads_mw_arr = zeros(1000,1); % The number 1000 is by default. Will weed zeros at the end. This will append all the MWs of the adsorbed chains
+            avgads_molarr(:,1) = 1:max_mw_free; % This is for compute_mwdist for a given case
+            
+            
+            avg_of_all_ads_mw_arr = zeros(1000,1); % The number 1000 is by default. Will weed zeros at the end. This will append all the MWs of the adsorbed chains for find_distribution_of_mw
+            init_index_avgads = 1; 
+            all_INIT_mw_arr = zeros(length(casearr)*nval,1); % Avg input MW for normalization: unlike avg_of_all_ads_mw_arr, the size hereis fixed
+            
             favg_dist = fopen(sprintf('./../../outfiles/overall/out_mwdist_n_%d_pdi_%g_%s_rcut_%s.dat',...
                 nval,ref_pdifree,dirstr,cutoff),'w');
             nframes_arch = 0; % Total frames per arch: sum across different cases and different files.
-            
-            % Avg input MW for normalization: unlike avgads the size here
-            % is fixed
-            all_INIT_mw_arr = zeros(length(casearr)*nval,1); %
-            
+
             for casecntr = 1:length(casearr) % begin case loop
                 casenum = casearr(casecntr);
                 
@@ -162,7 +163,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 %different time frames. Think of it as a big file. So
                 %adding is OK!
                 
-                outdist = compute_mwdist(adsfreechains_arr,2); % compute and write individual distribution
+                outdist = compute_mwdist(avgads_molarr,2); % compute and write individual distribution
                 distoutfyle = strcat(dirname,'/','ads_distout_details.dat');
                 fdist = fopen(distoutfyle,'w');
                 left_edges = outdist.BinEdges(1:outdist.NumBins);
