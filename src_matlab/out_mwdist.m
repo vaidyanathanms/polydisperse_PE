@@ -163,7 +163,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 distoutfyle = strcat(dirname,'/','ads_distout_details.dat');
                 fdist = fopen(distoutfyle,'w');
                 fprintf(fdist,'%s\t%s\n','Adsorbed chain MW', 'Adsorbed chain counts');
-                fprintf(fdist,'%d\t%d\t%d\n',[left_edges' right_edges' outdist.Values']');
+                fprintf(fdist,'%d\t%d\n',[avgads_molarr(:,1) avgads_molarr(:,2)]');
                 fclose(fdist);
                 
                 nframes_arch = nframes_arch + nframes_case;
@@ -178,7 +178,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
             % initial repeats of a given MW.
             [norm_avgprob,init_all_counts] = find_distribution_of_mw(avg_of_all_ads_mw_arr(:,1),all_INIT_mw_arr(:,1),nframes_arch);
             fprintf(favg_dist,'%s\t%s\t%s\n','MW','initial numbers','Normalized adsorption probability');
-            fprintf(favg_dist,'%d\t%d\t%g\n',[init_all_counts(:,1) init_all_counts(:,2) norm_avgprob(:,2)]);
+            fprintf(favg_dist,'%d\t%d\t%g\n',[init_all_counts(:,1) init_all_counts(:,2) norm_avgprob(:,2)]');
             
             % find avg probability of adsorption
             fclose(favg_dist);
