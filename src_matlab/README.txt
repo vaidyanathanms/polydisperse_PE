@@ -3,7 +3,6 @@ How to use the MATLAB files:
 Copy all output from Mesabi into the sim_results directory. See dir names for example.
 
 ***** File 1: adsfrac.m *********************************************************************
-
 Use adsfrac.m to compute the adsorbed fraction. 
 With ttestflag ON, this also writes the individual avg_f values for each case into ttest_dir (this super directory is required).
 Requires output superdirectory (outfiles) and the subdirectory folders within the superdirectory.
