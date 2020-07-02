@@ -1,6 +1,6 @@
 function [molcnt_arr] = analyze_datafile(dataname,nfree_ch,ngraft_ch)
 
-% Order in datafile: graft mons -> free mons -> counter ions -> salt
+% Required order in datafile: graft mons -> free mons -> counter ions -> salt
 
 % Check whether file exists
 fid = fopen(dataname,'r');
@@ -37,9 +37,13 @@ while true
         i = 1;
         while (i <= num_atoms) % increment molcnt counter based on molid
             
+            if feof(fid)
+                break;
+            end
+            
             tline = fgetl(fid);
             spl_tline = strsplit(strtrim(tline));
-            if ~ischar(tline) || isempty(tline)
+            if isempty(tline) || ~ischar(tline)
                 continue;
             end
             
