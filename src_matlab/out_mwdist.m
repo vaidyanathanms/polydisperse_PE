@@ -45,6 +45,7 @@ max_mw_free = 10*nfreemons; % An approximate max. Will throw error from extract_
 %% For averaging across cases
 bin_wid  = 8; % THIS CAN BE DIFFERENT FROM WHAT IS IN COMPUTE_MWDIST
 bin_lims = [1,max_mw_free]; % THIS IS NEEDED TO ENSURE ALL CASES ARE BINNED IN THE SAME RANGE
+bin_edges = []
 
 %% Main Analysis
 
@@ -98,7 +99,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 % of each chain 
                 molarr = analyze_datafile(inp_fylename,nval,nch_graft); % extract molecular details for comparison at the end
                 start_index = (casenum-1)*nval + 1; fin_index = casenum*nval;
-                all_INIT_mw_arr(start_index:fin_index) = molarr(:,3);
+                all_INIT_mw_arr(start_index:fin_index) = molarr(:,3); % contains the initial MW of all free chains
                
                 % Now start analyzing all adsorbed chain files
                 dirname = sprintf('./../../sim_results/outresults_dir_n_%d/%s/pdifree_%s_pdigraft_%s/Case_%d',...
@@ -140,7 +141,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                     % copy all data into an average array
                     len_ads_arr = length(all_ads_mw_arr); 
                     fin_index_avgads = init_index_avg_ads + len_ads_arr - 1;
-                    avg_of_all_ads_mw_arr(init_index_avgads:fin_index_avgads) = all_ads_mw_arr(:,1);
+                    avg_of_all_ads_mw_arr(init_index_avgads:fin_index_avgads) = all_ads_mw_arr(:,1); % contains the MW of all adsorbed chains
                     init_index_avg_ads = init_index_avg_ads + len_ads_arr;
                     
                     %For compute_mwdist(), the size of the array will be
@@ -173,12 +174,6 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                     % be easier to write a separate function to compute
                     % probability of adsorption.
                     
-                    % Normalization (division by number of frames in a
-                    % file) need not be done here. Adding a larger
-                    % simulation with a smaller length simulation is not
-                    % incorrect.
-                    avgads_molarr(:,2) = avgads_molarr(:,2) + adsfreechains_arr(:,2);
-                    clear adsfreechain_arr outdist
                     
                 end % end mol. wt distribution calculation
                 
@@ -186,7 +181,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 
             end % end case loop
             
-            [avgoutdist,avgprob] = find_distribution_of_mw(avg_of_all_ads_mw_arr(:,1),all_INIT_mw_arr(:,1),nframes_arch);
+            [avgoutdist,avgprob] = find_distribution_of_mw(avg_of_all_ads_mw_arr(:,1),all_INIT_mw_arr(:,1),nframes_arch,bin_wid);
            
             
             % find avg probability of adsorption
