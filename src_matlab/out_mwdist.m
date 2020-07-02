@@ -12,13 +12,13 @@ lsty = {'-','--',':'};
 msty = {'d','s','o','x'};
 
 %% Inputs
-nch_freearr = [16;32;64;128;150];
-casearr  = [1;2;3;4];
+nch_freearr = [32]%;64;128;150];
+casearr  = [1]%;2;3;4];
 pdi_freearr = [1.5];
-arch_arr = {'bl_bl';'bl_al';'al_bl';'al_al'};
-leg_arr  = {'Block-Block';'Block-Alter';'Alter-Block';'Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr for legends
-pdigraft = 1.0;
-nmonfree = 30; 
+arch_arr  = {'bl_bl';'bl_al';'al_bl';'al_al'};
+leg_arr   = {'Block-Block';'Block-Alter';'Alter-Block';'Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr for legends
+pdigraft  = 1.0;
+nfreemons = 30; 
 ngraft_ch = 32; % Number of graft chains
 cutoff = '1.50';
 lz = 120; 
@@ -39,7 +39,7 @@ avg_across_cases = zeros(length(nch_freearr),length(arch_arr),length(pdi_freearr
 rhofree = nch_freearr*nfreemons/(lz*area);
 pdigraft_str = num2str(pdigraft,'%1.1f');
 num_cases = length(casearr);
-max_mw_free = 10*nmonfree; % An approximate max. Will throw error from extract_adschain.m if it is more than this value.
+max_mw_free = 10*nfreemons; % An approximate max. Will throw error from extract_adschain.m if it is more than this value.
 
 %% For averaging across cases
 bin_wid  = 8; % THIS CAN BE DIFFERENT FROM WHAT IS IN COMPUTE_MWDIST
@@ -73,6 +73,8 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
 
             for casecntr = 1:length(casearr) % begin case loop
                 casenum = casearr(casecntr);
+     
+                fprintf('Analyzing pdi/nfree/arch/case: %g\t%d\t%s\t%d\n', ref_pdifree,nval,dirstr,casenum);
                 
                 %read molecular details from input datafile and remap molecular IDs of free chains                
                 inp_fylename = sprintf('./../../data_all_dir/n_%d/%s/pdifree%s_pdigraft_%s/Case_%d/PEinitdata.txt',...
@@ -93,8 +95,6 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                     continue
                 end
                 
-                fprintf('Analyzing pdi/nfree/arch/case: %g\t%d\t%s\t%d\n', ref_pdifree,nval,dirstr,casenum);
-                
                 % check if adsorbed chain file type exists
                 ads_prefix = sprintf('chainadsval_rcut_%s_config_*.lammpstrj',cutoff);
                 ads_fylelist = dir(strcat(dirname,'/',ads_prefix));
@@ -106,7 +106,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 nfyles = numel(ads_fylelist); %number of files of the type
                 
                 % begin running through the chainadsfile
-                for fylcnt = 1:nfyles
+                for fylcnt = 1:nfyles 
                     ads_fylename = strcat(dirname,'/',ads_fylelist(fylcnt).name);
                     if exist(ads_fylename,'file') ~= 2
                         fprintf('%s does not exist/empty file\n',ads_fylename);
@@ -162,11 +162,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
             fclose(favg_dist);
         
         end % end arch loop
-        
-        fclose(favg_dist);
-        
+              
     end % end nfree loop
 
 end % end pdi free loop
-
-fclose(fout_cons);
