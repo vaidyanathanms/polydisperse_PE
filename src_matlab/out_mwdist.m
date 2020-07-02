@@ -43,10 +43,9 @@ pdigraft_str = num2str(pdigraft,'%1.1f');
 num_cases = length(casearr);
 max_mw_free = 10*nfreemons; % An approximate max. Will throw error from extract_adschain.m if it is more than this value.
 
-%% For averaging across cases
+%% For averaging across cases (array name: avgads_molarr)
 bin_wid  = 8; % THIS CAN BE DIFFERENT FROM WHAT IS IN COMPUTE_MWDIST
 bin_lims = [1,max_mw_free]; % THIS IS NEEDED TO ENSURE ALL CASES ARE BINNED IN THE SAME RANGE
-bin_edges = []
 
 %% Main Analysis
 
@@ -75,8 +74,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
             % architecure.
             avgads_molarr = zeros(max_mw_free,2); % to compute average distribution; maximum size of the array should be equal to the expected max MW
             avgads_molarr(:,1) = 1:max_mw_free; % This is for compute_mwdist for a given case
-            
-            
+  
             avg_of_all_ads_mw_arr = zeros(1000,1); % The number 1000 is by default. Will weed zeros at the end. This will append all the MWs of the adsorbed chains for find_distribution_of_mw
             init_index_avgads = 1; 
             all_INIT_mw_arr = zeros(length(casearr)*nval,1); % Avg input MW for normalization: unlike avg_of_all_ads_mw_arr, the size hereis fixed
@@ -162,7 +160,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 
                 distoutfyle = strcat(dirname,'/','ads_distout_details.dat');
                 fdist = fopen(distoutfyle,'w');
-                fprintf(fdist,'%s\t%s\n','Adsorbed chain MW', 'Adsorbed chain counts');
+                fprintf(fdist,'%s\t%s\t%s\t%d\n','Adsorbed chain MW', 'Adsorbed chain counts','Total frames',nframes_case);
                 fprintf(fdist,'%d\t%d\n',[avgads_molarr(:,1) avgads_molarr(:,2)]');
                 fclose(fdist);
                 
