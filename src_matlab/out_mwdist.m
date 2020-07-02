@@ -86,7 +86,6 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
             
             favg_dist = fopen(sprintf('./../../outfiles/overall/out_mwdist_n_%d_pdi_%g_%s_rcut_%s.dat',...
                 nval,ref_pdifree,dirstr,cutoff),'w');
-            nframes_arch = 0; % Total frames per arch: sum across different cases and different files.
 
             for casecntr = 1:length(casearr) % begin case loop
                 casenum = casearr(casecntr);
@@ -177,9 +176,6 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 % files. One for each case, other a collated file.
                 
                 [norm_avgprob,init_all_counts] = find_distribution_of_mw(cnt_all_ads_mw_arr(:,1),all_INIT_mw_arr(:,1),nframes_arch);
-                
-                nframes_arch = nframes_arch + nframes_case;
-                
                 
             end % end case loop
             
