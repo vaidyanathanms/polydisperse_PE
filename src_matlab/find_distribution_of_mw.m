@@ -1,6 +1,7 @@
-function [norm_distcounts] = find_distribution_of_mw(dataarr,init_dist,total_frames)
+function [norm_distcounts,sorted_init_uniq_arr] = find_distribution_of_mw(dataarr,init_dist,total_frames)
 
 %% Format
+% Input
 % dataarr -> 1D array containing the MW of all chains that are
 % adsorbed over the course of the simulation (summing across cases and
 % num_fyles per case for a given arch).
@@ -22,7 +23,8 @@ all_init_counts = accumarray(init_ic,1);
 init_unique_counts = [init_unique, all_init_counts];
 
 % Counts of adsorbed MW distribution
-[adsorbed_unique,~,ads_ic] = unique(dataarr(:,3));
+dataarr(:,1) = dataarr(dataarr(:,1)~=0,1); % weed out zero values
+[adsorbed_unique,~,ads_ic] = unique(dataarr(:,1));
 all_adsorbed_counts = accumarray(ads_ic,1);
 adsorbed_unique_counts = [adsorbed_unique, all_adsorbed_counts];
 
