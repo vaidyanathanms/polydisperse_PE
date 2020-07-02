@@ -82,7 +82,6 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
             % cnt_all_ads_mw_arr will append all the MWs of the adsorbed chains for find_distribution_of_mw
             cnt_all_ads_mw_arr = zeros(1000,1); % The number 1000 is by default. Will weed zeros at the end. 
             init_index_avgads = 1; 
-            all_INIT_mw_arr = zeros(length(casearr)*nval,1); % Avg input MW for normalization: unlike cnt_all_ads_mw_arr, the size hereis fixed
             
             favg_dist = fopen(sprintf('./../../outfiles/overall/out_mwdist_n_%d_pdi_%g_%s_rcut_%s.dat',...
                 nval,ref_pdifree,dirstr,cutoff),'w');
