@@ -15,7 +15,7 @@ msty = {'d','s','o','x'};
 
 %% Inputs
 nch_freearr = [32]%;64;128;150];
-casearr  = [1]%;2;3;4];
+casearr  = [1;2;3;4];
 pdi_freearr = [1.5];
 arch_arr  = {'bl_bl'}%;'bl_al';'al_bl';'al_al'};
 leg_arr   = {'Block-Block'}%;'Block-Alter';'Alter-Block';'Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr for legends
@@ -168,18 +168,24 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 fprintf(fdist,'%s\t%s\t%s\t%d\n','Adsorbed chain MW', 'Adsorbed chain counts','Total frames',nframes_case);
                 fprintf(fdist,'%d\t%d\n',[avgads_molarr(:,1) avgads_molarr(:,2)]');
                 fclose(fdist);
+            
+                % Store into avg arrays
+                % NOTE 3: Easiest way is to add all the adsorbed mol wts and
+                % then count them after sorting. Subsequently divide by the
+                % number of times they occur in the initial configuration. The
+                % normalized output corresponds to the normalization with the
+                % initial repeats of a given MW. Cannot do this for a given
+                % architecture. Easier way is to write into two separate
+                % files. One for each case, other a collated file.
+                
+                [norm_avgprob,init_all_counts] = find_distribution_of_mw(cnt_all_ads_mw_arr(:,1),all_INIT_mw_arr(:,1),nframes_arch);
                 
                 nframes_arch = nframes_arch + nframes_case;
                 
+                
             end % end case loop
             
-            % Store into avg arrays
-            % NOTE 3: Easiest way is to add all the adsorbed mol wts and
-            % then count them after sorting. Subsequently divide by the
-            % number of times they occur in the initial configuration. The
-            % normalized output corresponds to the normalization with the
-            % initial repeats of a given MW.
-            [norm_avgprob,init_all_counts] = find_distribution_of_mw(cnt_all_ads_mw_arr(:,1),all_INIT_mw_arr(:,1),nframes_arch);
+            
             fprintf(favg_dist,'%s\t%s\t%s\n','MW','initial numbers','Normalized adsorption probability');
             fprintf(favg_dist,'%d\t%d\t%g\n',[init_all_counts(:,1) init_all_counts(:,2) norm_avgprob(:,2)]');
             
