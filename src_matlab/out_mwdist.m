@@ -148,30 +148,30 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                     len_ads_arr = length(all_ads_mw_arr);
                     fin_index_avgads = init_index_avg_ads + len_ads_arr - 1;
                     avg_of_all_ads_mw_arr(init_index_avgads:fin_index_avgads) = all_ads_mw_arr(:,1); % contains the MW of all adsorbed chains
-                    init_index_avg_ads = init_index_avg_ads + len_ads_arr;
+                    init_index_avg_ads = init_index_avg_ads + len_ads_arr; 
                     
-                    %For compute_mwdist(), the size of the array will be
-                    %equal to the maximum MW and the IDs corresponding to
-                    %the chains do not matter -- especially while taking an
-                    %average, since for each case, the distribution of MWs
-                    %will be different.
+                    %average across files for a given case
+                    avgads_molarr(:,2) = avgads_molarr(:,2) + adsfreechains_arr(:,2);
                     
-                    %NOTE 2: For individual cases, Output is not added with respect to anything.
-                    %If the output distribution is compared to the input,
-                    %the height of the curve will show the difference
-                    %between the input and output distributions.
-                    outdist = compute_mwdist(adsfreechains_arr,2); % compute and write individual distribution
-                    distoutfyle = strcat(dirname,'/','ads_distout_details.dat');
-                    fdist = fopen(distoutfyle,'w');
-                    left_edges = outdist.BinEdges(1:outdist.NumBins);
-                    right_edges = outdist.BinEdges(2:outdist.NumBins+1);
-                    all_values  = outdist.Values;
-                    fprintf(fdist,'%s\t%d\n','NumBins',outdist.NumBins);
-                    fprintf(fdist,'%s\t%s\t%s\n','leftEdge','RightEdge', 'Normalized Value');
-                    fprintf(fdist,'%d\t%d\t%d\n',[left_edges' right_edges' outdist.Values']');
-                    fclose(fdist);
-           
                 end % end mol. wt distribution calculation
+                
+                %NOTE 2: For compute_mwdist(), the size of the array will be
+                %equal to the maximum MW and the IDs corresponding to
+                %the chains do not matter since the first column is
+                %identical. For each casenum, Output is added across
+                %different time frames. Think of it as a big file. So
+                %adding is OK!
+                
+                outdist = compute_mwdist(adsfreechains_arr,2); % compute and write individual distribution
+                distoutfyle = strcat(dirname,'/','ads_distout_details.dat');
+                fdist = fopen(distoutfyle,'w');
+                left_edges = outdist.BinEdges(1:outdist.NumBins);
+                right_edges = outdist.BinEdges(2:outdist.NumBins+1);
+                all_values  = outdist.Values;
+                fprintf(fdist,'%s\t%d\n','NumBins',outdist.NumBins);
+                fprintf(fdist,'%s\t%s\t%s\n','leftEdge','RightEdge', 'Normalized Value');
+                fprintf(fdist,'%d\t%d\t%d\n',[left_edges' right_edges' outdist.Values']');
+                fclose(fdist);
                 
                 nframes_arch = nframes_arch + nframes_case;
                 
