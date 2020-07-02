@@ -1,5 +1,6 @@
 %% To plot output MW distribution
 % V2.0 changed binning algorithm, see NOTE 2 and NOTE 3
+% Results after NOTE 2 will mostly be irrelevant (only for cross-checking)
 
 clc;
 close all;
@@ -19,10 +20,10 @@ pdi_freearr = [1.5];
 arch_arr  = {'bl_bl'}%;'bl_al';'al_bl';'al_al'};
 leg_arr   = {'Block-Block'}%;'Block-Alter';'Alter-Block';'Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr for legends
 pdigraft  = 1.0;
-nfreemons = 30; 
+nfreemons = 30;
 ngraft_ch = 32; % Number of graft chains
 cutoff = '1.50';
-lz = 120; 
+lz = 120;
 area = 35^2;
 set_tmax = 3e7; % maximum timestep for analysis;
 
@@ -66,7 +67,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 fprintf('%s does not exist\n',dirname);
                 continue
             end
-    
+            
             % Output MWD averaged across cases
             % avgads_molarr consists of the total number a chain of a given
             % MW is adsorbed and is totalled across all the files for a
@@ -81,14 +82,14 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
             
             % Avg input MW for normalization: unlike avgads the size here
             % is fixed
-            all_INIT_mw_arr = zeros(length(casearr)*nval,1); % 
+            all_INIT_mw_arr = zeros(length(casearr)*nval,1); %
             
             for casecntr = 1:length(casearr) % begin case loop
                 casenum = casearr(casecntr);
-     
+                
                 fprintf('Analyzing pdi/nfree/arch/case: %g\t%d\t%s\t%d\n', ref_pdifree,nval,dirstr,casenum);
                 
-                %read molecular details from input datafile and remap molecular IDs of free chains                
+                %read molecular details from input datafile and remap molecular IDs of free chains
                 inp_fylename = sprintf('./../../data_all_dir/n_%d/%s/pdifree%s_pdigraft_%s/Case_%d/PEinitdata.txt',...
                     nval,dirstr,pdifree_str,pdigraft_str,casenum);
                 if exist(inp_fylename,'file') ~= 2
@@ -96,11 +97,11 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                     continue;
                 end
                 % molarr outputs the remapped ID of chain, actual ID and MW
-                % of each chain 
+                % of each chain
                 molarr = analyze_datafile(inp_fylename,nval,nch_graft); % extract molecular details for comparison at the end
                 start_index = (casenum-1)*nval + 1; fin_index = casenum*nval;
                 all_INIT_mw_arr(start_index:fin_index) = molarr(:,3); % contains the initial MW of all free chains
-               
+                
                 % Now start analyzing all adsorbed chain files
                 dirname = sprintf('./../../sim_results/outresults_dir_n_%d/%s/pdifree_%s_pdigraft_%s/Case_%d',...
                     nval,dirstr,pdifree_str,pdigraft_str,casenum);
@@ -122,7 +123,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 nframes_case = 0; % total frames per case: sum across all files.
                 
                 % begin running through the chainadsfile
-                for fylcnt = 1:nfyles 
+                for fylcnt = 1:nfyles
                     ads_fylename = strcat(dirname,'/',ads_fylelist(fylcnt).name);
                     if exist(ads_fylename,'file') ~= 2
                         fprintf('%s does not exist/empty file\n',ads_fylename);
@@ -139,7 +140,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                     nframes_case = nframes_case + num_frames;
                     
                     % copy all data into an average array
-                    len_ads_arr = length(all_ads_mw_arr); 
+                    len_ads_arr = length(all_ads_mw_arr);
                     fin_index_avgads = init_index_avg_ads + len_ads_arr - 1;
                     avg_of_all_ads_mw_arr(init_index_avgads:fin_index_avgads) = all_ads_mw_arr(:,1); % contains the MW of all adsorbed chains
                     init_index_avg_ads = init_index_avg_ads + len_ads_arr;
@@ -165,15 +166,6 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                     fprintf(fdist,'%d\t%d\t%d\n',[left_edges' right_edges' outdist.Values']');
                     fclose(fdist);
                     
-                    % Store into avg arrays
-                    % NOTE 3: No point in binning. Add
-                    % adsfreechains_arr(:,2) to avgads_molarr. The domain
-                    % which is adschains_arr(:,1) is identical across cases
-                    % and different ads_fylenmae. Hence adding won't cause
-                    % any problem. Now, better than histogramming, it will
-                    % be easier to write a separate function to compute
-                    % probability of adsorption.
-                    
                     
                 end % end mol. wt distribution calculation
                 
@@ -181,14 +173,19 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 
             end % end case loop
             
+            % Store into avg arrays
+            % NOTE 3: Easiest way is to add all the adsorbed mol wts and
+            % then count them after sorting. Subsequently divide by the
+            % number of times they occur in the initial configuration
+            
             [avgoutdist,avgprob] = find_distribution_of_mw(avg_of_all_ads_mw_arr(:,1),all_INIT_mw_arr(:,1),nframes_arch,bin_wid);
-           
+            
             
             % find avg probability of adsorption
             fclose(favg_dist);
-        
+            
         end % end arch loop
-              
+        
     end % end nfree loop
-
+    
 end % end pdi free loop
