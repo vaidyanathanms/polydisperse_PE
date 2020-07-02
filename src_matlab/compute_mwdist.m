@@ -5,9 +5,10 @@ function [distout] = compute_mwdist(dataarr,column_num)
 % calculated.
 
 % Keep bin width to 8.
-% Filter out ZERO molecular weight
+% * BUG FIX: DO NOT EDIT OUT ZERO MOLECULAR WT
+% Earlier version had zero MW wt filtered out. That doesn't make sense. If
+% there are no MWs between 0 and 8, the first bin has to be identically
+% zero. Good way os to add the bin limits. 
 
-[~,~,filt_dist] = find(dataarr(:,column_num));
 binwid    = 8;
-distout   = histogram(filt_dist,'BinWidth',binwid,'Normalization','pdf');
-% distout.Values
+distout   = histogram(dataarr(:,column_num),'BinWidth',binwid,'Normalization','pdf','BinLimits',[1,max(filt_dist)+1]);
