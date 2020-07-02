@@ -78,14 +78,14 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
             % architecure.
             avgads_molarr = zeros(max_mw_free,2); % to compute average distribution; maximum size of the array should be equal to the expected max MW
             avgads_molarr(:,1) = 1:max_mw_free; % This is for compute_mwdist for a given case
-  
+            
             % cnt_all_ads_mw_arr will append all the MWs of the adsorbed chains for find_distribution_of_mw
-            cnt_all_ads_mw_arr = zeros(1000,1); % The number 1000 is by default. Will weed zeros at the end. 
-            init_index_avgads = 1; 
+            cnt_all_ads_mw_arr = zeros(1000,1); % The number 1000 is by default. Will weed zeros at the end.
+            init_index_avgads = 1;
             
             favg_dist = fopen(sprintf('./../../outfiles/overall/out_mwdist_n_%d_pdi_%g_%s_rcut_%s.dat',...
                 nval,ref_pdifree,dirstr,cutoff),'w');
-
+            
             for casecntr = 1:length(casearr) % begin case loop
                 casenum = casearr(casecntr);
                 
@@ -122,6 +122,19 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 nfyles = numel(ads_fylelist); %number of files of the type
                 nframes_case = 0; % total frames per case: sum across all files.
                 
+                
+                % output for each case
+                dirout = sprintf('../../distribution_dir/n_%d/%s',nval,dirstr);
+                if ~exist(dirname,'dir')
+                    fprintf('%s does not exist\n',dirname);
+                    continue
+                end
+                distfyle = sprintf('distout_case_%d.dat',casenum);
+                distoutfyle = strcat(dirout,'/',distfyle);
+                fcase = fopen(distoutfyle,'w');
+                fprintf(fcase,'%s\t%s\t%s\t%s\t%s\n',...
+                    'MW','initial #of chains','Total occurences','Total occurences/frame','Normalized adsorption probability');
+                
                 % begin running through the chainadsfile
                 for fylcnt = 1:nfyles
                     ads_fylename = strcat(dirname,'/',ads_fylelist(fylcnt).name);
@@ -133,7 +146,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                         continue;
                     end
                     
-                    % extract adsorbed chain details: 
+                    % extract adsorbed chain details:
                     % o/p: adsfreechains_arr (2D array) with first column
                     % equal to 1:max_mw_free and second column consisting
                     % of the repeats. all_arr_mw_arr: all the adsorbed MWs
@@ -148,7 +161,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                     len_ads_arr = length(all_ads_mw_arr);
                     fin_index_avgads = init_index_avgads + len_ads_arr - 1;
                     cnt_all_ads_mw_arr(init_index_avgads:fin_index_avgads,1) = all_ads_mw_arr(:,1); % contains the MW of all adsorbed chains
-                    init_index_avgads = init_index_avgads + len_ads_arr; 
+                    init_index_avgads = init_index_avgads + len_ads_arr;
                     
                     %average across files for a given case
                     avgads_molarr(:,2) = avgads_molarr(:,2) + adsfreechains_arr(:,2);
@@ -164,7 +177,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 fprintf(fdist,'%s\t%s\t%s\t%d\n','Adsorbed chain MW', 'Adsorbed chain counts','Total frames',nframes_case);
                 fprintf(fdist,'%d\t%d\n',[avgads_molarr(:,1) avgads_molarr(:,2)]');
                 fclose(fdist);
-            
+                
                 % Store into avg arrays
                 % NOTE 3: Easiest way is to add all the adsorbed mol wts and
                 % then count them after sorting. Subsequently divide by the
@@ -175,12 +188,17 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 % files. One for each case, other a collated file.
                 
                 [norm_avgprob,init_all_counts] = find_distribution_of_mw(cnt_all_ads_mw_arr(:,1),molarr(:,3),nframes_case);
+                fprintf(fcase,'%d\t%d\t%d\t%g\t%g\n',[init_all_counts(:,1) init_all_counts(:,2) norm_avgprob(:,2) ...
+                    norm_avgprob(:,3) norm_avgprob(:,4)]');
+                fclose(fcase);
                 
             end % end case loop
             
             fprintf(favg_dist,'%s\t%d\%s\t%d\n','Case: ', casenum, 'Total frames', nframes_case);
-            fprintf(favg_dist,'%s\t%s\t%s\n','MW','initial numbers','Normalized adsorption probability');
-            fprintf(favg_dist,'%d\t%d\t%g\n',[init_all_counts(:,1) init_all_counts(:,2) norm_avgprob(:,2)]');
+            fprintf(favg_dist,'%s\t%s\t%s\t%s\t%s\n',...
+                    'MW','initial #of chains','Total occurences','Total occurences/frame','Normalized adsorption probability');
+            fprintf(favg_dist,'%d\t%d\t%d\t%g\t%g\n',[init_all_counts(:,1) init_all_counts(:,2) norm_avgprob(:,2) ...
+                    norm_avgprob(:,3) norm_avgprob(:,4)]');
             
             clear init_all_counts norm_avgprob avgads_molarr cnt_all_ads_mw_arr molarr
             
