@@ -129,7 +129,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                     fprintf('%s does not exist\n',dirname);
                     continue
                 end
-                distfyle = sprintf('distout_case_%d.dat',casenum);
+                distfyle = sprintf('distout_rcut_%s_case_%d.dat',cutoff,casenum);
                 distoutfyle = strcat(dirout,'/',distfyle);
                 fcase = fopen(distoutfyle,'w');
                 fprintf(fcase,'%s\t%s\t%s\t%s\t%s\n',...
