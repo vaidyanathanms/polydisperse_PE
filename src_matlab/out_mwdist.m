@@ -103,7 +103,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 % molarr outputs the remapped ID of chain, actual ID and MW
                 % of each chain
                 molarr = analyze_datafile(inp_fylename,nval,nch_graft); % extract molecular details for comparison at the end
-                start_index = (casenum-1)*nval + 1; fin_index = casenum*nval;
+                start_index = (casecntr-1)*nval + 1; fin_index = casenum*nval;
                 all_INIT_mw_arr(start_index:fin_index) = molarr(:,3); % contains the initial MW of all free chains
                 
                 % Now start analyzing all adsorbed chain files
