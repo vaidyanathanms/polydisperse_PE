@@ -72,11 +72,16 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
             % given case and across cases for a given graft-free
             % architecure.
             avgads_molarr = zeros(max_mw_free,2); % to compute average distribution; maximum size of the array should be equal to the expected max MW
-            avgads_molarr(:,1) = 1:max_mw_free;
+            avgads_molarr(:,1) = 1:max_mw_free; init_index_avgads = 1;
+            avg_of_all_ads_mw_arr = zeros(1000,1); % The number 1000 is by default. Will weed zeros at the end. This will append all the MWs of the adsorbed chains
             favg_dist = fopen(sprintf('./../../outfiles/overall/out_mwdist_n_%d_pdi_%g_%s_rcut_%s.dat',...
                 nval,ref_pdifree,dirstr,cutoff),'w');
             nframes_arch = 0; % Total frames per arch: sum across different cases and different files.
-
+            
+            % Avg input MW for normalization: unlike avgads the size here
+            % is fixed
+            all_INIT_mw_arr = zeros(length(casearr)*nval,1); % 
+            
             for casecntr = 1:length(casearr) % begin case loop
                 casenum = casearr(casecntr);
      
@@ -89,8 +94,11 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                     fprintf('%s does not exist/empty file\n',inp_fylename);
                     continue;
                 end
+                % molarr outputs the remapped ID of chain, actual ID and MW
+                % of each chain 
                 molarr = analyze_datafile(inp_fylename,nval,nch_graft); % extract molecular details for comparison at the end
-                
+                start_index = (casenum-1)*nval + 1; fin_index = casenum*nval;
+                all_INIT_mw_arr(start_index:fin_index) = molarr(:,3);
                
                 % Now start analyzing all adsorbed chain files
                 dirname = sprintf('./../../sim_results/outresults_dir_n_%d/%s/pdifree_%s_pdigraft_%s/Case_%d',...
@@ -123,9 +131,17 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                         continue;
                     end
                     
-                    % extract adsorbed chain details
+                    % extract adsorbed chain details: o/p contains
+                    % frequency of all adsorbed chains, MW of each adsorbed
+                    % chain and number of frames analyzed
                     [adsfreechains_arr,all_ads_mw_arr,num_frames] = extract_adschain(ads_fylename,max_mw_free);
                     nframes_case = nframes_case + num_frames;
+                    
+                    % copy all data into an average array
+                    len_ads_arr = length(all_ads_mw_arr); 
+                    fin_index_avgads = init_index_avg_ads + len_ads_arr - 1;
+                    avg_of_all_ads_mw_arr(init_index_avgads:fin_index_avgads) = all_ads_mw_arr(:,1);
+                    init_index_avg_ads = init_index_avg_ads + len_ads_arr;
                     
                     %For compute_mwdist(), the size of the array will be
                     %equal to the maximum MW and the IDs corresponding to
@@ -170,7 +186,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 
             end % end case loop
             
-            [avgoutdist,avgprob] = find_distribution_of_mw(avgads_molarr,molarr(:,3),nframes_arch);
+            [avgoutdist,avgprob] = find_distribution_of_mw(avg_of_all_ads_mw_arr(:,1),all_INIT_mw_arr(:,1),nframes_arch);
            
             
             % find avg probability of adsorption
