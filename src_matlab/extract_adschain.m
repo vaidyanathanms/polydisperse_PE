@@ -22,7 +22,7 @@ if ~ischar(tline) || isempty(tline)
     fprintf('ERROR: Unable to read file %s\n', tline)
     return;
 end
-spl_tline = strsplit(strtrim(tline),','); % comma demilited
+spl_tline = strtrim(strsplit(strtrim(tline),',')); % comma demilited
 find_keyword = -1; % to find "freechainMW" keyword
 
 for wordcnt = 1:length(spl_tline)
@@ -35,7 +35,7 @@ if find_keyword == -1
     fprintf('ERROR: Unable to find keyword (freechainMW) in header %s\n', tline);
     return;
 end
-    
+
 % start reading the rest of the file
 while true
     
@@ -44,7 +44,7 @@ while true
         continue;
     end
     
-    spl_tline = strsplit(strtrim(tline)); 
+    spl_tline = strtrim(strsplit(strtrim(tline)));
     ch_mw = str2double(spl_tline{column_num});
     
     % check if this exceeds the max designated value
@@ -55,15 +55,14 @@ while true
     end
  
     % check if zero/negative or real values are there
-    if ch_mw < 1 || ~isinteger(ch_mw)
+    if ch_mw < 1 || ~isinteger(int8(ch_mw))
         fprintf('ERROR: Unknown output MW %d\n',ch_mw)
         break;
     end
     
     adschain_arr(ch_mw,2) = adschain_arr(ch_mw,2) + 1; % add corresponding value
-    
+        
 end
-    
     
     
     
