@@ -133,9 +133,14 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                         continue;
                     end
                     
-                    % extract adsorbed chain details: o/p contains
-                    % frequency of all adsorbed chains, MW of each adsorbed
-                    % chain and number of frames analyzed
+                    % extract adsorbed chain details: 
+                    % o/p: adsfreechains_arr (2D array) with first column
+                    % equal to 1:max_mw_free and second column consisting
+                    % of the repeats. all_arr_mw_arr: all the adsorbed MWs
+                    % across all frames. num_frames: number of frames.
+                    % Technically sum(all_ads_mw_arr) for a given MW ==
+                    % adsfreechains_arr(corresponding MW,2). Need to check
+                    % this..
                     [adsfreechains_arr,all_ads_mw_arr,num_frames] = extract_adschain(ads_fylename,max_mw_free);
                     nframes_case = nframes_case + num_frames;
                     
@@ -165,8 +170,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                     fprintf(fdist,'%s\t%s\t%s\n','leftEdge','RightEdge', 'Normalized Value');
                     fprintf(fdist,'%d\t%d\t%d\n',[left_edges' right_edges' outdist.Values']');
                     fclose(fdist);
-                    
-                    
+           
                 end % end mol. wt distribution calculation
                 
                 nframes_arch = nframes_arch + nframes_case;
@@ -176,9 +180,10 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
             % Store into avg arrays
             % NOTE 3: Easiest way is to add all the adsorbed mol wts and
             % then count them after sorting. Subsequently divide by the
-            % number of times they occur in the initial configuration
-            
-            [avgoutdist,avgprob] = find_distribution_of_mw(avg_of_all_ads_mw_arr(:,1),all_INIT_mw_arr(:,1),nframes_arch,bin_wid);
+            % number of times they occur in the initial configuration. The
+            % normalized output corresponds to the normalization with the
+            % initial repeats of a given MW.
+            [norm_avgprob] = find_distribution_of_mw(avg_of_all_ads_mw_arr(:,1),all_INIT_mw_arr(:,1),nframes_arch,bin_wid);
             
             
             % find avg probability of adsorption
