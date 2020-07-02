@@ -203,7 +203,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
             clear init_all_counts norm_avgprob avgads_molarr cnt_all_ads_mw_arr molarr
             
             % find avg probability of adsorption
-            fclose(favg_dist);
+            fclose(favg_dist); %this is just a concatenation of all fcase ID files.
             
         end % end arch loop
         
