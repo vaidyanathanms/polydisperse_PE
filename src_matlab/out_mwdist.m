@@ -178,9 +178,11 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 
             end % end case loop
             
-            
+            fprintf(favg_dist,'%s\t%d\%s\t%d\n','Case: ', casenum, 'Total frames', nframes_case);
             fprintf(favg_dist,'%s\t%s\t%s\n','MW','initial numbers','Normalized adsorption probability');
             fprintf(favg_dist,'%d\t%d\t%g\n',[init_all_counts(:,1) init_all_counts(:,2) norm_avgprob(:,2)]');
+            
+            clear init_all_counts norm_avgprob avgads_molarr cnt_all_ads_mw_arr molarr
             
             % find avg probability of adsorption
             fclose(favg_dist);
