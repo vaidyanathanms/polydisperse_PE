@@ -1,4 +1,4 @@
-function [distcounts] = find_distribution_of_mw(dataarr,init_dist,total_frames)
+function [norm_distcounts] = find_distribution_of_mw(dataarr,init_dist,total_frames)
 
 %% Format
 % dataarr -> 1D array containing the MW of all chains that are
@@ -35,8 +35,8 @@ sorted_adsb_uniq_arr = sortrows(adsorbed_unique_counts,1);
 % occurences per MW. Then divide by the number of frames to normalize.
 % p(n_ads^mw) = [\sum_{i=1}^{n_f^mw} n_i,ads^MW \times num_frames]/[n_f^MW
 % \times \sum N_f]
-distcounts = zeros(length(sorted_init_uniq_arr),2);
-distcounts(:,1) = sorted_init_uniq_arr(:,1);
+norm_distcounts = zeros(length(sorted_init_uniq_arr),2);
+norm_distcounts(:,1) = sorted_init_uniq_arr(:,1);
 
 for i = 1:length(sorted_adsb_uniq_arr)
     adsorb_MW = sorted_adsb_uniq_arr(i,1);
@@ -60,7 +60,7 @@ for i = 1:length(sorted_adsb_uniq_arr)
         return;
     end
     
-    distcounts(init_index,2) = adsorbed_num_chains/(init_num_chains*total_frames); 
+    norm_distcounts(init_index,2) = adsorbed_num_chains/(init_num_chains*total_frames); 
 end
     
            
