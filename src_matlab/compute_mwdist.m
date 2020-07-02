@@ -11,4 +11,4 @@ function [distout] = compute_mwdist(dataarr,column_num)
 % zero. Good way os to add the bin limits. 
 
 binwid    = 8;
-distout   = histogram(dataarr(:,column_num),'BinWidth',binwid,'Normalization','pdf','BinLimits',[1,max(filt_dist)+1]);
+distout   = histogram(dataarr(:,column_num),'BinWidth',binwid,'Normalization','pdf','BinLimits',[1,max(dataarr(:,column_num))+1]);
