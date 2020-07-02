@@ -68,6 +68,10 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
             end
             
             % Output MWD averaged across cases
+            
+            % NOTE 1: Two different arrays are used: avgads_molarr and
+            % cnt_all_ads_mw_arr. Both have different functionalities
+            
             % avgads_molarr consists of the total number a chain of a given
             % MW is adsorbed and is totalled across all the files for a
             % given case and across cases for a given graft-free
@@ -75,9 +79,10 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
             avgads_molarr = zeros(max_mw_free,2); % to compute average distribution; maximum size of the array should be equal to the expected max MW
             avgads_molarr(:,1) = 1:max_mw_free; % This is for compute_mwdist for a given case
   
-            avg_of_all_ads_mw_arr = zeros(1000,1); % The number 1000 is by default. Will weed zeros at the end. This will append all the MWs of the adsorbed chains for find_distribution_of_mw
+            % cnt_all_ads_mw_arr will append all the MWs of the adsorbed chains for find_distribution_of_mw
+            cnt_all_ads_mw_arr = zeros(1000,1); % The number 1000 is by default. Will weed zeros at the end. 
             init_index_avgads = 1; 
-            all_INIT_mw_arr = zeros(length(casearr)*nval,1); % Avg input MW for normalization: unlike avg_of_all_ads_mw_arr, the size hereis fixed
+            all_INIT_mw_arr = zeros(length(casearr)*nval,1); % Avg input MW for normalization: unlike cnt_all_ads_mw_arr, the size hereis fixed
             
             favg_dist = fopen(sprintf('./../../outfiles/overall/out_mwdist_n_%d_pdi_%g_%s_rcut_%s.dat',...
                 nval,ref_pdifree,dirstr,cutoff),'w');
@@ -146,7 +151,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                     % copy all data into an average array
                     len_ads_arr = length(all_ads_mw_arr);
                     fin_index_avgads = init_index_avgads + len_ads_arr - 1;
-                    avg_of_all_ads_mw_arr(init_index_avgads:fin_index_avgads,1) = all_ads_mw_arr(:,1); % contains the MW of all adsorbed chains
+                    cnt_all_ads_mw_arr(init_index_avgads:fin_index_avgads,1) = all_ads_mw_arr(:,1); % contains the MW of all adsorbed chains
                     init_index_avgads = init_index_avgads + len_ads_arr; 
                     
                     %average across files for a given case
@@ -174,7 +179,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
             % number of times they occur in the initial configuration. The
             % normalized output corresponds to the normalization with the
             % initial repeats of a given MW.
-            [norm_avgprob,init_all_counts] = find_distribution_of_mw(avg_of_all_ads_mw_arr(:,1),all_INIT_mw_arr(:,1),nframes_arch);
+            [norm_avgprob,init_all_counts] = find_distribution_of_mw(cnt_all_ads_mw_arr(:,1),all_INIT_mw_arr(:,1),nframes_arch);
             fprintf(favg_dist,'%s\t%s\t%s\n','MW','initial numbers','Normalized adsorption probability');
             fprintf(favg_dist,'%d\t%d\t%g\n',[init_all_counts(:,1) init_all_counts(:,2) norm_avgprob(:,2)]');
             
