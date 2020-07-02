@@ -174,7 +174,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 % architecture. Easier way is to write into two separate
                 % files. One for each case, other a collated file.
                 
-                [norm_avgprob,init_all_counts] = find_distribution_of_mw(cnt_all_ads_mw_arr(:,1),all_INIT_mw_arr(:,1),nframes_arch);
+                [norm_avgprob,init_all_counts] = find_distribution_of_mw(cnt_all_ads_mw_arr(:,1),molarr(:,3),nframes_case);
                 
             end % end case loop
             
