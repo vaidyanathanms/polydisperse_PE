@@ -28,7 +28,6 @@ area = 35^2;
 set_tmax = 3e7; % maximum timestep for analysis;
 
 %% Graft details
-
 ncharge_mons_graft = 30; % per graft chain details
 ntail_mons_graft = 5;    % per graft chain details
 ntot_mons_graft  = ncharge_mons_graft + ntail_mons_graft;
@@ -66,9 +65,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 fprintf('%s does not exist\n',dirname);
                 continue
             end
-            
-            
-            
+
             favg_dist = fopen(sprintf('./../../outfiles/overall/out_mwdist_n_%d_pdi_%g_%s_rcut_%s.dat',...
                 nval,ref_pdifree,dirstr,cutoff),'w');
             
@@ -190,7 +187,6 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 % initial repeats of a given MW. Cannot do this for a given
                 % architecture. Easier way is to write into two separate
                 % files. One for each case, other a collated file.
-                
                 [norm_avgprob,init_all_counts] = find_distribution_of_mw(cnt_all_ads_mw_arr(:,1),molarr(:,3),nframes_case);
                 fprintf(fcase,'%d\t%d\t%d\t%g\t%g\n',[init_all_counts(:,1) init_all_counts(:,2) norm_avgprob(:,2) ...
                     norm_avgprob(:,3) norm_avgprob(:,4)]');
