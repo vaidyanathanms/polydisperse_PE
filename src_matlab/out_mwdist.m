@@ -67,21 +67,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 continue
             end
             
-            % Output MWD averaged across cases
             
-            % NOTE 1: Two different arrays are used: avgads_molarr and
-            % cnt_all_ads_mw_arr. Both have different functionalities
-            
-            % avgads_molarr consists of the total number a chain of a given
-            % MW is adsorbed and is totalled across all the files for a
-            % given case and across cases for a given graft-free
-            % architecure.
-            avgads_molarr = zeros(max_mw_free,2); % to compute average distribution; maximum size of the array should be equal to the expected max MW
-            avgads_molarr(:,1) = 1:max_mw_free; % This is for compute_mwdist for a given case
-            
-            % cnt_all_ads_mw_arr will append all the MWs of the adsorbed chains for find_distribution_of_mw
-            cnt_all_ads_mw_arr = zeros(1000,1); % The number 1000 is by default. Will weed zeros at the end.
-            init_index_avgads = 1;
             
             favg_dist = fopen(sprintf('./../../outfiles/overall/out_mwdist_n_%d_pdi_%g_%s_rcut_%s.dat',...
                 nval,ref_pdifree,dirstr,cutoff),'w');
@@ -134,6 +120,24 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 fcase = fopen(distoutfyle,'w');
                 fprintf(fcase,'%s\t%s\t%s\t%s\t%s\n',...
                     'MW','initial #of chains','Total occurences','Total occurences/frame','Normalized adsorption probability');
+                
+  
+                % Output MWD averaged across cases
+                
+                % NOTE 1: Two different arrays are used: avgads_molarr and
+                % cnt_all_ads_mw_arr. Both have different functionalities
+                
+                % avgads_molarr consists of the total number a chain of a given
+                % MW is adsorbed and is totalled across all the files for a
+                % given case and across cases for a given graft-free
+                % architecure.
+                avgads_molarr = zeros(max_mw_free,2); % to compute average distribution; maximum size of the array should be equal to the expected max MW
+                avgads_molarr(:,1) = 1:max_mw_free; % This is for compute_mwdist for a given case
+                
+                % cnt_all_ads_mw_arr will append all the MWs of the adsorbed chains for find_distribution_of_mw
+                cnt_all_ads_mw_arr = zeros(1000,1); % The number 1000 is by default. Will weed zeros at the end.
+                init_index_avgads = 1;
+                
                 
                 % begin running through the chainadsfile
                 for fylcnt = 1:nfyles
@@ -192,17 +196,16 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                     norm_avgprob(:,3) norm_avgprob(:,4)]');
                 fclose(fcase);
                 
-            end % end case loop
-            
-            fprintf(favg_dist,'%s\t%d\%s\t%d\n','Case: ', casenum, 'Total frames', nframes_case);
-            fprintf(favg_dist,'%s\t%s\t%s\t%s\t%s\n',...
+                % collate all details
+                fprintf(favg_dist,'%s\t%d\t%s\t%d\n','Case: ', casenum, 'Total frames', nframes_case);
+                fprintf(favg_dist,'%s\t%s\t%s\t%s\t%s\n',...
                     'MW','initial #of chains','Total occurences','Total occurences/frame','Normalized adsorption probability');
-            fprintf(favg_dist,'%d\t%d\t%d\t%g\t%g\n',[init_all_counts(:,1) init_all_counts(:,2) norm_avgprob(:,2) ...
+                fprintf(favg_dist,'%d\t%d\t%d\t%g\t%g\n',[init_all_counts(:,1) init_all_counts(:,2) norm_avgprob(:,2) ...
                     norm_avgprob(:,3) norm_avgprob(:,4)]');
-            
-            clear init_all_counts norm_avgprob avgads_molarr cnt_all_ads_mw_arr molarr
-            
-            % find avg probability of adsorption
+                
+                clear init_all_counts norm_avgprob avgads_molarr cnt_all_ads_mw_arr molarr
+                
+            end % end case loop
             fclose(favg_dist); %this is just a concatenation of all fcase ID files.
             
         end % end arch loop
