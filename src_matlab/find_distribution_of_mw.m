@@ -1,5 +1,6 @@
-function [norm_distcounts,sorted_init_uniq_arr] = find_distribution_of_mw(dataarr,init_dist,total_frames)
+function [norm_distcounts,sorted_init_uniq_arr,errflag] = find_distribution_of_mw(dataarr,init_dist,total_frames)
 
+errflag = 0; % to see whether there are errors.
 %% Format
 % Input
 % dataarr -> 1D array containing the MW of all chains that are
@@ -59,7 +60,12 @@ for i = 1:length(sorted_adsb_uniq_arr)
     end
     
     if find_in_init == -1
-        fprintf('ERROR: the molecular wt of adsorbed chain (%d) not found in the initial MW array',adsorb_MW);
+        fprintf('ERROR: the molecular wt of adsorbed chain (%d) not found in the initial MW array \n',adsorb_MW);
+        fprintf('adsorb_arr \n');
+        fprintf('%d\n',sorted_adsb_uniq_arr(:,1));
+        fprintf('init_arr \n');
+        fprintf('%d\n',sorted_init_uniq_arr(:,1));    
+        errflag = 1;
         return;
     end
     
