@@ -11,6 +11,13 @@ clear;
 close all;
 format long;
 
+%% Color codes
+
+green = [0 0.5 0.0]; gold = [0.9 0.75 0]; orange = [0.91 0.41 0.17]; brown=[0.6 0.2 0];
+pclr = {'m','r',gold,green,orange,'k','b',brown};
+lsty = {'-','--',':'};
+msty = {'d','s','o','x'};
+
 %% Flags
 avg_flag = 1;
 plt_flag = 1;
@@ -43,7 +50,7 @@ max_mw_free = 10*nfreemons; % An approximate max. Will throw error from extract_
 %% Compute average_distribution
 
 if avg_flag
-
+    
     for ncnt = 1:length(nch_freearr) % begin nfree loop
         nval = nch_freearr(ncnt);
         
@@ -150,7 +157,7 @@ if avg_flag
                 end % end reading the file for a given architecture (end of while loop)
                 
                 if err_flag ~= 1
-                   
+                    
                     
                     for write_cntr = 1:length(mw_data_arr(:,1))
                         
@@ -175,7 +182,57 @@ if avg_flag
 end % end avg_flag
 
 
-%% Compute coarsened distribution
+%% Plot distribution
 
-
-
+if plt_flag
+    
+    for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
+        ref_pdifree     = pdi_freearr(pdi_cntr);
+        pdifree_str     = num2str(ref_pdifree,'%1.1f');
+        
+        for arch_cnt = 1:length(arch_arr)  % begin arch loop
+            dirstr = arch_arr{arch_cnt};
+            
+            harch = figure;
+            hold on
+            ax = gca;
+            ax.FontSize = 14;
+            ax.Box = 'on';
+            ax.YMinorTick = 'on';
+            ax.XMinorTick = 'on';
+            ax.TickLength = [0.025,0.05];
+            ax.XLabel.FontSize = 24;
+            ax.YLabel.FontSize = 24;
+            ax.PlotBoxAspectRatio = [1.618,1,1];
+            ax.XColor = 'k';
+            ax.YColor = 'k';
+            %axis labels
+            ax.XLabel.String = 'MW';
+            ax.YLabel.String = 'p_{ads}(MW)';
+            
+            for ncnt = 1:length(nch_freearr) % begin nfree loop
+                nval = nch_freearr(ncnt);
+                
+                fylename = sprintf('./../../distribution_dir/avg_values/avg_mwdist_n_%d_pdi_%g_%s_rcut_%s.dat',...
+                    nval,ref_pdifree,dirstr,cutoff);
+                if exist(fylename,'file') ~=2
+                    fprintf('%s does not exist', fylename);
+                    continue;
+                end
+                
+                plt_data = importdata(fylename);
+                plot(plt_data.data(:,1), plt_data.data(:,4), 'Color',pclr{ncnt},'LineStyle','None',...
+                    'Marker',msty{pdi_cntr},'MarkerFaceColor',pclr{ncnt},'MarkerEdgeColor',pclr{ncnt},'MarkerSize',8)
+                legendinfo{ncnt} = ['$N_{pa}$ = ' num2str(nval)];
+                
+            end % end nfree loop
+            ylim([0 1.1]);
+            legend(legendinfo,'Interpreter','Latex','FontSize',18,'Location','best')
+            legend boxoff
+            saveas(harch,sprintf('./../../all_figures/avg_dist_%s_%s.png',dirstr,pdifree_str));
+            
+        end % end arch loop
+        
+    end % end pdi loop
+    
+end % end plt_flag loop
