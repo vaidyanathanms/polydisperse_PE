@@ -13,7 +13,7 @@ format long;
 
 %% Flags
 avg_flag = 1;
-coarse_flag = 1;
+plt_flag = 1;
 
 %% Input data
 nch_freearr = [32]%;64;128;150];
