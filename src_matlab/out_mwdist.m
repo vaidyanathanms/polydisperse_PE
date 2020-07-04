@@ -14,11 +14,11 @@ lsty = {'-','--',':'};
 msty = {'d','s','o','x'};
 
 %% Inputs
-nch_freearr = [32]%;64;128;150];
+nch_freearr = [32;64;128;150];
 casearr  = [1;2;3;4];
 pdi_freearr = [1.5];
-arch_arr  = {'bl_bl'}%;'bl_al';'al_bl';'al_al'};
-leg_arr   = {'Block-Block'}%;'Block-Alter';'Alter-Block';'Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr for legends
+arch_arr  = {'al_al'}%;'bl_al';'al_bl';'al_al'};
+leg_arr   = {'Alter-Alter'}%;'Block-Alter';'Alter-Block';'Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr for legends
 pdigraft  = 1.0;
 nfreemons = 30;
 ngraft_ch = 32; % Number of graft chains
@@ -187,19 +187,24 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 % initial repeats of a given MW. Cannot do this for a given
                 % architecture. Easier way is to write into two separate
                 % files. One for each case, other a collated file.
-                [norm_avgprob,init_all_counts] = find_distribution_of_mw(cnt_all_ads_mw_arr(:,1),molarr(:,3),nframes_case);
-                fprintf(fcase,'%d\t%d\t%d\t%g\t%g\n',[init_all_counts(:,1) init_all_counts(:,2) norm_avgprob(:,2) ...
-                    norm_avgprob(:,3) norm_avgprob(:,4)]');
+                [norm_avgprob,init_all_counts,error_flag] = find_distribution_of_mw(cnt_all_ads_mw_arr(:,1),molarr(:,3),nframes_case);
+                
+                if error_flag == 0
+                    fprintf(fcase,'%d\t%d\t%d\t%g\t%g\n',[init_all_counts(:,1) init_all_counts(:,2) norm_avgprob(:,2) ...
+                        norm_avgprob(:,3) norm_avgprob(:,4)]');
+                end
                 fclose(fcase);
-                
+                    
                 % collate all details
-                fprintf(favg_dist,'%s\t%d\t%s\t%d\t%s\t%d\n', ...
-                    'Case: ', casenum, 'Tot_frames', nframes_case,'num_unique_MW',length(init_all_counts(:,1)));
-                fprintf(favg_dist,'%s\t%s\t%s\t%s\t%s\n',...
-                    'MW','initial_#of_chains','Tot_occurences','Tot_occurences/frame','Norm_adsorption_prob');
-                fprintf(favg_dist,'%d\t%d\t%d\t%g\t%g\n',[init_all_counts(:,1) init_all_counts(:,2) norm_avgprob(:,2) ...
-                    norm_avgprob(:,3) norm_avgprob(:,4)]');
-                
+                if error_flag == 0
+                    fprintf(favg_dist,'%s\t%d\t%s\t%d\t%s\t%d\n', ...
+                        'Case: ', casenum, 'Tot_frames', nframes_case,'num_unique_MW',length(init_all_counts(:,1)));
+                    fprintf(favg_dist,'%s\t%s\t%s\t%s\t%s\n',...
+                        'MW','initial_#of_chains','Tot_occurences','Tot_occurences/frame','Norm_adsorption_prob');
+                    fprintf(favg_dist,'%d\t%d\t%d\t%g\t%g\n',[init_all_counts(:,1) init_all_counts(:,2) norm_avgprob(:,2) ...
+                        norm_avgprob(:,3) norm_avgprob(:,4)]');
+                end
+                    
                 clear init_all_counts norm_avgprob avgads_molarr cnt_all_ads_mw_arr molarr
                 
             end % end case loop
