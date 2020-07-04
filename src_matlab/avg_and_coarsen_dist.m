@@ -151,13 +151,16 @@ if avg_flag
                 
                 if err_flag ~= 1
                    
-                    write_cntr = 1; % write output data after normalizing with number of occurences.
-                    while mw_data_arr(write_cntr,1) ~= 0 && write_cntr <= length(mw_data_arr(:,1))
+                    
+                    for write_cntr = 1:length(mw_data_arr(:,1))
+                        
+                        if mw_data_arr(write_cntr,3) == 0
+                            fprintf('WARNING: Number of elements is less than 50 for this case, RECHCEK \n');
+                        end
                         
                         norm_vals = mw_data_arr(write_cntr,2)/mw_data_arr(write_cntr,3);
                         fprintf(fout_data,'%d\t%d\t%d\t%d\n',...
                             mw_data_arr(write_cntr,1),mw_data_arr(write_cntr,2),mw_data_arr(write_cntr,3),norm_vals);
-                        write_cntr = write_cntr +1;
                         
                     end
                     
