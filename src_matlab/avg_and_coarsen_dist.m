@@ -11,6 +11,10 @@ clear;
 close all;
 format long;
 
+%% Flags
+avg_flag = 1;
+coarse_flag = 1;
+
 %% Input data
 nch_freearr = [32]%;64;128;150];
 casearr  = [1;2;3;4];
@@ -36,127 +40,139 @@ pdigraft_str = num2str(pdigraft,'%1.1f');
 num_cases = length(casearr);
 max_mw_free = 10*nfreemons; % An approximate max. Will throw error from extract_adschain.m if it is more than this value.
 
-%% Main Analysis
+%% Compute average_distribution
 
-for ncnt = 1:length(nch_freearr) % begin nfree loop
-    nval = nch_freearr(ncnt);
-    
-    for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
-        ref_pdifree     = pdi_freearr(pdi_cntr);
-        pdifree_str     = num2str(ref_pdifree,'%1.1f');
+if avg_flag
+
+    for ncnt = 1:length(nch_freearr) % begin nfree loop
+        nval = nch_freearr(ncnt);
         
-        for arch_cnt = 1:length(arch_arr)  % begin arch loop
-            dirstr = arch_arr{arch_cnt};
+        for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
+            ref_pdifree     = pdi_freearr(pdi_cntr);
+            pdifree_str     = num2str(ref_pdifree,'%1.1f');
             
-            mw_data_arr = zeros(50,3); %value of 50 is approximate. Can weed off zero at the end.
-            mw_ref_cntr = 0;
-            
-            dirname = sprintf('./../../outfiles/overall');
-            if ~exist(dirname,'dir')
-                fprintf('%s does not exist\n',dirname);
-                continue
-            end
-            
-            finp_data = fopen(sprintf('./../../outfiles/overall/out_mwdist_n_%d_pdi_%g_%s_rcut_%s.dat',...
-                nval,ref_pdifree,dirstr,cutoff),'r');
-            if finp_data <= 0
-                fprintf('ERROR: %s not found\n', finp_data);
-                continue;
-            end
-            
-            fout_data = fopen(sprintf('./../../distribution_dir/avg_values/avg_mwdist_n_%d_pdi_%g_%s_rcut_%s.dat',...
-                nval,ref_pdifree,dirstr,cutoff),'w');
-            fprintf(fout_data,'%s\t%s\t%s\t%s\n','MW','Unnorm_probability','Tot_occurences','Norm_probability');
-            
-            % Parse and analyze the file.
-            while ~feof(finp_data)
+            for arch_cnt = 1:length(arch_arr)  % begin arch loop
+                dirstr = arch_arr{arch_cnt};
                 
-                % Start reading file and find header keyword
-                tline = fgetl(fid); % get header
-                if ~ischar(tline) || isempty(tline)
-                    fprintf('ERROR: Unable to read file %s\n', tline)
-                    return;
-                end
-                spl_tline = strtrim(strsplit(strtrim(tline)));
-                find_keyword = -1; % to find "freechainMW" keyword
+                mw_data_arr = zeros(50,3); %value of 50 is approximate. Can weed off zero at the end.
+                mw_ref_cntr = 0;
                 
-                for wordcnt = 1:length(spl_tline)
-                    if strcmp(strtrim(spl_tline{wordcnt}),'num_unique_MW')
-                        find_keyword = 1; column_num = wordcnt;
-                        num_unique_MWs = str2double(strtrim(spl_tline{column_num+1}));
-                        clear column_num
-                        break;
-                    end
+                dirname = sprintf('./../../outfiles/overall');
+                if ~exist(dirname,'dir')
+                    fprintf('%s does not exist\n',dirname);
+                    continue
                 end
                 
-                % check if the first and fifth column are the MW and
-                % norm_adsorption_prob respectively.
-                tline = fgetl(fid);
-                spl_tline = strtrim(strsplit(strtrim(tline)));
-                if ~strcmp(strtrim(spl_tline{1}),'MW') || ~strcmp(strtrim(spl_tline{5}),'Norm_adsorption_prob')
-                    fprintf('ERROR: 1st and 5th column needs to be MW and norm_adsorption_prob respectively: %s\t%s\n',strtrim(spl_tline{1}),strtrim(spl_tline{5}));
+                finp_data = fopen(sprintf('./../../outfiles/overall/out_mwdist_n_%d_pdi_%g_%s_rcut_%s.dat',...
+                    nval,ref_pdifree,dirstr,cutoff),'r');
+                if finp_data <= 0
+                    fprintf('ERROR: %s not found\n', finp_data);
                     continue;
                 end
                 
+                fout_data = fopen(sprintf('./../../distribution_dir/avg_values/avg_mwdist_n_%d_pdi_%g_%s_rcut_%s.dat',...
+                    nval,ref_pdifree,dirstr,cutoff),'w');
+                fprintf(fout_data,'%s\t%s\t%s\t%s\n','MW','Unnorm_probability','Tot_occurences','Norm_probability');
                 
-                for linecnt = 1:num_unique_MWs % Read each case and process
-                    tline = fgetl(fid);
+                err_flag = 0;
+                % Parse and analyze the file.
+                while ~feof(finp_data) && err_flag == 0
+                    
+                    % Start reading file and find header keyword
+                    tline = fgetl(finp_data); % get header
+                    if ~ischar(tline) || isempty(tline)
+                        fprintf('ERROR: Unable to read file %s\n', tline)
+                        return;
+                    end
                     spl_tline = strtrim(strsplit(strtrim(tline)));
+                    find_keyword = -1; % to find "freechainMW" keyword
                     
-                    MW_val = str2double(strtrim(spl_tline{1}));
-                    norm_adsorb_val = str2double(strtrim(spl_tline{5}));
+                    for wordcnt = 1:length(spl_tline)
+                        if strcmp(strtrim(spl_tline{wordcnt}),'num_unique_MW')
+                            find_keyword = 1; column_num = wordcnt;
+                            num_unique_MWs = str2double(strtrim(spl_tline{column_num+1}));
+                            clear column_num
+                            break;
+                        end
+                    end
                     
-                    if MW_val <=0
-                        fprintf('ERROR: Unknown mol. wt: %d\n',MW_val);
+                    % check if the first and fifth column are the MW and
+                    % norm_adsorption_prob respectively.
+                    tline = fgetl(finp_data);
+                    spl_tline = strtrim(strsplit(strtrim(tline)));
+                    if ~strcmp(strtrim(spl_tline{1}),'MW') || ~strcmp(strtrim(spl_tline{5}),'Norm_adsorption_prob')
+                        fprintf('ERROR: 1st and 5th column needs to be MW and norm_adsorption_prob respectively: %s\t%s\n',strtrim(spl_tline{1}),strtrim(spl_tline{5}));
                         continue;
                     end
                     
-                    %find MW_val is already present in the first column mw_data_arr
-                    check_flag = ismember(mw_data_arr(:,1),MW_val);
-                    if max(check_flag(:,1)) == 0
-                        mw_ref_cntr = mw_ref_cntr + 1;
-                        mw_data_arr(mw_ref_cntr,1) = MW_val;
-                        mw_data_arr(mw_ref_cntr,2) = norm_adsorb_val;
-                        mw_data_arr(mw_ref_cntr,3) = 1; %change flag
-                    else % if it is already present, add extra flag to third column and the normalized value to second column so that it can be divided at the end
-                        index_val = find(mw_data_arr,MW_val);
-                        if length(index_val) > 1
-                            fprintf('ERROR: Multiple occurences of the same MW (%d) found in the consolidated array \n', MW_val);
-                            fprintf('Array data %\n',mw_data_arr);
-                            continue;
-                        end
-                        
-                        if mw_data_arr(index_val,1) ~= MW_val
-                            fprintf('ERROR: Not adding the corresponding MWs: %d\t%d\n', mw_data_arr(index_val,1), MW_val);
-                            continue;
-                        end
-                        
-                        mw_data_arr(index_val,2) = mw_data_arr(index_val,2) + norm_adsorb_val;
-                        mw_data_arr(index_val,3) = mw_data_arr(index_val,3) + 1;
-                    end % end processing one line
                     
-                end % end processing each case
+                    for linecnt = 1:num_unique_MWs % Read each case and process
+                        tline = fgetl(finp_data);
+                        spl_tline = strtrim(strsplit(strtrim(tline)));
+                        
+                        MW_val = str2double(strtrim(spl_tline{1}));
+                        norm_adsorb_val = str2double(strtrim(spl_tline{5}));
+                        
+                        if MW_val <=0
+                            fprintf('ERROR: Unknown mol. wt: %d\n',MW_val);
+                            continue;
+                        end
+                        
+                        %find MW_val is already present in the first column mw_data_arr
+                        check_flag = ismember(mw_data_arr(:,1),MW_val);
+                        if max(check_flag(:,1)) == 0
+                            mw_ref_cntr = mw_ref_cntr + 1;
+                            mw_data_arr(mw_ref_cntr,1) = MW_val;
+                            mw_data_arr(mw_ref_cntr,2) = norm_adsorb_val;
+                            mw_data_arr(mw_ref_cntr,3) = 1; %change flag
+                        else % if it is already present, add extra flag to third column and the normalized value to second column so that it can be divided at the end
+                            index_val = find(mw_data_arr(:,1)==MW_val);
+                            if length(index_val) > 1
+                                fprintf('ERROR: Multiple occurences of the same MW (%d) found in the consolidated array \n', MW_val);
+                                fprintf('Mol wt. array data:\n');
+                                fprintf('%d\n',mw_data_arr(:,1));
+                                err_flag = 1;
+                                break;
+                            end
+                            
+                            if mw_data_arr(index_val,1) ~= MW_val
+                                fprintf('ERROR: Not adding the corresponding MWs: %d\t%d\n', mw_data_arr(index_val,1), MW_val);
+                                err_flag = 1;
+                                break;
+                            end
+                            
+                            mw_data_arr(index_val,2) = mw_data_arr(index_val,2) + norm_adsorb_val;
+                            mw_data_arr(index_val,3) = mw_data_arr(index_val,3) + 1;
+                        end % end processing one line
+                        
+                    end % end processing each case
+                    
+                end % end reading the file for a given architecture (end of while loop)
                 
-            end % end reading the file for a given architecture
-            
-            write_cntr = 1; % write output data after normalizing with number of occurences.
-            while mw_data_arr(write_cntr,1) ~= 0 && write_cntr <= length(mw_data_arr(:,1))
+                if err_flag ~= 1
+                   
+                    write_cntr = 1; % write output data after normalizing with number of occurences.
+                    while mw_data_arr(write_cntr,1) ~= 0 && write_cntr <= length(mw_data_arr(:,1))
+                        
+                        norm_vals = mw_data_arr(write_cntr,2)/mw_data_arr(write_cntr,3);
+                        fprintf(fout_data,'%d\t%d\t%d\t%d\n',...
+                            mw_data_arr(write_cntr,1),mw_data_arr(write_cntr,2),mw_data_arr(write_cntr,3),norm_vals);
+                        write_cntr = write_cntr +1;
+                        
+                    end
+                    
+                end
                 
-                norm_vals = mw_data_arr(write_cntr,2)/mw_data_arr(write_cntr,3);
-                fprintf(fout_data,'%d\t%d\t%d\t%d\n',...
-                    mw_data_arr(write_cntr,1),mw_data_arr(write_cntr,2),mw_data_arr(write_cntr,3),norm_vals);
-                write_cntr = write_cntr +1;
-                
-            end
+            end % end arch loop
             
-            
-        end % end arch loop
+        end % end pdi loop
         
-    end % end pdi loop
+    end % end nval loop
     
-end % end nval loop
+end % end avg_flag
 
 
+%% Compute coarsened distribution
 
 
 
