@@ -26,7 +26,7 @@ nsalt        = 510
 f_charge     = 0.5
 archarr      = [1,4]
 ncases_pdi   = [1,2,3,4]
-pdi_free     = 1.5
+pdi_free     = 1.0
 pdi_graft    = 1.0
 
 #--------file_lists--------------------------------------------
@@ -120,6 +120,7 @@ for ifree in range(len(free_chains)):
 
         for casenum in range(len(ncases_pdi)):
 
+            print("Finding trajecory files in ", ncases_pdi[casenum])
             workdir_subpdi = workdir_graftpdi + '/Case_' + str(ncases_pdi[casenum])
             if not os.path.isdir(workdir_subpdi):
                 print("ERROR: ", workdir_subpdi, " not found")
@@ -137,7 +138,8 @@ for ifree in range(len(free_chains)):
                 
                 if list_of_files == []: #if list is empty here too
                     print("Did not find files of type", \
-                          fyl_list[fylcnt])
+                          fyl_list[fylcnt], "in casenum", \
+                          ncases_pdi[casenum])
                     continue
 
                 for filenum in range(len(list_of_files)):
