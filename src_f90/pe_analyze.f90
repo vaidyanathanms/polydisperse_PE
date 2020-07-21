@@ -2002,7 +2002,7 @@ SUBROUTINE ALLOUTPUTS()
      DO i = 1,nfreechains
 
         WRITE(avgadschwrite,'(I0,1X,F14.8)') i,&
-             & REAL(adsfree_chainsarr)/REAL(nfrcntr)
+             & REAL(adsfree_chainsarr(i))/REAL(nfrcntr)
 
      END DO
 
