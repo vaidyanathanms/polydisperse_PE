@@ -19,7 +19,7 @@ lsty = {'-','--',':'};
 msty = {'d','s','o','x'};
 
 %% Input data
-nfreearr = [16;32;64;96;128;150];
+nfreearr = [16;32;64;128;150];
 casearr  = [1,2,3,4];
 pdi_freearr = [1,1.5];
 arch_arr = {'bl_bl','al_al'};
@@ -32,10 +32,10 @@ set_tmax = 3e7; % maximum timestep for analysis;
 
 %% Input flags
 % see definitions above
-fig1  = 1; 
-fig2a = 0; 
-fig2b = 0; 
-fig3a = 0; 
+fig1  = 1;
+fig2a = 0;
+fig2b = 0;
+fig3a = 0;
 fig3b = 0;
 fig4  = 0;
 
@@ -45,7 +45,7 @@ pdigraft_str = num2str(pdigraft,'%1.1f');
 
 %% Fig1
 if fig1
-
+    
     nval_pl = [64,150]; casenum = 1; arch = 'bl_bl'; mnideal = 30; pdifree = 1.50;
     h1 = figure;
     hold on
@@ -60,7 +60,7 @@ if fig1
         histogram(alldata.data(:,3),'BinWidth',8,'Normalization','pdf','BinLimits',[1,max(alldata.data(:,3))+1]);
         legendinfo{plcnt} = ['$N_{pa} =$ ' num2str(nval_pl(plcnt))];
     end
-     
+    
     mwvals = 1:10*mnideal;
     mwrat  = mwvals/mnideal;
     k = 1/(pdifree - 1);
@@ -77,7 +77,7 @@ if fig1
     plot(mwvals,psztheory/normval,'-k','LineWidth',2);
     legendinfo{plcnt+1} = 'Theory';
     xlim([0 max(alldata.data(:,3))+10])
-
+    
     legend(legendinfo,'FontSize',16,'Location','Best','Interpreter','Latex')
     legend boxoff
     saveas(h1,'./../../Figs_paper/SZdistribution.png');
@@ -87,6 +87,103 @@ end
 
 %% Fig2a
 if fig2a
+    % Create arrays for according to the input array sizes
+    frac_ads = zeros(length(nfreearr),length(arch_arr)+1,length(pdi_freearr)); %+1 for y-dimension to incorporate the N_f values
+    err_ads  = zeros(length(nfreearr),length(arch_arr)+1,length(pdi_freearr)); %+1 for y-dimension to incorporate the N_f values
+    
+    for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
+        
+        pdifree     = pdi_freearr(pdi_cntr);
+        pdifree_str = num2str(pdifree,'%1.1f');
+    
+        frac_ads(:,1) = nfreearr;
+        err_ads(:,1)  = nfreearr;
+        
+        % Check file existence
+        fname = sprintf('./../../outfiles/overall/adsorbed_chain_ave_allcases_rcut_%s_pdifree_%g.dat',...
+            cutoff,pdifree);
+        fads_id = fopen(fname);
+        
+        if fads_id <= 0
+            fprintf('%s does not exist', fname);
+            continue;
+        end
+        
+        % Read and parse first line
+        tline = fgetl(fid); % get header
+        if ~ischar(tline) || isempty(tline)
+            fprintf('ERROR: Unable to read file %s\n', tline);
+            continue;
+        end
+        spl_tline = strtrim(strsplit(strtrim(tline))); 
+        
+        nf_col = -1; arch_col = -1; favg_col = -1; err_col = -1;
+        for wcnt = 1:length(tline)
+            if strcmp(spl_tline{wcnt},'N_f')
+                nf_col = wcnt;
+            elseif strcmp(spl_tline{wcnt},'Arch')
+                arch_col = wcnt;
+            elseif strcmp(spl_tline{wcnt},'avg_fraction')
+                favg_col = wcnt;
+            elseif strcmp(spl_tline{wcnt},'StdErrMean')
+                err_col = wcnt;
+            end
+        end
+        
+        if nf_col == -1 || arch_col == -1 || favg_col == -1 || err_col == -1
+            fprintf('Could not find all headers in %s \n' , tline);
+            continue
+        end
+        
+        
+        while true
+            
+            % Store data into arrays by comparing with the input arrays
+            tline = fgetl(fid); % get header
+            if ~ischar(tline) || isempty(tline)
+                fprintf('ERROR: Unable to read file %s\n', tline);
+                continue;
+            end
+            spl_tline = strtrim(strsplit(strtrim(tline)));
+        
+            % nf value
+            findnf = -1;
+            for itercnt = 1:length(nfreearr)
+                if str2double(spl_tline{nf_col}) == nfreearr(itercnt)
+                    findnf = 1;
+                    rownum = itercnt;
+                    break;
+                end
+            end
+            if findnf == -1
+                fprintf('WARNING: Did not find N_f value in the input array: %d\n', str2double(spl_tline{nf_col}));
+                continue;
+            end
+            
+            
+            %arch value
+            findarch = -1
+            for itercnt = 1:length(arch_arr)
+                if strcmp(arch_arr{itercnt},spl_tline{arch_col})
+                    findarch = 1;
+                    colnum = itercnt;
+                    break;
+                end
+            end
+            
+            if findarch == -1
+                fprintf('WARNING: Did not find arch value in the input array: %s\n', spl_tline{arch_col}));
+                continue;
+            end
+            
+            frac_ads(rownum,colnum,pdi_cntr) = str2double(spl_tline{favg_col});
+            err_ads(rownum,colnum,pdi_cntr)  = str2double(spl_tline{err_col});
+            
+        end
+        
+    end
+    
+    % Plot frac_ads, err_ads in one go
     
 end
 
