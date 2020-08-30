@@ -14,9 +14,9 @@ format long
 
 %% Color codes
 green = [0 0.5 0.0]; gold = [0.9 0.75 0]; orange = [0.91 0.41 0.17];brown = [0.2 0 0];
-pclr = {'m',brown,green,'k','m', gold};
+pclr = {'r',green,'b',brown,'k','m', gold};
 lsty = {'-','--',':'};
-msty = {'d','s','o','x'};
+msty = {'d','o','s','x'};
 
 %% Input data
 nfreearr = [16;32;64;128;150];
@@ -27,13 +27,14 @@ leg_arr  = {'Block-Block','Alter-Alter'}; % ALWAYS CHECK for correspondence with
 pdigraft = 1.0;
 nmonfree = 30; nmongraft = 30; ngraft = 32;
 cutoff = '1.50';
+nch_graft = 32;
 lz = 120; area=35^2;
 set_tmax = 3e7; % maximum timestep for analysis;
 
 %% Input flags
 % see definitions above
-fig1  = 1;
-fig2a = 0;
+fig1  = 0;
+fig2a = 1;
 fig2b = 0;
 fig3a = 0;
 fig3b = 0;
@@ -90,14 +91,16 @@ if fig2a
     % Create arrays for according to the input array sizes
     frac_ads = zeros(length(nfreearr),length(arch_arr)+1,length(pdi_freearr)); %+1 for y-dimension to incorporate the N_f values
     err_ads  = zeros(length(nfreearr),length(arch_arr)+1,length(pdi_freearr)); %+1 for y-dimension to incorporate the N_f values
+    pdi_plot = zeros(length(pdi_freearr));
     
     for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
         
         pdifree     = pdi_freearr(pdi_cntr);
         pdifree_str = num2str(pdifree,'%1.1f');
-    
-        frac_ads(:,1) = nfreearr;
-        err_ads(:,1)  = nfreearr;
+        
+        frac_ads(:,1,pdi_cntr) = nfreearr;
+        err_ads(:,1,pdi_cntr)  = nfreearr;
+        pdi_plot(pdi_cntr,1)   = pdifree;
         
         % Check file existence
         fname = sprintf('./../../outfiles/overall/adsorbed_chain_ave_allcases_rcut_%s_pdifree_%g.dat',...
@@ -109,16 +112,18 @@ if fig2a
             continue;
         end
         
+        fprintf('File under process %s\n', fname);
+        
         % Read and parse first line
-        tline = fgetl(fid); % get header
+        tline = fgetl(fads_id); % get header
         if ~ischar(tline) || isempty(tline)
             fprintf('ERROR: Unable to read file %s\n', tline);
             continue;
         end
-        spl_tline = strtrim(strsplit(strtrim(tline))); 
+        spl_tline = strtrim(strsplit(strtrim(tline)));
         
         nf_col = -1; arch_col = -1; favg_col = -1; err_col = -1;
-        for wcnt = 1:length(tline)
+        for wcnt = 1:length(spl_tline)
             if strcmp(spl_tline{wcnt},'N_f')
                 nf_col = wcnt;
             elseif strcmp(spl_tline{wcnt},'Arch')
@@ -136,19 +141,19 @@ if fig2a
         end
         
         
-        while true
+        while ~feof(fads_id)
             
             % Store data into arrays by comparing with the input arrays
-            tline = fgetl(fid); % get header
-            if ~ischar(tline) || isempty(tline)
-                fprintf('ERROR: Unable to read file %s\n', tline);
+            tline = fgetl(fads_id); % get line
+            if ~ischar(tline) && isempty(tline)
+                fprintf('ERROR: Unable to read line %s\n', tline);
                 continue;
             end
             spl_tline = strtrim(strsplit(strtrim(tline)));
-        
+            
             % nf value
             findnf = -1;
-            for itercnt = 1:length(nfreearr)
+            for itercnt = 1:length(nfreearr) % comparing wrt the INPUT array
                 if str2double(spl_tline{nf_col}) == nfreearr(itercnt)
                     findnf = 1;
                     rownum = itercnt;
@@ -162,8 +167,8 @@ if fig2a
             
             
             %arch value
-            findarch = -1
-            for itercnt = 1:length(arch_arr)
+            findarch = -1;
+            for itercnt = 1:length(arch_arr) %comparing wrt the INPUT Array
                 if strcmp(arch_arr{itercnt},spl_tline{arch_col})
                     findarch = 1;
                     colnum = itercnt;
@@ -172,18 +177,47 @@ if fig2a
             end
             
             if findarch == -1
-                fprintf('WARNING: Did not find arch value in the input array: %s\n', spl_tline{arch_col}));
+                fprintf('WARNING: Did not find arch value in the input array: %s\n', spl_tline{arch_col});
                 continue;
             end
             
-            frac_ads(rownum,colnum,pdi_cntr) = str2double(spl_tline{favg_col});
-            err_ads(rownum,colnum,pdi_cntr)  = str2double(spl_tline{err_col});
+            frac_ads(rownum,colnum+1,pdi_cntr) = str2double(spl_tline{favg_col});
+            err_ads(rownum,colnum+1,pdi_cntr)  = str2double(spl_tline{err_col});
+            
+        end
+        
+        fprintf('Finished analyzing %s\n', fname);
+        
+    end
+    
+    % Plot frac_ads, err_ads in one go
+    
+    h1 = figure;
+    hold on
+    box on
+    set(gca,'FontSize',16)
+    xlabel('$N_{pa}/N_{pc}$','FontSize',20,'Interpreter','Latex')
+    ylabel('$f_{\rm{ads}}$','FontSize',20,'Interpreter','Latex')
+    
+    lcnt = 1;
+    for plcnt = 1:length(pdi_freearr)
+        
+        for arch_cnt = 1:length(arch_arr)
+            
+            errorbar(frac_ads(:,1,plcnt)/nch_graft,frac_ads(:,1+arch_cnt,plcnt),err_ads(:,1+arch_cnt,plcnt),...
+                'Color', pclr{arch_cnt},'Marker',msty{arch_cnt},'MarkerFaceColor',...
+                pclr{arch_cnt},'LineStyle',lsty{plcnt},'LineWidth',2,'MarkerSize',8)
+            
+            legendinfo{lcnt} = [leg_arr{arch_cnt} ', PDI = ' num2str(pdi_plot(plcnt,1))];
+            lcnt = lcnt + 1;
             
         end
         
     end
     
-    % Plot frac_ads, err_ads in one go
+    legend(legendinfo,'FontSize',12,'Location','NorthWest','Interpreter','Latex')
+    legend boxoff
+    saveas(h1,'./../../Figs_paper/fads_npabynpc_pdi_arch.png');
     
 end
 
@@ -194,12 +228,12 @@ end
 
 %% Fig3a
 if fig3a
-    
+    %Run avg_and_coarsen_dist.m in conjunction with out_mwdist.m
 end
 
 %% Fig3b
 if fig3b
-    
+    %Run avg_and_coarsen_dist.m in conjunction with out_mwdist.m
 end
 
 %% Fig 4
