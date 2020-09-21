@@ -245,8 +245,8 @@ if fig2b
         fave  = fopen(sprintf('./../../net_charge/AvgQnetBound_%s.txt',pdifree_str),'w');
         fprintf(fnr,'%s \n','NetCharge: Q_{b}=\Delta(n_g)*\int(\sum(q_j n_j(z)dz, j=all entities)z=0,Lz))');
         fprintf(fnr,'%s\t %s\t %s\t %s\t %s\n','N_pa','Arch','Case','First tstep','Q_{b}');
-        fprintf(fmon,'%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n',...
-            'N_pa','Arch','Case','N_bb','N_ntbr','N_chbr','N_ntfr','N_chfr','Nposions','Nnegions');      
+        fprintf(fmon,'%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n',...
+            'N_pa','Arch','Case','N_gr','N_bb','N_ntbr','N_chbr','N_ntfr','N_chfr','Nposions','Nnegions','Not');      
         fprintf(fave,'%s\t %s\t %s\t %s\n','N_pa','Arch','<Q_{b}>','StdDev');      
         pdigraft_str = num2str(pdigraft,'%1.1f');
 
@@ -284,13 +284,13 @@ if fig2b
                         fprintf('Empty file: %s \n',inp_fylename);
                         continue;
                     end
-                    idlist = [2;3;4;5;6;7;8]; % [nbb_brush,nneut_brush,ncharg_brush,nneut_free,ncharg_free,nposions,nnegions]...
+                    idlist = [1;2;3;4;5;6;7;8]; % [nbb_brush,nneut_brush,ncharg_brush,nneut_free,ncharg_free,nposions,nnegions]...
                     outmonlist = find_all_mons_name(inp_fylename,idlist);
                     fprintf(fmon,'%d\t%s\t%d\t',nval,dirstr,casenum);
                     for u = 1:length(outmonlist)
                         fprintf(fmon,'%d\t',outmonlist(u));
                     end
-                    fprintf(fmon,'\n');
+                    fprintf(fmon,'%d\n',sum(outmonlist));
                     
                     % Now analyze all the charge details
                     dirname = sprintf('./../../sim_results/outresults_dir_n_%d/%s/pdifree_%s_pdigraft_%s/Case_%d',...
