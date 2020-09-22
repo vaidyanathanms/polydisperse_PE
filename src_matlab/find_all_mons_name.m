@@ -1,7 +1,7 @@
 function nmonlist = find_all_mons_name(dataname,idinplist)
 % Required order in datafile: graft mons -> free mons -> counter ions -> salt
 
-nmonlist = zeros(length(idinplist));
+nmonlist = zeros(length(idinplist),1);
 % Check whether file exists
 fid = fopen(dataname,'r');
 
@@ -11,7 +11,7 @@ if fid <= 0
 end
 
 % Initialize data
-fprintf('Analyzing %s\n', dataname);
+fprintf('Analyzing datafile: %s\n', dataname);
 natom_flag = -1; % to see natoms keyword is read before reading Atoms
 
 % Start reading file
@@ -45,13 +45,13 @@ while true
                 continue;
             end
             
-            atype = str2double(spl_tline{2});
+            atype = str2double(spl_tline{3});
             for u = 1:length(idinplist)
-                if atype == u
-                    nmonlist(u) = nmonlist(u) + 1;
+                if atype == idinplist(u)
+                    nmonlist(u,1) = nmonlist(u,1) + 1;
+                    break;
                 end
             end
-            
             i = i + 1;
             
         end
