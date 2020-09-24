@@ -13,9 +13,9 @@ lsty = {'-','--',':'};
 msty = {'d','s','o','x'};
 
 %% Inputs
-nch_freearr = [16]%;32;64;128];
-casearr  = [1]%;2;3;4];
-pdi_freearr = [1.5];
+nch_freearr = [16;32;64;128;150];
+casearr  = [1;2;3;4];
+pdi_freearr = [1.0;1.5];
 arch_arr = {'bl_bl';'al_al'};
 leg_arr  = {'Block-Block';'Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr for legends
 pdigraft = 1.0;
@@ -92,11 +92,11 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                 
                 if min(size(traj_fylelist)) == 0 || numel(traj_fylelist) == 0 || isempty(traj_fylelist{1,1})
                     fprintf('No trajfiles are found for %d\t%s\t%d\n',nval,dirstr,casenum);
-                    fprintf(fout_cons,'%d\t%s\t%d\t%s\n',nval,dirstr,casenum,'UNK');
+                    fprintf(fout_cons,'%d\t%s\t%d\t%s\t',nval,dirstr,casenum,'N/A');
                 else
                     latest_index = find_latest_trfyle(traj_fylelist,length(traj_fylelist),2);
                     if latest_index == -1
-                        fprintf(fout_cons,'%d\t%s\t%d\t%s\t',nval,dirstr,casenum,'UNK');
+                        fprintf(fout_cons,'%d\t%s\t%d\t%s\t',nval,dirstr,casenum,'ERR');
                     else
                         fprintf(fout_cons,'%d\t%s\t%d\t%s\t',nval,dirstr,casenum,char(traj_fylelist{latest_index}));
                     end
@@ -117,7 +117,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                 else
                     [latest_index] = find_latest_anafyle(dens_fylelist,numel(dens_fylelist),3);
                     if latest_index == -1
-                        fprintf(fout_cons,'%s\t','UNK');
+                        fprintf(fout_cons,'%s\t','ERR');
                     else
                         fprintf(fout_cons,'%s\t',dens_fylelist(latest_index).name);
                     end
@@ -132,7 +132,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                 else
                     [latest_index] = find_latest_anafyle(ads_fylelist,numel(ads_fylelist),6);
                     if latest_index == -1
-                        fprintf(fout_cons,'%s\t','UNK');
+                        fprintf(fout_cons,'%s\t','ERR');
                     else
                         fprintf(fout_cons,'%s\t',ads_fylelist(latest_index).name);
                     end
