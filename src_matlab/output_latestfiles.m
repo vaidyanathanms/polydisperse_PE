@@ -36,8 +36,8 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
     end
 
     fout_cons = fopen(sprintf('./../../all_trajfiles/latest_pdi_%s.dat',pdifree_str),'w');    
-    fprintf(fout_cons,'%s\t%s\t%s\t%s\t%s\t%s\t%s\n','N_pa','Arch','Casenum','latest_file',...
-        'denscalc','adscalc','mwdistcalc');
+    fprintf(fout_cons,'%s\t%s\t%s\t%s\t%s\t%s\t%s\n','N_pa','Arch','Casenum','latest_trajfile',...
+        'latest_densfile','latest_adsfile','latest_mwdistfile');
     
     % Read trajlist
     trlist_fname = strcat(dirname,'/',sprintf('all_trajfiles_pdi_%s.txt',pdifree_str));
@@ -139,7 +139,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                 end
                 
                 %check for mwdist
-                mw_prefix = sprintf('chainsadsval_rcut_%s_config_*.lammpstrj',cutoff);
+                mw_prefix = sprintf('chainadsval_rcut_%s_config_*.lammpstrj',cutoff);
                 mw_fylelist = dir(strcat(ana_dirname,'/',mw_prefix));
                 if min(size(mw_fylelist)) == 0 || numel(mw_fylelist) == 0
                     fprintf('No files/Empty files are found for %s\n',mw_prefix);
@@ -152,6 +152,9 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                         fprintf(fout_cons,'%s\t',mw_fylelist(latest_index).name);
                     end
                 end
+                
+                
+                fprintf(fout_cons,'\n');
                 
             end % end casenum
             
