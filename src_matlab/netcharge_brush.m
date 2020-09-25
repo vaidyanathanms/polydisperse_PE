@@ -12,10 +12,10 @@ lsty = {'-','--',':'};
 msty = {'d','o','s','x'};
 
 %% Input data
-nfreearr = [16]%;32;64;128;150];
-casearr  = [1]%,2,3,4];
+nfreearr = [16;32;64;128;150];
+casearr  = [1,2,3,4];
 pdi_freearr = [1,1.5];
-arch_arr = {'bl_bl'}%,'al_al'};
+arch_arr = {'bl_bl','al_al'};
 leg_arr  = {'Block-Block','Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr
 pdigraft = 1.0;
 nmonfree = 30; nmongraft = 30; ngraft = 32;
@@ -28,14 +28,16 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
     
     ref_pdifree     = pdi_freearr(pdi_cntr);
     pdifree_str     = num2str(ref_pdifree,'%1.1f');
-    fnr   = fopen(sprintf('./../../net_charge/QnetBound_%s.txt',pdifree_str),'w');
-    fmon  = fopen(sprintf('./../../net_charge/nmonlist_%s.txt',pdifree_str),'w');
-    fave  = fopen(sprintf('./../../net_charge/AvgQnetBound_%s.txt',pdifree_str),'w');
+    
+    fnr   = fopen(sprintf('./../../net_charge/QnetBound_%s.txt',pdifree_str),'w'); % case wise net charge
     fprintf(fnr,'%s \n','NetCharge: Q_{b}=\Delta(n_g)*\int(\sum(q_j n_j(z)dz, j=all entities)z=0,Lz))');
-    fprintf(fnr,'%s\t%s\t%s\t%s\t%s\t%s\n','N_pa','Arch','Case','Analysis File','ht_{br}''Q_{b}');
+    fprintf(fnr,'%s\t%s\t%s\t%s\t%s\t%s\n','N_pa','Arch','Case','Analysis File','ht_{br}','Q_{b}');
+    fmon  = fopen(sprintf('./../../net_charge/nmonlist_%s.txt',pdifree_str),'w'); % monomer distribution details
     fprintf(fmon,'%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n',...
         'N_pa','Arch','Case','N_gr','N_bb','N_ntbr','N_chbr','N_ntfr','N_chfr','Nposions','Nnegions','Not');
+    fave  = fopen(sprintf('./../../net_charge/AvgQnetBound_%s.txt',pdifree_str),'w'); % average net charge
     fprintf(fave,'%s\t%s\t%s\t%s\t%s\n','N_pa','Arch','num_cases','<Q_{b}>','StdErrMean');
+    
     pdigraft_str = num2str(pdigraft,'%1.1f');
     
     for ncnt = 1:length(nfreearr) % begin nfree loop
@@ -43,7 +45,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
         
         for arch_cnt = 1:length(arch_arr)  % begin arch loop
             dirstr = arch_arr{arch_cnt};
-            sumq_arr = zeros(length(casearr),1);
+            sumq_arr = zeros(1,1);
             sumq_across_cases = 0; q_ncases = 0;
             
             for casecntr = 1:length(casearr) % begin case loop
@@ -160,10 +162,14 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                 
             end % end case loop
             
-            sumq_nozero = sumq_arr(sumq_arr~=0);
+            sumq_nozero = sumq_arr(sumq_arr(:,1)~=0);
+            if q_ncases ~= length(sumq_nozero)
+                fprintf('ERR: Not equal number of cases from two methods: %d\t%d\n', q_ncases,length(sumq_nozero));
+                fprintf(fave,'%d\t%s\t%s\t%s\t%s\n',nval,dirstr,'ERR','ERR','ERR');
+                continue
+            end
             stderr = std(sumq_nozero)/sqrt(length(sumq_nozero));
             
-            fprintf(fave,'%s\t%s\t%s\t%s\t%s\n','N_pa','Arch','num_cases','<Q_{b}>','StdDev');
             fprintf(fave,'%d\t%s\t%d\t%g\t%g\n',nval,dirstr,q_ncases,sumq_across_cases/q_ncases,stderr);
             
         end % end arch loop
