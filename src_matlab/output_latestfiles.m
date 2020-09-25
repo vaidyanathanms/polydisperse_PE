@@ -156,6 +156,8 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                 
                 fprintf(fout_cons,'\n');
                 
+                clear traj_fylellist dens_fylellist ads_fylellist mw_fylellist
+                
             end % end casenum
             
         end % end arch_cnt
