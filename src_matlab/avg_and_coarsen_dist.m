@@ -23,11 +23,10 @@ avg_flag = 1;
 plt_flag = 1;
 
 %% Input data
-nch_freearr = [32]%;64;128;150];
+nch_freearr = [32;64;128;150];
 casearr  = [1;2;3;4];
 pdi_freearr = [1.5];
-arch_arr  = {'bl_bl'}%;'bl_al';'al_bl';'al_al'};
-leg_arr   = {'Block-Block'}%;'Block-Alter';'Alter-Block';'Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr for legends
+arch_arr  = {'bl_bl';'al_al'};
 pdigraft  = 1.0;
 nfreemons = 30;
 ngraft_ch = 32; % Number of graft chains
@@ -70,13 +69,15 @@ if avg_flag
                     continue
                 end
                 
-                finp_data = fopen(sprintf('./../../outfiles/overall/out_mwdist_n_%d_pdi_%g_%s_rcut_%s.dat',...
-                    nval,ref_pdifree,dirstr,cutoff),'r');
+                finp_fyle = sprintf('./../../outfiles/overall/out_mwdist_n_%d_pdi_%g_%s_rcut_%s.dat',...
+                    nval,ref_pdifree,dirstr,cutoff);
+                finp_data = fopen(finp_fyle,'r');
                 if finp_data <= 0
                     fprintf('ERROR: %s not found\n', finp_data);
                     continue;
                 end
                 
+                fprintf('Analyzing %s\n', finp_fyle);
                 fout_data = fopen(sprintf('./../../distribution_dir/avg_values/avg_mwdist_n_%d_pdi_%g_%s_rcut_%s.dat',...
                     nval,ref_pdifree,dirstr,cutoff),'w');
                 fprintf(fout_data,'%s\t%s\t%s\t%s\n','MW','Unnorm_probability','Tot_occurences','Norm_probability');
@@ -132,7 +133,7 @@ if avg_flag
                             mw_data_arr(mw_ref_cntr,1) = MW_val;
                             mw_data_arr(mw_ref_cntr,2) = norm_adsorb_val;
                             mw_data_arr(mw_ref_cntr,3) = 1; %change flag
-                        else % if it is already present, add extra flag to third column and the normalized value to second column so that it can be divided at the end
+                        else % if it is already present, increment counter in the third column and the normalized value to second column so that it can be divided at the end
                             index_val = find(mw_data_arr(:,1)==MW_val);
                             if length(index_val) > 1
                                 fprintf('ERROR: Multiple occurences of the same MW (%d) found in the consolidated array \n', MW_val);
@@ -163,6 +164,7 @@ if avg_flag
                         
                         if mw_data_arr(write_cntr,3) == 0
                             fprintf('WARNING: Number of elements is less than 50 for this case, RECHCEK \n');
+                            continue;
                         end
                         
                         norm_vals = mw_data_arr(write_cntr,2)/mw_data_arr(write_cntr,3);
@@ -195,20 +197,11 @@ if plt_flag
             
             harch = figure;
             hold on
-            ax = gca;
-            ax.FontSize = 14;
-            ax.Box = 'on';
-            ax.YMinorTick = 'on';
-            ax.XMinorTick = 'on';
-            ax.TickLength = [0.025,0.05];
-            ax.XLabel.FontSize = 24;
-            ax.YLabel.FontSize = 24;
-            ax.PlotBoxAspectRatio = [1.618,1,1];
-            ax.XColor = 'k';
-            ax.YColor = 'k';
-            %axis labels
-            ax.XLabel.String = 'MW';
-            ax.YLabel.String = 'p_{ads}(MW)';
+            box on
+            set(gca,'FontSize',16)
+            xlabel('$MW$','FontSize',20,'Interpreter','Latex')
+            ylabel('$p_{\rm{ads}}(MW)$','FontSize',20,'Interpreter','Latex')
+            
             
             for ncnt = 1:length(nch_freearr) % begin nfree loop
                 nval = nch_freearr(ncnt);
@@ -223,12 +216,12 @@ if plt_flag
                 plt_data = importdata(fylename);
                 plot(plt_data.data(:,1), plt_data.data(:,4), 'Color',pclr{ncnt},'LineStyle','None',...
                     'Marker',msty{pdi_cntr},'MarkerFaceColor',pclr{ncnt},'MarkerEdgeColor',pclr{ncnt},'MarkerSize',8)
-                legendinfo{ncnt} = ['$N_{pa}$ = ' num2str(nval)];
+                legendinfo{ncnt} = ['$N_{pa}/N_{pc}$ = ' num2str(nval/ngraft_ch,'%1.1f')];
                 
             end % end nfree loop
             ylim([0 1.1]);
-            legend(legendinfo,'Interpreter','Latex','FontSize',18,'Location','best')
-            legend boxoff
+            legend(legendinfo,'Interpreter','Latex','FontSize',14,'Location','SouthEast')
+            legend boxon
             saveas(harch,sprintf('./../../all_figures/avg_dist_%s_%s.png',dirstr,pdifree_str));
             
         end % end arch loop
