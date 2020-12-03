@@ -144,7 +144,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                     %average adsorption values
                     if min(data(:,1)) > set_tmin
                         
-                        for minindcnt = 1:lendata
+                        for minindcnt = 1:lendata %avoid double counting
                             if data(minindcnt,1) > mintstep
                                 minindana = minindcnt; %minimum value at which the trajectories are separate
                                 mintstep = max(data(:,1)); %new value will be the maximum value of this file
