@@ -17,27 +17,26 @@ from my_python_functions import edit_generate_anainp_files
 from my_python_functions import run_analysis
 
 #---------input flags------------------------------------------
-#0-initial run  1- production
-restart = 0 # For restarting from given configurations
-
+analysis_type = 2 #1-polydisp_pe,2-newparams,3-mwchange,#4-oldsize
 
 #---------input details----------------------------------------
-free_chains  = [80]#,80,32,48]
+free_chains  = [150]
 free_avg_mw  = 30
-graft_chains = 64
+graft_chains = 32
 graft_avg_mw = 35 
 tail_mons    = 5
 nsalt        = 510
 f_charge     = 0.5
-archarr      = [1,2,3,4]
-ncases_pdi   = 5
-pdi_free     = 1.2
+archarr      = [4]
+ncases_pdi   = [1]
+pdi_free     = 1.5
 pdi_graft    = 1.0
+cutoff_dist  = 1.50 #use two decimal places
 
 #--------file_lists--------------------------------------------
 
 ana_files = ['pe_analyze.f90','pe_params.f90','anainp_var.txt']
-job_files = ['anainp_var.sh']
+job_files = ['jobana_var.sh']
 traj_pref = 'config_*'
 
 #---------directory info---------------------------------------
@@ -49,7 +48,18 @@ jobdir = '/home/dorfmank/vsethura/allfiles/files_polydisperse/src_lmp'
 for ifree in range(len(free_chains)):
     
     print( "Free Number of Chains: ", free_chains[ifree])
-    workdir1 = scratchdir + 'polydisp_pe'
+
+    if analysis_type == 1:
+        workdir1 = scratchdir + 'polydisp_pe'
+    elif analysis_type == 2:
+        workdir1 = scratchdir + 'newparams_polydisp_pe'
+    elif analysis_type == 3:
+        workdir1 = scratchdir + 'mwchange_polydisp_pe'
+    elif analysis_type == 4:
+        workdir1 = scratchdir + 'oldsize_polydisp_pe'
+    else:
+        print ("ERROR: Analysis_type unknown")
+        continue
     
     if not os.path.isdir(workdir1):
         print("ERROR: ", workdir1, " not found")
@@ -98,9 +108,9 @@ for ifree in range(len(free_chains)):
             print("ERROR: ", workdir_graftpdi, " not found")
             continue
 
-        for caselen in range(ncases_pdi):
+        for casenum in range(len(ncases_pdi)):
 
-            workdir_subpdi = workdir_graftpdi + '/Case_' + str(caselen+1)
+            workdir_subpdi = workdir_graftpdi + '/Case_' + str(ncases_pdi[casenum])
             if not os.path.isdir(workdir_subpdi):
                 print("ERROR: ", workdir_subpdi, " not found")
                 continue
@@ -108,7 +118,7 @@ for ifree in range(len(free_chains)):
             os.chdir(workdir_subpdi)
             destdir = os.getcwd()
 
-            print( "Starting analysis for case ", caselen+1, "in ",\
+            print( "Starting analysis for case ", ncases_pdi[casenum], "in ",\
                        free_chains[ifree],dirstr)
 
             #---Copying files------
@@ -119,17 +129,35 @@ for ifree in range(len(free_chains)):
                 cpy_main_files(maindir,destdir,ana_files[fyllist])
 
             for fyllist in range(len(job_files)):
-                cpy_main_files(maindir,destdir,job_files[fyllist])
+                cpy_main_files(jobdir,destdir,job_files[fyllist])
 
-            dataname = find_datafyle(free_chains[ifree],fylstr,caselen,destdir)
-            latest_traj = find_latest_trajfyle(traj_pref,destdir)
+            dataname =  find_datafyle(free_chains[ifree],fylstr,\
+                                      ncases_pdi[casenum],destdir)
+            if dataname == 'ERROR':
+                print("ERROR: No restart files found")
+                continue
 
+            
+            #latest_traj = find_latest_trajfyle(traj_pref,destdir)
+            #if latest_traj == 'ERROR':
+            #    print("ERROR: No trajectory files found")
+            #    continue
+            
             compile_anafiles()            
             ntotch = free_chains[ifree] + graft_chains
-            edit_generate_anainp_files(dataname,latest_traj,ntotch,\
-                                       free_chains[ifree],graft_chains)
-            run_analysis(free_chains[ifree],pdi_free,caselen,fylstr,\
-                           'anainp_var.sh','anainp.sh')
+            traj_arr = glob.glob(traj_pref)
+            if traj_arr == []:
+                print("ERROR: No trajectory files found")
+                continue
+            
+            for fyllist in range(len(traj_arr)):
+                print("Analyzing ", traj_arr[fyllist])
+                edit_generate_anainp_files(dataname,traj_arr[fyllist],ntotch,\
+                                           free_chains[ifree],graft_chains,\
+                                           cutoff_dist,fyllist+1)
+                outana = 'jobana_' + str(fyllist+1) + '.sh'
+                run_analysis(free_chains[ifree],pdi_free,ncases_pdi[casenum],\
+                             fylstr,'jobana_var.sh',outana,fyllist+1)
                 
 
 

@@ -17,16 +17,16 @@ from my_python_functions import my_cpy_generic
 analysis_type  = 2 #1-polydisp_pe,2-newparams,3-mwchange,#4-oldsize
 
 #---------input details----------------------------------------
-free_chains  = [64,96,128,150]
+free_chains  = [16,32,64,128,150]
 free_avg_mw  = 30
 graft_chains = 32
 graft_avg_mw = 35 
 tail_mons    = 5
 nsalt        = 510
 f_charge     = 0.5
-archarr      = [1,2,3,4]
+archarr      = [1]
 ncases_pdi   = [1,2,3,4]
-pdi_free     = 1.5
+pdi_free     = 1.0
 pdi_graft    = 1.0
 cutoff_dist  = 1.50 #use two decimal places
 
@@ -168,14 +168,14 @@ for ifree in range(len(free_chains)):
                 continue
 
             # All restart files should have same atom type details
-            print( "Copying file: ", list_of_files[0])
+            fylename = max(list_of_files, key=os.path.getctime)
+            print( "Copying file: ", fylename)
 
-            fylname = list_of_files[0]
             dataname = 'PEinitdata.txt'
             if not os.path.exists(lmp_fyle):
                 my_cpy_generic(lmp_dir,destdir,lmp_fyle,lmp_fyle)
 
             subprocess.call(["mpirun","-np","48","./lmp_mesabi","-r"\
-                             ,fylname,dataname])
+                             ,fylename,dataname])
             my_cpy_generic(destdir,data_dir,dataname,dataname)
             
