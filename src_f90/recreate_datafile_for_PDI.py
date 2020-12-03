@@ -26,7 +26,7 @@ nsalt        = 510
 f_charge     = 0.5
 archarr      = [1]
 ncases_pdi   = [1,2,3,4]
-pdi_free     = 1.0
+pdi_free     = 1.5
 pdi_graft    = 1.0
 cutoff_dist  = 1.50 #use two decimal places
 
