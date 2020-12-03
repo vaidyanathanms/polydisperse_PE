@@ -15,4 +15,5 @@ src_f90/my_python_functions.pyc
 src_f90/*.mod
 src_f90/poly_charg.txt
 src_f90/polyinp_fordiff*
+src_f90/a.out
 .gitignore~
