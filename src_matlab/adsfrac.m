@@ -14,20 +14,21 @@ lsty = {'-','--',':'};
 msty = {'d','s','o','x'};
 
 %% Inputs
-nfreearr = [16;32;64;96;128;150];
+nfreearr = [16,32,64,128,150];
 casearr  = [1,2,3,4];
-pdi_freearr = [1,1.3,1.5];
-arch_arr = {'bl_bl','bl_al','al_bl','al_al'};
-leg_arr  = {'Block-Block','Block-Alter','Alter-Block','Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr
+pdi_freearr = [1.0,1.5];
+arch_arr = {'bl_bl','al_al'};
+leg_arr  = {'Block-Block','Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr
 pdigraft = 1.0;
 nmonfree = 30; nmongraft = 30; ngraft = 32;
 cutoff = '1.50';
 lz = 120; area=35^2;
 set_tmax = 3e7; % maximum timestep for analysis;
+set_tmin = 1e7; % minimum timestep for analysis;
 
 %% Input flags
 ttestflag = 1; % write to ttest_dir the individual cases
-plotads   = 1;
+plotads   = 1; % plot fads as a function of PDI
 
 %% Zero arrays
 avg_across_cases = zeros(length(nfreearr),length(arch_arr),length(pdi_freearr));
@@ -57,7 +58,14 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
     % Create average across all cases
     fout_avg = fopen(sprintf('./../../outfiles/overall/adsorbed_chain_ave_allcases_rcut_%s_pdifree_%g.dat',...
         cutoff,pdifree),'w');
-    fprintf(fout_avg,'%s\t%s\t%s\t%s\t%s\n','N_f','Arch','ncases','numsample_pts','avg_fraction');
+    fprintf(fout_avg,'%s\t%s\t%s\t%s\t%s\t%s\n','N_f','Arch','ncases','numsample_pts','avg_fraction','StdErrMean');
+    
+    % Create case-based avg outfiles for SI data
+    fout_sidata = fopen(sprintf('./../../outfiles/overall/sidata_adsorbed_chain_rcut_%s_pdifree_%g.dat',...
+        cutoff,pdifree),'w');
+    fprintf(fout_sidata,'%s\t%s\t%s\t%s\t%s\n','\DJ$_{\rm{ideal}}$','$N_{pa}$','Arch',...
+        'Case \#','avg_fraction');
+    
     
     for ncnt = 1:length(nfreearr) % begin nfree loop
         nval = nfreearr(ncnt);
@@ -81,12 +89,15 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
             
             
             if ttestflag %write all cases into separate folders in ttest_dir
-            
+                
                 fout_ttest = fopen(sprintf('./../../ttest_dir/n_%d/adsfrac_rcut_%s_pdifree_%g_arch_%s.dat',...
                     nval,cutoff,pdifree,dirstr),'w');
                 fprintf(fout_ttest,'%s\n','avg_fraction: #of columns correspond to the number of cases');
                 
             end
+            
+            
+            avgcase_store = zeros(length(casearr),1); % store each average value
             
             for casecntr = 1:length(casearr) % begin case loop
                 casenum = casearr(casecntr);
@@ -110,10 +121,12 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                 end
                 
                 nfyles = numel(ads_fylelist); %number of files of the type
+                reordered_ads_list = renumber_files(ads_fylelist,nfyles); % reorder file names to avoid double counting
                 
                 sum_across_files = 0; tot_cntr_across_files = 0; mintime = 10^10; maxtime = 0;
+                mintstep = 0;
                 for fylcnt = 1:nfyles % begin running through all files of the given type
-                    ads_fylename = strcat(dirname,'/',ads_fylelist(fylcnt).name);
+                    ads_fylename = strcat(dirname,'/',reordered_ads_list{fylcnt});
                     if exist(ads_fylename,'file') ~= 2
                         fprintf('%s does not exist/empty file\n',ads_fylename);
                         continue;
@@ -122,24 +135,41 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                         continue;
                     end
                     
-                    %average adsorption values
                     fprintf('Analyzing %s\n', ads_fylename);
                     data = importdata(ads_fylename);
-                    nads_fracchain = sum(data(:,3));
-                    sum_across_files = sum_across_files + nads_fracchain;
-                    tot_cntr_across_files = tot_cntr_across_files + length(data(:,3));
+                    lendata = length(data(:,1));
                     
-                    %find minimum and maximum time
-                    if min(data(:,1)) < mintime
-                        mintime = min(data(:,1));
-                    end
-                    if maxtime < max(data(:,1))
-                        maxtime = max(data(:,1));
+                    
+                    
+                    %average adsorption values
+                    if min(data(:,1)) > set_tmin
+                        
+                        for minindcnt = 1:lendata %avoid double counting
+                            if data(minindcnt,1) > mintstep
+                                minindana = minindcnt; %minimum value at which the trajectories are separate
+                                mintstep = max(data(:,1)); %new value will be the maximum value of this file
+                                break;
+                            end
+                        end
+                        nads_fracchain = sum(data(minindana:lendata,3));
+                        sum_across_files = sum_across_files + nads_fracchain;
+                        tot_cntr_across_files = tot_cntr_across_files + length(data(minindana:lendata,3));
+                        
+                        %find minimum and maximum time
+                        if min(data(:,1)) < mintime
+                            mintime = min(data(:,1));
+                        end
+                        if maxtime < max(data(:,1))
+                            maxtime = max(data(:,1));
+                        end
                     end
                     
-                end % end summing adsfrac across all files
-                
+                end % end summing adsfrac across all files for a given case
+%                 fprintf('%g\t%g\n',sum_across_files,tot_cntr_across_files);
                 avg_for_each_casenum = sum_across_files/tot_cntr_across_files;
+                
+                fprintf(fout_sidata,'%s\t%d\t%s\t%d\t%g\n',pdifree_str,nval,dirstr,...
+                    casenum,avg_for_each_casenum);
                 
                 if maxtime > set_tmax
                     fprintf(fout_case,'%d\t%d\t%d\t%d\t%d\t%g\n',nval,casenum,...
@@ -157,6 +187,8 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                 casecntr_arr(ncnt,arch_cnt)  = casecntr_arr(ncnt,arch_cnt) + 1;
                 nadschain_all(ncnt,arch_cnt) = nadschain_all(ncnt,arch_cnt) + avg_for_each_casenum;
                 totsamples(ncnt,arch_cnt)    = totsamples(ncnt,arch_cnt) + tot_cntr_across_files;
+                avgcase_store(casecntr)      = avg_for_each_casenum;
+                
                 
                 if ttestflag % add to corresponding ttest file
                     fprintf(fout_ttest,'%g\t',avg_for_each_casenum);
@@ -168,7 +200,19 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
             fclose(fout_case);
             
             avg_across_cases(ncnt,arch_cnt,pdi_cntr) = nadschain_all(ncnt,arch_cnt)/casecntr_arr(ncnt,arch_cnt);
-            fprintf(fout_avg,'%d\t%s\t%d\t%d\t%g\n',nval,dirstr,casecntr_arr(ncnt,arch_cnt),totsamples(ncnt,arch_cnt),avg_across_cases(ncnt,arch_cnt,pdi_cntr));
+            
+            if casecntr_arr(ncnt,arch_cnt) > 1
+                
+                nonzerovals = avgcase_store(avgcase_store~=0);
+                stderr_val = std(nonzerovals)/sqrt(length(nonzerovals));
+                
+            else
+                
+                stderr_val = -1; % Invalid for just one case
+                
+            end
+            
+            fprintf(fout_avg,'%d\t%s\t%d\t%d\t%g\t%g\n',nval,dirstr,casecntr_arr(ncnt,arch_cnt),totsamples(ncnt,arch_cnt),avg_across_cases(ncnt,arch_cnt,pdi_cntr),stderr_val);
             
         end % end arch loop
         
@@ -241,3 +285,5 @@ if plotads
     end
     
 end
+
+

@@ -14,11 +14,11 @@ lsty = {'-','--',':'};
 msty = {'d','s','o','x'};
 
 %% Inputs
-nch_freearr = [16;32;64;96;128;150];
+nch_freearr = [16;32;64;128;150];
 casearr  = [1;2;3;4];
 pdi_freearr = [1.5];
-arch_arr = {'bl_bl';'bl_al';'al_bl';'al_al'};
-leg_arr  = {'Block-Block';'Block-Alter';'Alter-Block';'Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr for legends
+arch_arr = {'bl_bl';'al_al'};
+leg_arr  = {'Block-Block';'Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr for legends
 pdigraft = 1.0;
 cutoff = '1.50';
 lz = 120; area=35^2;
@@ -55,6 +55,14 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
             nval,cutoff),'w');
         fprintf(fout_cons,'%s\t%s\t%s\t%s\t%s\t%s\t%s\n','N_f','Arch','Ref_PDI','Case_num',...
             'Mw_free','Mn_free','PDI_Simulated');
+        
+        
+        % create consolidated list for SI data
+        fout_sidata = fopen(sprintf('./../../outfiles/overall/sidata_pdi_consolidate_n_%d_rcut_%s.dat',...
+            nval,cutoff),'w');
+        fprintf(fout_sidata,'%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n','\DJ$_{\rm{ideal}}$',...
+            '$N_{pa}$','Arch','Case \#','\DJ$_{\rm{sim}}$','Free neutral beads','Free charged beads','Positive ions');
+        
         
         %create average across all cases
         favg_pdi = fopen(sprintf('./../../outfiles/overall/pdi_ave_allcases_rcut_%s.dat',...
@@ -126,8 +134,10 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                     continue;
                 end
                 
+                idlist = [1;2;3;4;5;6;7;8];
                 molarr = analyze_datafile(ads_fylename,nval,nch_graft); % extract molecular details
-                
+                outmonlist = find_all_mons_name(ads_fylename,idlist); % extract num_mons data
+
                 if pdiflag % begin pdi calculation
                     
                     % analyze and write molecule details
@@ -143,6 +153,10 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                         nval,dirstr,ref_pdifree,casenum,mnfree,mwfree,pdi_sim);
                     casecntr_arr(ncnt,arch_cnt)  = casecntr_arr(ncnt,arch_cnt) + 1;
                     npdi_all(ncnt,arch_cnt) = npdi_all(ncnt,arch_cnt) + pdi_sim;
+                    
+                    fprintf(fout_sidata,'%g\t%d\t%s\t%d\t%g\t%d\t%d\t%d\n',ref_pdifree,...
+                        nval,dirstr,casenum,pdi_sim,outmonlist(5,1),outmonlist(6,1),outmonlist(7,1));
+                    
                 end % end pdi calculation
                 
                 if mwdflag % begin molecular weight distribution calculation
@@ -187,10 +201,11 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
             
         end % end arch loop
         
-    end % end nfree loop
+    end % end pdi free loop
     
     fclose(favg_pdi);
+    fclose(fout_cons);
+    fclose(fout_sidata);
     
-end % end pdi free loop
+end % end nfree loop
 
-fclose(fout_cons);

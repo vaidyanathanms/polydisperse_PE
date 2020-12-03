@@ -29,8 +29,13 @@ plt_data = 1; % Plot ratio of histogram
 
 %% Zero arrays
 
-mean_data_arch   = zeros(length(arch_arr));
-stderr_data_arch = zeros(length(arch_arr));
+mean_data_arch_rat   = zeros(length(arch_arr));
+mean_data_arch_big   = zeros(length(arch_arr));
+mean_data_arch_sml   = zeros(length(arch_arr));
+
+stderr_data_arch_rat = zeros(length(arch_arr));
+stderr_data_arch_big = zeros(length(arch_arr));
+stderr_data_arch_sml = zeros(length(arch_arr));
 
 %% Main Analysis
 
@@ -40,8 +45,8 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
     % create consolidated list
     fout_cons = fopen(sprintf('./../../bidispersed_cases/fracads_n_%d_rcut_%s.dat',...
         nval,cutoff),'w');
-    fprintf(fout_cons,'%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n','N_f','Arch','Ref_PDI','Case_num',...
-        'Mw1_free','Mw2_free','fads_cnt_mw1','fads_cnt_mw2','rat_cnt_fads');
+    fprintf(fout_cons,'%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n','N_f','Arch','Ref_PDI','Case_num',...
+        'nsteps','Mw1_free','Mw2_free','fads_cnt_mw1','fads_cnt_mw2','rat_cnt_fads');
     
     %create average across all cases
     favg_pdi = fopen(sprintf('./../../bidispersed_cases/fracads_ave_allcases_rcut_%s.dat',...
@@ -68,6 +73,8 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
             end
             
             mwratarr = zeros(length(casearr),1);
+            mwbigarr = zeros(length(casearr),1);
+            mwsmlarr = zeros(length(casearr),1);
             
             for casecntr = 1:length(casearr) % begin case loop
                 casenum = casearr(casecntr);
@@ -109,21 +116,52 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 
                 mwratarr(casecntr,1) = mwrat;
                 
-                fprintf(fout_cons,'%d\t%s\t%s\t%d\t%d\t%d\t%d\t%d\t%g\n', nval,dirstr,pdifree_str,casenum,...
-                    nchain_mws(1),nchain_mws(2),mwcnt1,mwcnt2,mwrat);
+                % Count total time steps
+                tsteps = 1; tref = alldata.data(1,1);
+                for tcnt = 2:lendata
+                    if tref ~= alldata.data(tcnt,1)
+                        tsteps = tsteps + 1;
+                        tref = alldata.data(tcnt,1);
+                    end
+                end
+                
+                
+                mwbigarr(casecntr,1) = 2*mwcnt1/(tsteps*nval); % ratio wrt initial total steps * number of chains of each type (half of each type and hence 2)
+                mwsmlarr(casecntr,1) = 2*mwcnt2/(tsteps*nval); % ratio wrt initial total steps * number of chains of each type (half of each type and hence 2)
+                
+                fprintf(fout_cons,'%d\t%s\t%s\t%d\t%d\t%d\t%d\t%d\t%d\t%g\n', nval,dirstr,pdifree_str,casenum,...
+                    tsteps,nchain_mws(1),nchain_mws(2),mwcnt1,mwcnt2,mwrat);
                 
             end
             
-            allnzmwrat = mwratarr(mwratarr~=0); % weed out zero values
-            lenarr = length(allnzmwrat);
-            stdval = std(allnzmwrat);
-            meanval = mean(allnzmwrat);
-            stderr = stdval/sqrt(lenarr);
+            % weed out zero values
+            allnmwrat = mwratarr(mwratarr~=0);
+            allnbigmw = mwbigarr(mwbigarr~=0);
+            allnsmlmw = mwsmlarr(mwsmlarr~=0);
             
-            fprintf(favg_pdi,'%d\t%s\t%s\t%d\t%g\t%g\n',nval,dirstr,pdifree_str,lenarr,meanval,stderr);
+            lenarr = length(allnmwrat);
+            stdratval = std(allnmwrat);
+            meanratval = mean(allnmwrat);
+            stdraterr = stdratval/sqrt(lenarr);
             
-            mean_data_arch(arch_cnt,1)   = meanval;
-            stderr_data_arch(arch_cnt,1) = stderr;
+            fprintf(favg_pdi,'%d\t%s\t%s\t%d\t%g\t%g\n',nval,dirstr,pdifree_str,lenarr,meanratval,stdraterr);
+            
+            stdbigval = std(allnbigmw);
+            meanbigval = mean(allnbigmw);
+            stdbigerr = stdbigval/sqrt(lenarr);
+            
+            stdsmlval = std(allnsmlmw);
+            meansmlval = mean(allnsmlmw);
+            stdsmlerr = stdsmlval/sqrt(lenarr);
+            
+            
+            mean_data_arch_rat(arch_cnt,1)   = meanratval;
+            mean_data_arch_big(arch_cnt,1)   = meanbigval;
+            mean_data_arch_sml(arch_cnt,1)   = meansmlval;
+            
+            stderr_data_arch_rat(arch_cnt,1) = stdraterr;
+            stderr_data_arch_big(arch_cnt,1) = stdbigerr;
+            stderr_data_arch_sml(arch_cnt,1) = stdsmlerr;
             
         end % end arch loop
         
@@ -139,23 +177,68 @@ end % end nfree_arr loop
 
 
 if plt_data
-   
+    
+    % Plot only ratio
     h1 = figure;
     hold on
     box on
     set(gca,'FontSize',16)
     xlabel('Architecture','FontSize',20,'Interpreter','Latex')
-    ylabel('$f^{\rm{rat}}_{\rm{ads}}$','FontSize',20,'Interpreter','Latex')
-    
-    X = categorical({'Block-Block','Alter-Alter'});
-    bar(X,mean_data_arch(:,1));
-    er = errorbar(X,mean_data_arch(:,1),stderr_data_arch(:,1),stderr_data_arch(:,1));
+    ylabel('$\phi_{\rm{ads}}$','FontSize',20,'Interpreter','Latex')
+    X = categorical({leg_arr{1},leg_arr{2}});
+    bar(X,mean_data_arch_rat(:,1));
+    er = errorbar(X,mean_data_arch_rat(:,1),stderr_data_arch_rat(:,1),stderr_data_arch_rat(:,1));
     er.Color = [0 0 0];
     er.LineStyle = 'none';
     er.LineWidth = 2;
-    
     saveas(h1,'./../../Figs_paper/bidispersed.png');
     
+    % Plot all mws and ratio of mws
+    h2 = figure;
+    hold on
+    box on
+    set(gca,'FontSize',16)
+    xlabel('Architecture','FontSize',20,'Interpreter','Latex')
+    ylabel('$f_{\rm{ads}}$','FontSize',20,'Interpreter','Latex')
+    X = categorical({leg_arr{1};leg_arr{2}});
+    Yall_data = zeros(length(arch_arr),3); Erall_data = zeros(length(arch_arr),3);
+    for i = 1:length(arch_arr)
+        Yall_data(i,1) = mean_data_arch_sml(i,1);
+        Yall_data(i,2) = mean_data_arch_big(i,1);
+        Yall_data(i,3) = mean_data_arch_rat(i,1);
+        
+        Erall_data(i,1) = stderr_data_arch_sml(i,1);
+        Erall_data(i,2) = stderr_data_arch_big(i,1);
+        Erall_data(i,3) = stderr_data_arch_rat(i,1);
+    end
+
+    
+    hBar = bar(X,Yall_data);
+    ylim([0.006 15])
+    pleg{1} = '$n$ = 8';
+    pleg{2} = '$n$ = 52';
+    pleg{3} = '$\phi_{\rm{ads}}$';
+    legend(hBar,pleg,'Interpreter','Latex','Location','NorthWest')
+    %xticks([1 2]); xticklabels = ({leg_arr{1} leg_arr{2}});
+    
+    % Only to plot with error bars
+    % Ref: https://www.mathworks.com/matlabcentral/answers/102220-how-do-i-place-errorbars-on-my-grouped-bar-graph-using-function-errorbar-in-matlab
+%     % Find the number of groups and the number of bars in each group
+%     ngroups = size(Yall_data, 1);
+%     nbars = size(Yall_data, 2);
+%     % Calculate the width for each bar group
+%     groupwidth = min(0.8, nbars/(nbars + 1.5));
+%     % Set the position of each error bar in the centre of the main bar
+%     % Based on barweb.m by Bolu Ajiboye from MATLAB File Exchange
+%     for i = 1:nbars
+%         % Calculate center of each bar
+%         x = (1:ngroups) - groupwidth/2 + (2*i-1) * groupwidth / (2*nbars);
+%         errorbar(x, Yall_data(:,i), Erall_data(:,i), 'k', 'linestyle', 'none');
+%     end
+    set(gca,'yscale','log'); % edit legends and xlabels AFTER PLOTTING. Could not insert automatically.
+    hold off
+    
+   
 end
-    
-    
+
+

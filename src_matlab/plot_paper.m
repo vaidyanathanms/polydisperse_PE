@@ -16,14 +16,14 @@ format long
 %% Color codes
 green = [0 0.5 0.0]; gold = [0.9 0.75 0]; orange = [0.91 0.41 0.17];brown = [0.2 0 0];
 pclr = {'r',green,'b',brown,'k','m', gold};
-lsty = {'-','--',':'};
+lsty = {'--','-',':'};
 msty = {'d','o','s','x'};
 
 %% Input data
-nfreearr = [16]%;32;64;128;150];
-casearr  = [1]%,2,3,4];
+nfreearr = [16;32;64;128;150];
+casearr  = [1,2,3,4];
 pdi_freearr = [1,1.5];
-arch_arr = {'bl_bl'}%,'al_al'};
+arch_arr = {'bl_bl','al_al'};
 leg_arr  = {'Block-Block','Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr
 pdigraft = 1.0;
 nmonfree = 30; nmongraft = 30; ngraft = 32;
@@ -35,7 +35,7 @@ set_tmax = 3e7; % maximum timestep for analysis;
 %% Input flags
 % see definitions above
 fig1  = 0;
-fig2a = 0;
+fig2a = 1;
 fig2b = 1;
 fig3a = 0;
 fig3b = 0;
@@ -60,7 +60,7 @@ if fig1
             nval_pl(plcnt),arch,casenum);
         alldata = importdata(strcat(dirname,'/init_mol_details.dat'));
         histogram(alldata.data(:,3),'BinWidth',8,'Normalization','pdf','BinLimits',[1,max(alldata.data(:,3))+1]);
-        legendinfo{plcnt} = ['$N_{pa} =$ ' num2str(nval_pl(plcnt))];
+        legendinfo{plcnt} = ['$n_{pa} =$ ' num2str(nval_pl(plcnt))];
     end
     
     mwvals = 1:10*mnideal;
@@ -162,7 +162,7 @@ if fig2a
                 end
             end
             if findnf == -1
-                fprintf('WARNING: Did not find N_f value in the input array: %d\n', str2double(spl_tline{nf_col}));
+                fprintf('WARNING: Did not find N_pa value in the input array: %d\n', str2double(spl_tline{nf_col}));
                 continue;
             end
             
@@ -197,7 +197,7 @@ if fig2a
     hold on
     box on
     set(gca,'FontSize',16)
-    xlabel('$N_{pa}/N_{pc}$','FontSize',20,'Interpreter','Latex')
+    xlabel('$n_{pa}/n_{pc}$','FontSize',20,'Interpreter','Latex')
     ylabel('$f_{\rm{ads}}$','FontSize',20,'Interpreter','Latex')
     
     lcnt = 1;
@@ -205,11 +205,16 @@ if fig2a
         
         for arch_cnt = 1:length(arch_arr)
             
-            errorbar(frac_ads(:,1,plcnt)/nch_graft,frac_ads(:,1+arch_cnt,plcnt),err_ads(:,1+arch_cnt,plcnt),...
-                'Color', pclr{arch_cnt},'Marker',msty{arch_cnt},'MarkerFaceColor',...
-                pclr{arch_cnt},'LineStyle',lsty{plcnt},'LineWidth',2,'MarkerSize',8)
-            
-            legendinfo{lcnt} = [leg_arr{arch_cnt} ', PDI = ' num2str(pdi_plot(plcnt,1))];
+            if pdi_freearr(plcnt) == 1
+                errorbar(frac_ads(:,1,plcnt)/nch_graft,frac_ads(:,1+arch_cnt,plcnt),err_ads(:,1+arch_cnt,plcnt),...
+                    'Color', pclr{arch_cnt},'Marker',msty{arch_cnt},'MarkerFaceColor',...
+                    'None','LineStyle',lsty{plcnt},'LineWidth',1,'MarkerSize',10)
+            else
+                errorbar(frac_ads(:,1,plcnt)/nch_graft,frac_ads(:,1+arch_cnt,plcnt),err_ads(:,1+arch_cnt,plcnt),...
+                    'Color', pclr{arch_cnt},'Marker',msty{arch_cnt},'MarkerFaceColor',...
+                    pclr{arch_cnt},'LineStyle',lsty{plcnt},'LineWidth',1,'MarkerSize',10)
+            end
+            legendinfo{lcnt} = [leg_arr{arch_cnt} ', PDI = ' num2str(pdi_plot(plcnt,1),'%.1f')];
             lcnt = lcnt + 1;
             
         end
@@ -243,7 +248,7 @@ if fig2b
         pdi_plot(pdi_cntr,1)   = pdifree;
         
         % Check file existence
-        fname = fopen(sprintf('./../../net_charge/AvgQnetBound_%s.txt',pdifree_str));
+        fname = sprintf('./../../net_charge/AvgQnetBound_%s.txt',pdifree_str);
         fads_id = fopen(fname);
         
         if fads_id <= 0
@@ -269,7 +274,7 @@ if fig2b
                 arch_col = wcnt;
             elseif strcmp(spl_tline{wcnt},'num_cases')
                 ncases_col = wcnt;
-            elseif strcmp(spl_tline{wcnt},'avg_fraction')
+            elseif strcmp(spl_tline{wcnt},'<Q_{b}>')
                 favg_col = wcnt;
             elseif strcmp(spl_tline{wcnt},'StdErrMean')
                 err_col = wcnt;
@@ -301,12 +306,12 @@ if fig2b
                     break;
                 end
             end
+            
             if findnf == -1
                 fprintf('WARNING: Did not find N_f value in the input array: %d\n', str2double(spl_tline{nf_col}));
                 continue;
             end
-            
-            
+      
             %arch value
             findarch = -1;
             for itercnt = 1:length(arch_arr) %comparing wrt the INPUT Array
@@ -331,34 +336,39 @@ if fig2b
         
     end
     
-    % Plot frac_ads, err_ads in one go
+    % Plot qnet, err_qnet in one go
     
     h1 = figure;
     hold on
     box on
     set(gca,'FontSize',16)
-    xlabel('$N_{pa}/N_{pc}$','FontSize',20,'Interpreter','Latex')
-    ylabel('$f_{\rm{ads}}$','FontSize',20,'Interpreter','Latex')
+    xlabel('$n_{pa}/n_{pc}$','FontSize',20,'Interpreter','Latex')
+    ylabel('$\langle Q_{b} \rangle$','FontSize',20,'Interpreter','Latex')
     
     lcnt = 1;
     for plcnt = 1:length(pdi_freearr)
         
         for arch_cnt = 1:length(arch_arr)
             
-            errorbar(qnet_brsh(:,1,plcnt)/nch_graft,qnet_brsh(:,1+arch_cnt,plcnt),err_qnet(:,1+arch_cnt,plcnt),...
-                'Color', pclr{arch_cnt},'Marker',msty{arch_cnt},'MarkerFaceColor',...
-                pclr{arch_cnt},'LineStyle',lsty{plcnt},'LineWidth',2,'MarkerSize',8)
-            
-            legendinfo{lcnt} = [leg_arr{arch_cnt} ', PDI = ' num2str(pdi_plot(plcnt,1))];
+            if pdi_freearr(plcnt) == 1
+                errorbar(qnet_brsh(:,1,plcnt)/nch_graft,qnet_brsh(:,1+arch_cnt,plcnt),err_qnet(:,1+arch_cnt,plcnt),...
+                    'Color', pclr{arch_cnt},'Marker',msty{arch_cnt},'MarkerEdgeColor',pclr{arch_cnt},'MarkerFaceColor',...
+                    'none','LineStyle',lsty{plcnt},'LineWidth',1,'MarkerSize',10)
+            else
+                errorbar(qnet_brsh(:,1,plcnt)/nch_graft,qnet_brsh(:,1+arch_cnt,plcnt),err_qnet(:,1+arch_cnt,plcnt),...
+                    'Color', pclr{arch_cnt},'Marker',msty{arch_cnt},'MarkerFaceColor',...
+                    pclr{arch_cnt},'LineStyle',lsty{plcnt},'LineWidth',1,'MarkerSize',10)
+            end
+            legendinfo{lcnt} = [leg_arr{arch_cnt} ', PDI = ' num2str(pdi_plot(plcnt,1),'%.1f')];
             lcnt = lcnt + 1;
             
         end
         
     end
     
-    legend(legendinfo,'FontSize',12,'Location','NorthWest','Interpreter','Latex')
+    lgd = legend(legendinfo,'FontSize',12,'Location','NorthWest','Interpreter','Latex');
     legend boxoff
-    saveas(h1,'./../../Figs_paper/fads_npabynpc_pdi_arch.png');
+    saveas(h1,'./../../Figs_paper/fig_qnetbrush.png');
     
 end % end if fig2b
 
