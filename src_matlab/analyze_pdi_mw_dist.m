@@ -14,7 +14,7 @@ lsty = {'-','--',':'};
 msty = {'d','s','o','x'};
 
 %% Inputs
-nch_freearr = [16;32;64;128;150];
+nch_freearr = [150] %[16;32;64;128;150];
 casearr  = [1;2;3;4];
 pdi_freearr = [1.5];
 arch_arr = {'bl_bl';'al_al'};
@@ -35,6 +35,7 @@ nch_graft = 32;
 %% Input flags
 pdiflag  = 1;
 mwdflag  = 1;
+siflag   = 1;
 
 %% Zero arrays
 avg_across_cases = zeros(length(nch_freearr),length(arch_arr),length(pdi_freearr));
@@ -45,6 +46,14 @@ pdigraft_str = num2str(pdigraft,'%1.1f');
 num_cases = length(casearr);
 
 %% Main Analysis
+
+if siflag %latex output
+    % SI Data
+    fout_latex_sidata = fopen('./../../outfiles/overall/sidata_pdi_initdata_consolidate.dat','w');
+    fprintf(fout_latex_sidata,'%s\t&\t %s\t&\t %s\t&\t %s\t&\t %s\t&\t %s\t&\t %s\t&\t %s\n','\DJ$_{\rm{ideal}}$',...
+        '$N_{pa}$','Arch','Case \#','\DJ$_{\rm{sim}}$','Free neutral beads','Free charged beads','Positive ions');
+    
+end
 
 for ncnt = 1:length(nch_freearr) % begin nfree loop
     nval = nch_freearr(ncnt);
@@ -157,6 +166,11 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                     fprintf(fout_sidata,'%g\t%d\t%s\t%d\t%g\t%d\t%d\t%d\n',ref_pdifree,...
                         nval,dirstr,casenum,pdi_sim,outmonlist(5,1),outmonlist(6,1),outmonlist(7,1));
                     
+                    if siflag
+                        fprintf(fout_latex_sidata,'%g\t &\t %d\t &\t %s\t &\t %d\t &\t %g\t &\t %d\t &\t %d\t &\t %d\n',...
+                            ref_pdifree,nval,dirstr,casenum,pdi_sim,outmonlist(5,1),outmonlist(6,1),outmonlist(7,1));
+                    end
+                    
                 end % end pdi calculation
                 
                 if mwdflag % begin molecular weight distribution calculation
@@ -206,6 +220,8 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
     fclose(favg_pdi);
     fclose(fout_cons);
     fclose(fout_sidata);
-    
 end % end nfree loop
 
+if siflag
+    fclose(fout_latex_sidata);
+end

@@ -1,12 +1,9 @@
 %% Plot all data for the paper
 
-% Fig 1  : SZ-distribution
-% Fig 2a : f_ads vs Npa/Npc for different PDI and architectures
-% Fig 2b : Qnet vs Npa/Npc for different PDI and architectures
-% Fig 3a : p_ads(MW) vs MW for Block-Block and various N_pa/Npc
-% Fig 3b : p_ads(MW) vs MW for Alter-Alter and various N_pa/Npc
-% Fig 4  : Density plots
-% Fig 5  : Bidispersed case
+% Figsz   : SZ-distribution
+% Figfads : f_ads vs Npa/Npc for different PDI and architectures
+% Figqnet : Qnet vs Npa/Npc for different PDI and architectures
+% Figdens : Density plots
 
 clear
 clc
@@ -15,7 +12,7 @@ format long
 
 %% Color codes
 green = [0 0.5 0.0]; gold = [0.9 0.75 0]; orange = [0.91 0.41 0.17];brown = [0.2 0 0];
-pclr = {'r',green,'b',brown,'k','m', gold};
+pclr = {'r','b',green,brown,'k','m', gold};
 lsty = {'--','-',':'};
 msty = {'d','o','s','x'};
 
@@ -34,19 +31,17 @@ set_tmax = 3e7; % maximum timestep for analysis;
 
 %% Input flags
 % see definitions above
-fig1  = 0;
-fig2a = 1;
-fig2b = 1;
-fig3a = 0;
-fig3b = 0;
-fig4  = 0;
+figsz   = 0;
+figfads = 1;
+figqnet = 1;
+figdens  = 0; nplot = 150; %for density profiles
 
 %% Pre-calculations
 rhofree = nfreearr*30/(lz*area);
 pdigraft_str = num2str(pdigraft,'%1.1f');
 
-%% Fig1
-if fig1
+%% SZ
+if figsz
     
     nval_pl = [64,150]; casenum = 1; arch = 'bl_bl'; mnideal = 30; pdifree = 1.50;
     h1 = figure;
@@ -87,8 +82,8 @@ if fig1
     
 end
 
-%% Fig2a
-if fig2a
+%% f_ads
+if figfads
     % Create arrays for according to the input array sizes
     frac_ads = zeros(length(nfreearr),length(arch_arr)+1,length(pdi_freearr)); %+1 for y-dimension to incorporate the N_f values
     err_ads  = zeros(length(nfreearr),length(arch_arr)+1,length(pdi_freearr)); %+1 for y-dimension to incorporate the N_f values
@@ -228,8 +223,8 @@ if fig2a
     
 end
 
-%% Fig2b
-if fig2b
+%% <Qb>
+if figqnet
     
     fprintf('%s\n','Preparing net bound charge plot');
     
@@ -311,7 +306,7 @@ if fig2b
                 fprintf('WARNING: Did not find N_f value in the input array: %d\n', str2double(spl_tline{nf_col}));
                 continue;
             end
-      
+            
             %arch value
             findarch = -1;
             for itercnt = 1:length(arch_arr) %comparing wrt the INPUT Array
@@ -373,23 +368,106 @@ if fig2b
 end % end if fig2b
 
 
-%% Fig3a
-if fig3a
-    %Run avg_and_coarsen_dist.m in conjunction with out_mwdist.m
+%% \rho
+if figdens
+    
+    fprintf('%s\n','Preparing density plots');
+    
+    for arch_cnt = 1:length(arch_arr)  % begin arch loop
+        dirstr = arch_arr{arch_cnt};lcnt = 1;
+        
+        % Plot density profiles
+        h1 = figure;
+        hold on
+        box on
+        set(gca,'FontSize',16)
+        xlabel('$z/L_{z}$','FontSize',20,'Interpreter','Latex')
+        ylabel('$\rho$','FontSize',20,'Interpreter','Latex')
+        
+        for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
+            
+            pdifree     = pdi_freearr(pdi_cntr);
+            pdifree_str = num2str(pdifree,'%1.1f');
+            totcases = 0;avg_rho_graft = 0; avg_rho_free = 0; 
+            
+            for casecntr = 1:length(casearr) % begin case loop
+                casenum = casearr(casecntr);
+                
+                % Check file existence
+                dirname = sprintf('./../../sim_results/outresults_dir_n_%d/%s/pdifree_%s_pdigraft_%s/Case_%d',...
+                    nplot,dirstr,pdifree_str,pdigraft_str,casenum);
+                if ~exist(dirname,'dir')
+                    fprintf('%s does not exist\n',dirname);
+                    continue
+                end
+                rho_prefix = 'grpdens_config_*.lammpstrj';
+                rho_fylelist = dir(strcat(dirname,'/',rho_prefix));
+                if min(size(rho_fylelist)) == 0
+                    fprintf('No files/Empty files are found for %s\n',rho_prefix);
+                    continue;
+                end
+                
+                nfyles = numel(rho_fylelist); %number of files of the type
+                if nfyles == 0
+                    fprintf('Did not find files of the type grpdens_config* in %d\t%s\n', nplot,dirstr);
+                    continue;
+                else
+                    [latest_fyleindex] = find_latest_fyle(rho_fylelist,nfyles);
+                end
+                
+                rho_fylename = strcat(dirname,'/',rho_fylelist(latest_fyleindex).name);
+                if exist(rho_fylename,'file') ~= 2
+                    fprintf('%s does not exist/empty file\n',rho_fylename);
+                    continue;
+                elseif struct(dir(rho_fylename)).bytes == 0
+                    fprintf('Empty file: %s \n',rho_fylename);
+                    continue;
+                end
+                fprintf('Plotting density profiles using %s for n_pa = %d\n', rho_fylename, nplot);
+                
+                all_data = importdata(rho_fylename,' ',1);
+                fld = all_data.data;
+                rdata = fld(:,1); lz = fld(1,1) + fld(length(fld(:,1)),1); %because of binning
+                nbins = length(rdata(:,1));
+                
+                % sanity check for length of data
+                if casecntr == 1
+                    nbins_old = nbins;
+                else
+                    if nbins_old ~= nbins
+                        fprintf('ERROR: The values of bins do not match %s\t%d\t%g\n',dirstr,nplot,pdifree)
+                        error('CHECK nbins')
+                    else
+                        nbins_old = nbins;
+                    end
+                end
+                
+                avg_rho_graft = fld(:,2) + avg_rho_graft;
+                avg_rho_free  = fld(:,3) + avg_rho_free;
+                
+                totcases = totcases + 1;
+                
+            end
+            
+            avg_rho_graft =  avg_rho_graft/totcases;
+            avg_rho_free  =  avg_rho_free/totcases;
+            
+            plot(rdata/lz,avg_rho_graft,'Color','k','LineStyle',lsty{pdi_cntr},'LineWidth',2)
+            plot(rdata/lz,avg_rho_free,'Color',green,'LineStyle',lsty{pdi_cntr},'LineWidth',2)
+            
+            legendinfo{lcnt} = ['Brush Monomers; ' 'PDI = ' num2str(pdifree,'%.1f')];
+            lcnt = lcnt + 1;
+            legendinfo{lcnt} = ['Free Monomers; ' 'PDI = ' num2str(pdifree,'%.1f')];
+            lcnt = lcnt + 1;
+            
+        end
+        
+        lgd = legend(legendinfo,'FontSize',12,'Location','NorthEast','Interpreter','Latex');
+        legend boxoff
+        saveas(h1,sprintf('./../../Figs_paper/SI_Figs/fig_dens_%s_%d.png',dirstr,nplot));
+        
+    end
+    
 end
 
-%% Fig3b
-if fig3b
-    %Run avg_and_coarsen_dist.m in conjunction with out_mwdist.m
-end
-
-%% Fig 4
-if fig4
-   % Run density_plot.m 
-end
-   
-%% Fig 5
-if fig4
-    % Run bidispersed_analysis.m
-end
 
