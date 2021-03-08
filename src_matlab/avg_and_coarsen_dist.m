@@ -26,7 +26,7 @@ plt_flag = 1;
 nch_freearr = [32;64;128;150];
 casearr  = [1;2;3;4];
 pdi_freearr = [1.5];
-arch_arr  = {'bl_bl'};
+arch_arr  = {'al_al'};
 pdigraft  = 1.0;
 nfreemons = 30;
 ngraft_ch = 32; % Number of graft chains
@@ -48,7 +48,7 @@ max_mw_free = 10*nfreemons; % An approximate max. Will throw error from extract_
 
 %% For spline fit
 
-pvalarr = [0.01;3.5847648446484876E-4;3.8440521968920746E-4;1.4144914819373184E-4];
+pvalarr = [0.1;3.5847648446484876E-4;3.8440521968920746E-4;1.4144914819373184E-4];
 %% Compute average_distribution
 
 if avg_flag
@@ -292,7 +292,7 @@ if plt_flag
                 pval = pvalarr(ncnt); %https://www.mathworks.com/help/curvefit/cubic-smoothing-splines.html
                 xxi = (0:max(xalldata));
                 ys = csaps(xalldata,yalldata,pval,xxi,yalldata);
-                plot(xxi,ys,'Color',pclr{ncnt},'LineStyle','--','LineWidth',2)
+%                 plot(xxi,ys,'Color',pclr{ncnt},'LineStyle','--','LineWidth',2)
                 if ncnt == 4
                     x3d = xalldata; y3d = yalldata;
                 end
