@@ -18,9 +18,9 @@ src_f90/polyinp_fordiff*
 src_f90/a.out
 .gitignore~
 src_matlab/compute_pdi_mw_dist.m
-src_f90/SZDist_main.f90
-src_lmp/in.bias
-src_lmp/in.init
-src_lmp/in.init_var
-src_lmp/in.umbre
-src_f90/FreeChains.dat
+./src_f90/SZDist_main.f90
+./src_lmp/in.bias
+./src_lmp/in.init
+./src_lmp/in.init_var
+./src_lmp/in.umbre
+./src_f90/FreeChains.dat
