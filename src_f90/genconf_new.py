@@ -21,11 +21,13 @@ from my_python_functions import clean_backup_initfiles
 
 #---------input flags------------------------------------------
 #0-initial run  1- production
-restart = 0 # For restarting from given configurations
-
+restart   = 0  # For restarting from given configurations
+num_hrs   = 24 # Total number of hours for run
+num_nodes = 2  # Number of nodes
+num_procs = 24  # Number of procs per node
 
 #---------input details----------------------------------------
-free_chains  = [80]#,80,32,48]
+free_chains  = [150,100,64]
 free_avg_mw  = 30
 graft_chains = 64
 graft_avg_mw = 35 
@@ -33,10 +35,11 @@ tail_mons    = 5
 nsalt        = 510
 f_charge     = 0.5
 archarr      = [1,2,3,4]
-ncases_pdi   = 5
+ncases_pdi   = [1,2,3]
 pdi_free     = 1.2
 pdi_graft    = 1.0
 
+box_data     = [53.0, 53.0, 120.0] #x-box, y-box, z-box
 #--------file_lists--------------------------------------------
 
 f90_files = ['ran_numbers.f90','lammps_inp.f90','lmp_params.f90'\
@@ -100,9 +103,9 @@ for ifree in range(len(free_chains)):
         if not os.path.isdir(workdir_graftpdi):
             os.mkdir(workdir_graftpdi)
 
-        for caselen in range(ncases_pdi):
+        for casenum in range(len(ncases_pdi)):
 
-            workdir_subpdi = workdir_graftpdi + '/Case_' + str(caselen+1)
+            workdir_subpdi = workdir_graftpdi + '/Case_' + str(ncases_pdi[casenum])
             if not os.path.isdir(workdir_subpdi):
                 os.mkdir(workdir_subpdi)
 
@@ -111,7 +114,7 @@ for ifree in range(len(free_chains)):
                 os.chdir(workdir_subpdi)
                 destdir = os.getcwd()
 
-                print( "Starting case", caselen+1, "for ",\
+                print( "Starting case", ncases_pdi[casenum], "for ",\
                        free_chains[ifree],dirstr)
 
                 #---Copying files------
@@ -147,27 +150,29 @@ for ifree in range(len(free_chains)):
                 print( "Copy Successful - Generating Input Files")
                 
                 lmp_data_fyle = create_paramfyl_for_datafyl(destdir,\
-                                                      par_files,free_chains[ifree]\
-                                                      ,fylstr,caselen,free_avg_mw,\
-                                                      graft_chains,graft_avg_mw,nsalt,\
-                                                      f_charge,tail_mons,\
-                                                      archarr[iarch],pdi_files)
+                                                            par_files,free_chains[ifree]\
+                                                            ,fylstr,ncases_pdi[casenum],free_avg_mw,\
+                                                            graft_chains,graft_avg_mw,nsalt,\
+                                                            f_charge,tail_mons,archarr[iarch],\
+                                                            pdi_files,box_data)
 
                 compile_and_run_inpgenfyles(par_files[1],destdir)            
 
                 #---Run LAMMPS files-------------
 
                 edit_generate_input_lmp_files('in.init_var',lmp_data_fyle)
-                run_lammps(free_chains[ifree],pdi_free,caselen,fylstr,\
-                           'jobmain_var.sh','jobmain.sh')
+                run_lammps(free_chains[ifree],pdi_free,ncases_pdi[casenum],fylstr,\
+                           'jobmain_var.sh','jobmain.sh',num_hrs,num_nodes,num_procs)
                 
                 #----Copy/Backup initial files---
                 clean_backup_initfiles(f90_files,pdi_files,par_files,destdir)
-
                 os.chdir(maindir)
 
             else:
 
+                print("%s\t %g\t %d\t %s\t %d\t" 
+                      %("Restarting simulation for pdi/nfree/arch/casenum",
+                        pdi_free,free_chains[ifree],fylstr,ncases_pdi[casenum]))
                 if not os.path.isdir(workdir_subpdi):
                     print( workdir_subpdi, "not found")
                     continue
@@ -183,7 +188,7 @@ for ifree in range(len(free_chains)):
                     continue
 
                 for fyllist in range(len(lmp_long)):
-                    cpy_main_files(lmp_dir,destdir,lmp_long[fyllist])
+                    cpy_main_files(lmpdir,destdir,lmp_long[fyllist])
 
                 fylename = destdir + '/lmp_mesabi'
                 if not fylename: 
@@ -191,8 +196,9 @@ for ifree in range(len(free_chains)):
                     desfyl = destdir + '/lmp_mesabi'
                     shutil.copy2(srcfyl, desfyl)
 
-                run_lammps(free_chains[ifree],pdifree,caselen,fylstr,\
-                           'jobmain_long_var.sh','jobmain_long.sh')
+                run_lammps(free_chains[ifree],pdi_free,ncases_pdi[casenum],fylstr,\
+                           'jobmain_long_var.sh','jobmain_long.sh',num_hrs,\
+                           num_nodes,num_procs)
 
 
                 os.chdir(maindir)
