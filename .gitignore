@@ -24,3 +24,4 @@ src_matlab/compute_pdi_mw_dist.m
 ./src_lmp/in.init_var
 ./src_lmp/in.umbre
 ./src_f90/FreeChains.dat
+src_f90/a.out
