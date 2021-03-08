@@ -109,6 +109,10 @@ SUBROUTINE READ_INP_FILE()
         READ(inpread,*,iostat=ierr) arch
         logflag  = 1
 
+     ELSEIF(dumchar == 'box_dimensions') THEN
+
+        READ(inpread,*,iostat=ierr) boxl_x, boxl_y, boxl_z
+
      ELSEIF(dumchar == 'log_file') THEN
 
         READ(inpread,*,iostat=ierr) log_fname
@@ -140,7 +144,7 @@ SUBROUTINE DEFAULT_VALUES()
 
   nch_free = 0; avg_mon_free = 0; nch_brush = 0; avg_mon_brush = 0
   mon_tail_brush = 0; n_salt = 0; charge_frac = 0.0
-
+  boxl_x = 53.0; boxl_y = 53.0; boxl_z = 120.0
 
 END SUBROUTINE DEFAULT_VALUES
 
@@ -641,15 +645,6 @@ SUBROUTINE COMPUTE_POLY_ION_BOX_SALT_DETAILS()
 
   IMPLICIT NONE
   INTEGER :: ierr
-
-  IF(default_dim == 1) THEN
-     boxl_x = 53.0; boxl_y = 53.0; boxl_z = 120.0
-  ELSE
-     OPEN(unit = 24,file="box.dat",action="read",status="old"&
-          &,iostat=ierr)
-     IF(ierr /= 0) STOP "box.dat cannot be found"
-     READ(24,*) boxl_x, boxl_y, boxl_z
-  END IF
 
   nchains = nch_free + nch_brush
   totpart = mw_tot_brush + mw_tot_free + ncntr_brush + ncntr_free +&

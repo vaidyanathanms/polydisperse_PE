@@ -24,7 +24,7 @@ MODULE PARAMETERS_PE
   REAL    :: normdens,denbinavg,brush_ht,fracadsavg
   INTEGER :: nfreegrp,nadsgrp, nfreemons, nadsmons
   REAL    :: adscut,avgadscnt,avg_ch_adscnt
-  INTEGER :: ncatgrp, nangrp, nanions, ncations
+  INTEGER :: ncatgrp, nangrp, npol_anions, npol_cations
   REAL    :: acrbinval, acrvolavg, acrdomcut,chadscut
   INTEGER :: acrmaxbin,acrfreq
   INTEGER :: nfreechains, ngraftchains, ngraftmons,graft_type
@@ -45,6 +45,8 @@ MODULE PARAMETERS_PE
   INTEGER, PARAMETER :: dumwrite = 200, rgswrite = 250,adswrite=360
   INTEGER, PARAMETER :: adsmonwrite=370,adschwrite = 380
   INTEGER, PARAMETER :: adschwrite2=390, tethwrite = 410
+  INTEGER, PARAMETER :: avgadschwrite=470
+  INTEGER, PARAMETER :: init_mw_write=420
 
   !Math Constants
 
@@ -93,8 +95,9 @@ MODULE PARAMETERS_PE
   INTEGER, ALLOCATABLE, DIMENSION(:,:) :: dengrp_arr
   INTEGER, ALLOCATABLE, DIMENSION(:) :: catgrp,angrp
   INTEGER, ALLOCATABLE, DIMENSION(:) :: free_ptr, ads_ptr, free_grp&
-       &,ads_grp,free_chainarr
-  
+       &,ads_grp,free_chainarr,adsfree_chainsarr
+  INTEGER, ALLOCATABLE, DIMENSION(:) :: chain_id_to_mw_map
+
 END MODULE PARAMETERS_PE
 
 !--------------------------------------------------------------------
