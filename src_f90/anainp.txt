@@ -1,36 +1,31 @@
 datafile
-PEdata_100_alter_alter.dat
+pedatainp.data
 trajectory_file
-config_5040000.lammpstrj
+config_23735000.lammpstrj
 nframes
-2500
-skipfr
 200
+skipfr
+1600
 freqfr
-1
+0
 nchains
 164
-nwater
-0
-atomsperchain
-64
+avg_graft_dist
+1
 compute_density
 5 3 7 120 1
-3 4 5 6 7 8 9 
+2 3 4 5 6 7 8 
 compute_grpdens
 2
-2
-3 4
+4
+1 2 3 4
 2
 5 6
-compute_fracads
-21.545 65 100
-compute_monfracads
-2 3000 2 1920 1.5
-5 6
-3 4
 compute_chainfracads
-30 64 1.5
+100 64 1.50
+2 2
+5 6
+3 4
 compute_ancatrdf
 10 100 5.0 2 2
 3 4

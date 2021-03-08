@@ -3,9 +3,9 @@ py_datafyl
 trajectory_file
 py_trajfyl
 nframes
-3000
+1500
 skipfr
-1000
+0
 freqfr
 0
 nchains
@@ -21,6 +21,10 @@ compute_grpdens
 1 2 3 4
 2
 5 6
+compute_monfracads
+2 2 py_cutoff
+5 6
+3 4
 compute_chainfracads
 py_nfrchains py_ngrchains py_cutoff
 compute_ancatrdf
