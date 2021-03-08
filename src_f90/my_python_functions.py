@@ -223,8 +223,7 @@ def find_datafyle(nch_free,archstr,casenum,destdir):
         restart_fyles = glob.glob('archival_*')
         
         if restart_fyles == []:
-            print("ERROR: No restart files found")
-            return
+            return 'ERROR'
 
         if not os.path.exists('lmp_mesabi'):
         
@@ -241,19 +240,22 @@ def find_latest_trajfyle(pref,destdir):
     
     os.chdir(destdir)
     traj_arr = glob.glob(pref)
+    if traj_arr == []:
+        return 'ERROR'
     latest_fyle = max(traj_arr,key = os.path.getctime)
     return latest_fyle
 
 
 def edit_generate_anainp_files(inpdata,inptraj,nch_tot,nch_free,\
-                               nch_graft,cutoff):
+                               nch_graft,cutoff,listnum):
     
     if not os.path.exists('anainp_var.txt'):
         print('ERROR: pe_params not found')
         return
 
     fr  = open('anainp_var.txt','r')
-    fw  = open('anainp.txt','w')
+    outana = 'anainp_' + str(listnum) + '.txt'
+    fw  = open(outana,'w')
 
     datafyle = re.split('/',inpdata)
     dataname = datafyle[len(datafyle)-1]
@@ -272,7 +274,7 @@ def edit_generate_anainp_files(inpdata,inptraj,nch_tot,nch_free,\
     fw.close()
     fr.close()
 
-def run_analysis(nch_free,pdifree,casenum,dirstr,inpjob,outjob):
+def run_analysis(nch_free,pdifree,casenum,dirstr,inpjob,outjob,listnum,destdir):
 
     if not os.path.exists(inpjob):
         print('ERROR: ', inpjob,'not found')
@@ -285,7 +287,9 @@ def run_analysis(nch_free,pdifree,casenum,dirstr,inpjob,outjob):
     fid = fr.read().replace("py_jobname",jobstr).\
           replace("py_freech",str(nch_free)).\
           replace("py_pdifree",str(pdifree)).\
-          replace("py_caselen",str(casenum))
+          replace("py_caselen",str(casenum)).\
+          replace("pyfylval",str(listnum)).\
+          replace("pyoutdir",str(destdir))
     fw.write(fid)
     fw.close()
     fr.close()
