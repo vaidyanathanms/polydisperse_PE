@@ -126,13 +126,13 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 
                 % avgads_molarr consists of the total number a chain of a given
                 % MW is adsorbed and is totalled across all the files for a
-                % given case and across cases for a given graft-free
-                % architecure.
+                % given case and across cases for a given graft/free
+                % (alal/blbl/albl/blal) architecure.
                 avgads_molarr = zeros(max_mw_free,2); % to compute average distribution; maximum size of the array should be equal to the expected max MW
                 avgads_molarr(:,1) = 1:max_mw_free; % This is for compute_mwdist for a given case
                 
                 % cnt_all_ads_mw_arr will append all the MWs of the adsorbed chains for find_distribution_of_mw
-                cnt_all_ads_mw_arr = zeros(1000,1); % The number 1000 is by default. Will weed zeros at the end.
+                cnt_all_ads_mw_arr = zeros(1000,1); % The number 1000 is inconsequential. Will weed zeros at the end.
                 init_index_avgads = 1;
                 
                 
