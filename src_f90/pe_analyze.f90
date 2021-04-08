@@ -165,7 +165,7 @@ SUBROUTINE READ_ANA_IP_FILE()
         END IF
 
      ELSEIF(dumchar == 'compute_fracads') THEN
-        
+        ! From density profiles
         adscalc = 1
         READ(anaread,*,iostat=ierr) brush_ht,mstart,nfree
         PRINT *, "Number of free molecules: ", nfree
@@ -181,7 +181,7 @@ SUBROUTINE READ_ANA_IP_FILE()
         fracadsavg = 0.0
 
      ELSEIF(dumchar == 'compute_monfracads') THEN
-
+        ! From free monomer - graft monomer distance
         IF(chainads) STOP "Chain details before monomer details"
         
         monads = 1
@@ -197,7 +197,7 @@ SUBROUTINE READ_ANA_IP_FILE()
 
 
      ELSEIF(dumchar == 'compute_chainfracads') THEN
-
+        ! From min(free CHAIN - graft CHAIN distance)
         chainads = 1
         READ(anaread,*,iostat=ierr) nfreechains, ngraftchains,&
              & chadscut
@@ -1805,10 +1805,10 @@ SUBROUTINE COMPUTE_FREEPENETRATE_MONS(iframe)
 
   END DO
   
-  WRITE(adsmonwrite,*) iframe, dumadscnt, REAL(dumadscnt)&
-       &/REAL(nfreemons)
+  WRITE(adsmonwrite,*) timestep, dumadscnt, REAL(dumadscnt)&
+       &/REAL(nadsmons)
      
-  avgadscnt = avgadscnt + REAL(dumadscnt)/REAL(nfreemons)
+  avgadscnt = avgadscnt + REAL(dumadscnt)/REAL(nadsmons)
 
 END SUBROUTINE COMPUTE_FREEPENETRATE_MONS
 

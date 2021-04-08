@@ -15,7 +15,8 @@ MODULE PARAMS
   INTEGER :: nch_free, avg_mon_free, nch_brush, avg_mon_brush
   INTEGER :: mon_tail_brush
   INTEGER :: n_salt
-  INTEGER :: default_dim = 1 !If 1=>53*53*120.Or else use  !box.dat
+!  Default box size is set inside the code
+!  INTEGER :: default_dim !If 1=>53*53*120.Or else use  !box.dat
   REAL    :: charge_frac = 0.5
   REAL    :: brush_dist
   INTEGER :: arch
@@ -34,7 +35,7 @@ MODULE PARAMS
 ! Files
 
   CHARACTER(LEN = 256) :: data_fname, log_fname, inp_fname
-  CHARACTER(LEN = 256) :: free_pdi_fname, brush_pdi_fname
+  CHARACTER(LEN = 256) :: free_pdi_fname, brush_pdi_fname,box_fname
   INTEGER, PARAMETER :: outdata = 100, logout = 110, inpread = 120
   INTEGER, PARAMETER :: freeread = 130, brushread = 140
 

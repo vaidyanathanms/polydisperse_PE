@@ -20,16 +20,16 @@ from my_python_functions import run_analysis
 analysis_type = 2 #1-polydisp_pe,2-newparams,3-mwchange,#4-oldsize
 
 #---------input details----------------------------------------
-free_chains  = [150]
+free_chains  = [16,32,64,128,150]
 free_avg_mw  = 30
 graft_chains = 32
 graft_avg_mw = 35 
 tail_mons    = 5
 nsalt        = 510
 f_charge     = 0.5
-archarr      = [4]
-ncases_pdi   = [1]
-pdi_free     = 1.5
+archarr      = [1,4]
+ncases_pdi   = [1,2,3,4]
+pdi_free     = 1.0
 pdi_graft    = 1.0
 cutoff_dist  = 1.50 #use two decimal places
 
@@ -157,7 +157,7 @@ for ifree in range(len(free_chains)):
                                            cutoff_dist,fyllist+1)
                 outana = 'jobana_' + str(fyllist+1) + '.sh'
                 run_analysis(free_chains[ifree],pdi_free,ncases_pdi[casenum],\
-                             fylstr,'jobana_var.sh',outana,fyllist+1)
+                             fylstr,'jobana_var.sh',outana,fyllist+1,destdir)
                 
 
 

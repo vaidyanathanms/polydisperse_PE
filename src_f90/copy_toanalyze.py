@@ -19,18 +19,18 @@ rest_job_flag  = 0 #copy restart/job files
 fyl_flag       = 1 #copy output files
 
 #---------input details----------------------------------------
-free_chains  = [16]#[16,24,32,64,96,128,150]
+free_chains  = [16,32,64,128,150]
 free_avg_mw  = 30
 graft_chains = 32
 graft_avg_mw = 35 
 tail_mons    = 5
 nsalt        = 510
 f_charge     = 0.5
-archarr      = [1]#,2,3,4]
-ncases_pdi   = [1]#,2,3,4]
-pdi_free     = 1.0
+archarr      = [1,4]
+ncases_pdi   = [1,2,3,4]
+pdi_free     = 1.5
 pdi_graft    = 1.0
-cutoff_dist  = 1.50 #use two decimal places
+cutoff_dist  = 1.00 #use two decimal places
 
 
 #--------file_lists--------------------------------------------

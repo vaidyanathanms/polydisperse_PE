@@ -1,9 +1,13 @@
 #!/bin/bash -l
-#PBS -l walltime=03:00:00,nodes=1:ppn=1,pmem=2580mb
-#PBS -m abe
-#PBS -N py_jobname
-#PBS -M vsethura@umn.edu
-cd ${PBS_O_WORKDIR}
+#SBATCH --time=02:00:00
+#SBATCH --ntasks=1
+#SBATCH --mem=2g
+#SBATCH --tmp=2g
+#SBATCH --mail-type=ALL  
+#SBATCH --mail-user=sample_email@umn.edu 
+cd pyoutdir
+echo ${PWD}
+module load intel 
 echo job_start
 export OMP_NUM_THREADS=1
 ./anainp.o anainp_pyfylval.txt

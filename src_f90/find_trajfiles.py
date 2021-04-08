@@ -17,7 +17,7 @@ from my_python_functions import my_cpy_generic
 analysis_type  = 2 #1-polydisp_pe,2-newparams,3-mwchange,#4-oldsize
 
 #---------input details----------------------------------------
-free_chains  = [16,24,32,64,96,128,150]
+free_chains  = [64]
 free_avg_mw  = 30
 graft_chains = 32
 graft_avg_mw = 35 
@@ -26,7 +26,7 @@ nsalt        = 510
 f_charge     = 0.5
 archarr      = [1,4]
 ncases_pdi   = [1,2,3,4]
-pdi_free     = 1.0
+pdi_free     = 1.5
 pdi_graft    = 1.0
 
 #--------file_lists--------------------------------------------

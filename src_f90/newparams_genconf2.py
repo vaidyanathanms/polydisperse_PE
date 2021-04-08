@@ -32,23 +32,23 @@ maxtime   = 40000000 # Maximum timesteps
 equiltime = 25000000 # Equilibrium timesteps
 
 #---------input details----------------------------------------
-free_chains  = [32,64,128,150]
+free_chains  = [16,32,64,128,150]
 free_avg_mw  = 30
 graft_chains = 32
 graft_avg_mw = 35 
 tail_mons    = 5
 nsalt        = 510
 f_charge     = 0.5
-archarr      = [1,2,3,4]
+archarr      = [1,4]
 ncases_pdi   = [1,2,3,4]
-pdi_free     = 1.3
+pdi_free     = 1.5
 pdi_graft    = 1.0
 
 box_data     = [35.0, 35.0, 120.0] #x-box, y-box, z-box
 
 #--------file_lists--------------------------------------------
 
-f90_files = ['ran_numcdrs.f90','lammps_inp.f90','lmp_params.f90'\
+f90_files = ['ran_numbers.f90','lammps_inp.f90','lmp_params.f90'\
              ,'SZDist2.f90','init_pdi.txt','polyinp_fordiffbox_var.dat']
 lmp_files = ['in.longrun','in.init_var','in.run1','jobmain_var.sh']
 lmp_long  = ['in.longrun','jobmain_long_var.sh']

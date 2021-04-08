@@ -1,15 +1,15 @@
 datafile
-pedatainp.data
+py_datafyl
 trajectory_file
-config_23735000.lammpstrj
+py_trajfyl
 nframes
-200
+1500
 skipfr
-1600
+0
 freqfr
 0
 nchains
-164
+py_ntotchains
 avg_graft_dist
 1
 compute_density
@@ -21,8 +21,12 @@ compute_grpdens
 1 2 3 4
 2
 5 6
+compute_monfracads
+2 2 py_cutoff
+5 6
+3 4
 compute_chainfracads
-100 64 1.50
+py_nfrchains py_ngrchains py_cutoff
 2 2
 5 6
 3 4
