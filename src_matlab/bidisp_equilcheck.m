@@ -1,8 +1,8 @@
 %% To check equilibration
-% Assumes chains have IDs from 1-nch_freearr
+% Assumes chains have IDs from (nch_graft+1) to (nch_freearr+nch_graft)
 
-clear
 clc
+clear
 close all
 format long
 
@@ -13,11 +13,14 @@ green = [0 0.5 0.0]; gold = [0.9 0.75 0]; orange = [0.91 0.41 0.17];brown = [0.2
 pclr = {'m',brown,green,'k','m', gold};
 lsty = {'-','--',':'};
 msty = {'d','s','o','x'};
+cmap = [.7 .7 .7 %// light gray
+    1  1  1]; %// white
 
 %% Inputs
+nch_graft = 32;
 nch_freearr = [150];
 nchain_mws = [52,8]; % Give the two molecular weights that correspond to the bidispersed case (larger MW first)
-casearr  = [1;2;3;4];
+casearr  = [1];
 pdi_freearr = [1.5];
 arch_arr = {'bl_bl';'al_al'};
 leg_arr  = {'Block-Block';'Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr for legends
@@ -25,7 +28,7 @@ pdigraft = 1.0;
 pdigraft_str = num2str(pdigraft,'%1.1f');
 cutoff = '1.50';
 ref_mw = 52;
-
+dtval  = 12.5;
 
 %% Flags
 plt_data = 1; % Plot ratio of histogram
@@ -115,41 +118,36 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 mwbigarr(casecntr,1) = 2*mwcnt1/(tsteps*nval); % ratio wrt initial total steps * number of chains of each type (half of each type and hence 2)
                 mwsmlarr(casecntr,1) = 2*mwcnt2/(tsteps*nval); % ratio wrt initial total steps * number of chains of each type (half of each type and hence 2)
                 
-                for molid_cnt = 1:nval
-                    if molid_cnt
-                    for tcnt = 1:tsteps
-                        
+                tcnt = 1; tref = alldata.data(1,1); tarr_cnt = 1;
+                for tcnt = 1:lendata
+                    if alldata.data(tcnt,1) ~= tref
+                        tarr_cnt = tarr_cnt + 1;
+                        tref = alldata.data(tcnt,1);
+                    end
+                    if alldata.data(tcnt,5) == ref_mw
+                        mol_id = alldata.data(tcnt,4) - nch_graft; %to make values
+                        ads_matrix(mol_id,tarr_cnt) = 1;
+                    end
+                end
                 
+                yticks = 0:8:76;
+                [r,c] = size(ads_matrix);
                 
-            end
-            
-            % weed out zero values
-            allnmwrat = mwratarr(mwratarr~=0);
-            allnbigmw = mwbigarr(mwbigarr~=0);
-            allnsmlmw = mwsmlarr(mwsmlarr~=0);
-            
-            lenarr = length(allnmwrat);
-            stdratval = std(allnmwrat);
-            meanratval = mean(allnmwrat);
-            stdraterr = stdratval/sqrt(lenarr);
-            
-            fprintf(favg_pdi,'%d\t%s\t%s\t%d\t%g\t%g\n',nval,dirstr,pdifree_str,lenarr,meanratval,stdraterr);
-            
-            stdbigval = std(allnbigmw);
-            meanbigval = mean(allnbigmw);
-            stdbigerr = stdbigval/sqrt(lenarr);
-            
-            stdsmlval = std(allnsmlmw);
-            meansmlval = mean(allnsmlmw);
-            stdsmlerr = stdsmlval/sqrt(lenarr);
-            
+                h= figure;
+                imagesc(dtval*((1:c)+0.5), (1:r)+0.5, ads_matrix) %https://stackoverflow.com/questions/3280705/how-can-i-display-a-2d-binary-matrix-as-a-black-white-plot
+                colormap(cmap)
+                ylim([1 75])
+                xlim([0 (c+0.5)*dtval])
+                axis ij
+                set(gca,'YMinorGrid','On','YTick',yticks,'YTickLabel',yticks,'YGrid','On','FontSize',16)
+                xlabel('Time ($\tau$)','FontSize',20,'Interpreter','Latex')
+                ylabel('Chain ID','FontSize',20,'Interpreter','Latex')
+                saveas(h,sprintf('./../../all_figures/bidispequildist_case_%d_arch_%s.png',casenum,dirstr));
 
+            end % end case loop
             
         end % end arch loop
         
     end % end pdi loop
-    
-    fclose(fout_cons);
-    fclose(favg_pdi);
     
 end % end nfree_arr loop
