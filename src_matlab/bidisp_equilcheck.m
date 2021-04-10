@@ -142,7 +142,7 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 set(gca,'YMinorGrid','On','YTick',yticks,'YTickLabel',yticks,'YGrid','On','FontSize',16)
                 xlabel('Time ($\tau$)','FontSize',20,'Interpreter','Latex')
                 ylabel('Chain ID','FontSize',20,'Interpreter','Latex')
-                saveas(h,sprintf('./../../all_figures/bidispequildist_case_%d_arch_%s.png',casenum,dirstr));
+                saveas(h,sprintf('./../../Figs_paper/bidispequildist_case_%d_arch_%s.png',casenum,dirstr));
 
             end % end case loop
             

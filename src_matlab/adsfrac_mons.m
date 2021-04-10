@@ -16,14 +16,14 @@ msty = {'d','s','o','x'};
 %% Inputs
 nfreearr = [16,32,64,128,150];
 casearr  = [1,2,3,4];
-pdi_freearr = [1.0,1.5];
+pdi_freearr = [1,1.5];
 arch_arr = {'bl_bl','al_al'};
 leg_arr  = {'Block-Block','Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr
 pdigraft = 1.0;
 nmonfree = 30; nmongraft = 30; ngraft = 32;
 cutoff = '1.50';
 lz = 120; area=35^2;
-set_tmax = 3e7; % maximum timestep for analysis;
+set_tmax = 2.5e7; % maximum timestep for analysis;
 set_tmin = 1e7; % minimum timestep for analysis;
 
 %% Input flags
@@ -124,7 +124,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                 reordered_ads_list = renumber_files(ads_fylelist,nfyles); % reorder file names to avoid double counting
                 
                 sum_across_files = 0; tot_cntr_across_files = 0; mintime = 10^10; maxtime = 0;
-                mintstep = 0;
+                mintstep = 0; 
                 for fylcnt = 1:nfyles % begin running through all files of the given type
                     ads_fylename = strcat(dirname,'/',reordered_ads_list{fylcnt});
                     if exist(ads_fylename,'file') ~= 2
@@ -139,8 +139,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                     data = importdata(ads_fylename);
                     lendata = length(data(:,1));
                     
-                    
-                    
+                   
                     %average adsorption values
                     if min(data(:,1)) > set_tmin
                         
@@ -151,9 +150,9 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                                 break;
                             end
                         end
-                        nads_fracmon = sum(data(minindana:lendata,3));
+                        nads_fracmon = sum(data(minindana:lendata,2));
                         sum_across_files = sum_across_files + nads_fracmon;
-                        tot_cntr_across_files = tot_cntr_across_files + length(data(minindana:lendata,3));
+                        tot_cntr_across_files = tot_cntr_across_files + length(data(minindana:lendata,2));
                         
                         %find minimum and maximum time
                         if min(data(:,1)) < mintime
@@ -166,7 +165,11 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                     
                 end % end summing adsfrac across all files for a given case
 %                 fprintf('%g\t%g\n',sum_across_files,tot_cntr_across_files);
-                avg_for_each_casenum = sum_across_files/tot_cntr_across_files;
+                if tot_cntr_across_files ~=0
+                    avg_for_each_casenum = sum_across_files/tot_cntr_across_files;
+                else
+                    avg_for_each_casenum = 0;
+                end
                 
                 fprintf(fout_sidata,'%s\t%d\t%s\t%d\t%g\n',pdifree_str,nval,dirstr,...
                     casenum,avg_for_each_casenum);
@@ -185,7 +188,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                 
                 %save it to overall arrays
                 casecntr_arr(ncnt,arch_cnt)  = casecntr_arr(ncnt,arch_cnt) + 1;
-                nadsmon_all(ncnt,arch_cnt) = nadsmon_all(ncnt,arch_cnt) + avg_for_each_casenum;
+                nadsmon_all(ncnt,arch_cnt)   = nadsmon_all(ncnt,arch_cnt) + avg_for_each_casenum;
                 totsamples(ncnt,arch_cnt)    = totsamples(ncnt,arch_cnt) + tot_cntr_across_files;
                 avgcase_store(casecntr)      = avg_for_each_casenum;
                 
@@ -239,7 +242,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
         %         ylim([min(min(avg_across_cases(:,:,pdi_cntr))) 1.2*max(max(avg_across_cases(:,:,pdi_cntr)))])
         legend(legendinfo,'FontSize',16,'Location','Best')
         legend boxoff
-        saveas(h1,sprintf('./../../all_figures/adsorbmon_rcut_%s_pdi_%g.png',cutoff,pdifree));
+        saveas(h1,sprintf('./../../Figs_paper/adsorbmon_rcut_%s_pdi_%g.png',cutoff,pdifree));
         clear legendinfo
     end
     
@@ -279,7 +282,7 @@ if plotads
         
         legend(legendinfo,'FontSize',16,'Location','Best')
         legend boxoff
-        saveas(h1,sprintf('./../../all_figures/adsorbmon_rcut_%s_nval_%g.png',cutoff,nval));
+        saveas(h1,sprintf('./../../Figs_paper/adsorbmon_rcut_%s_nval_%g.png',cutoff,nval));
         clear legendinfo
         
     end

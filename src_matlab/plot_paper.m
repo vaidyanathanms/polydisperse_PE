@@ -28,11 +28,12 @@ cutoff = '1.50';
 nch_graft = 32;
 lz = 120; area=35^2;
 set_tmax = 3e7; % maximum timestep for analysis;
+tot_graftmon = nmongraft*ngraft;
 
 %% Input flags
 % see definitions above
-figsz   = 0;
-figfads = 1; figfads_mon = 1;
+figsz   = 1;
+figfads = 0; figfads_mon = 0;
 figqnet = 0;
 figdens  = 0; nplot = 150; %for density profiles
 
@@ -79,6 +80,31 @@ if figsz
     legend boxoff
     saveas(h1,'./../../Figs_paper/SZdistribution.png');
     clear legendinfo
+    
+    % Fig S1b - as a function of the number of chains instead of P(N)
+    
+    h1 = figure;
+    hold on
+    box on
+    set(gca,'FontSize',16)
+    xlabel('$N$','FontSize',20,'Interpreter','Latex')
+    ylabel('$n(N)$','FontSize',20,'Interpreter','Latex')
+    for plcnt = 1:length(nval_pl)
+        dirname = sprintf('./../../data_all_dir/n_%d/%s/pdifree1.5_pdigraft_1.0/Case_%d',...
+            nval_pl(plcnt),arch,casenum);
+        alldata = importdata(strcat(dirname,'/init_mol_details.dat'));
+        
+        histogram(alldata.data(:,3),'BinWidth',8,'BinLimits',[1,max(alldata.data(:,3))+1]);
+        legendinfo{plcnt} = ['$n_{pa} =$ ' num2str(nval_pl(plcnt))];
+    end
+   
+    xlim([0 max(alldata.data(:,3))+10])
+    
+    legend(legendinfo,'FontSize',16,'Location','Best','Interpreter','Latex')
+    legend boxoff
+    saveas(h1,'./../../Figs_paper/SZdistribution.png');
+    clear legendinfo
+    
     
 end
 
@@ -581,7 +607,7 @@ if figfads_mon
     box on
     set(gca,'FontSize',16)
     xlabel('$n_{pa}/n_{pc}$','FontSize',20,'Interpreter','Latex')
-    ylabel('$f_{\rm{ads}}$','FontSize',20,'Interpreter','Latex')
+    ylabel('$N_{\rm{ads}}^{\rm{mon}}$','FontSize',20,'Interpreter','Latex')
     
     lcnt = 1;
     for plcnt = 1:length(pdi_freearr)
@@ -604,7 +630,7 @@ if figfads_mon
         
     end
     
-    legend(legendinfo,'FontSize',12,'Location','NorthWest','Interpreter','Latex')
+    legend(legendinfo,'FontSize',12,'Location','SouthEast','Interpreter','Latex')
     legend boxoff
     saveas(h1,'./../../Figs_paper/fadsmon_npabynpc_pdi_arch.png');
     clear legendinfo
