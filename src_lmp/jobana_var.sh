@@ -4,7 +4,7 @@
 #SBATCH --mem=2g
 #SBATCH --tmp=2g
 #SBATCH --mail-type=ALL  
-#SBATCH --mail-user=sample_email@umn.edu 
+#SBATCH --mail-user=vsethura@umn.edu 
 cd pyoutdir
 echo ${PWD}
 module load intel 

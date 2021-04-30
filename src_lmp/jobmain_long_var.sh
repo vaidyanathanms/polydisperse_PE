@@ -1,8 +1,11 @@
 #!/bin/bash -l
-#PBS -l walltime=py_hours:00:00,nodes=py_nodes:ppn=py_procs,pmem=2580mb
-#PBS -m abe
-#PBS -N py_jobname
-#PBS -M vsethura@umn.edu
-cd ${PBS_O_WORKDIR}
+#SBATCH --time=py_hours:00:00
+#SBATCH -N py_nodes
+#SBATCH -n py_procs
+#SBATCH --mem=2g 
+#SBATCH --job-name=py_jobname
+#SBATCH --mail-user=vsethura@umn.edu 
+cd ${SLURM_SUBMIT_DIR}
+
 echo job_start
 mpirun -np py_totnp ./lmp_mesabi -in in.longrun -e screen
