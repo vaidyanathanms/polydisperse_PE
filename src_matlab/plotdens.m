@@ -101,7 +101,7 @@ for j = 1:length(nfree)
         legend(legendinfo,'Interpreter','Latex','FontSize',16,'Location','Best')
         legend boxoff
         xlim([0 0.30])
-        saveas(h1,sprintf('./../../all_figures/n_%d_%s',nval,dirstr),'png');
+        saveas(h1,sprintf('./../../Figs_paper/n_%d_%s',nval,dirstr),'png');
         clear legendinfo
         
     end

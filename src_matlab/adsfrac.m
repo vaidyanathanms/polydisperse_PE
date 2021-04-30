@@ -1,4 +1,4 @@
-%% To compute average adsorbed fraction of chains
+% %% To compute average adsorbed fraction of chains
 % 1) Change path to filename (search for keyword filename) and other places
 % wherever necessary.
 
@@ -239,7 +239,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
         %         ylim([min(min(avg_across_cases(:,:,pdi_cntr))) 1.2*max(max(avg_across_cases(:,:,pdi_cntr)))])
         legend(legendinfo,'FontSize',16,'Location','Best')
         legend boxoff
-        saveas(h1,sprintf('./../../all_figures/adsorbchain_rcut_%s_pdi_%g.png',cutoff,pdifree));
+        saveas(h1,sprintf('./../../Figs_paper/adsorbchain_rcut_%s_pdi_%g.png',cutoff,pdifree));
         clear legendinfo
     end
     
@@ -279,7 +279,7 @@ if plotads
         
         legend(legendinfo,'FontSize',16,'Location','Best')
         legend boxoff
-        saveas(h1,sprintf('./../../all_figures/adsorbchain_rcut_%s_nval_%g.png',cutoff,nval));
+        saveas(h1,sprintf('./../../Figs_paper/adsorbchain_rcut_%s_nval_%g.png',cutoff,nval));
         clear legendinfo
         
     end

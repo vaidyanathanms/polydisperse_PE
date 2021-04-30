@@ -226,7 +226,7 @@ if plt_flag
             ylim([0 1.1]);
             legend(legendinfo,'Interpreter','Latex','FontSize',14,'Location','SouthEast')
             legend boxon
-            saveas(harch,sprintf('./../../all_figures/avg_dist_%s_%s.png',dirstr,pdifree_str));
+            saveas(harch,sprintf('./../../Figs_paper/avg_dist_%s_%s.png',dirstr,pdifree_str));
             
         end % end arch loop
         
@@ -358,7 +358,7 @@ if plt_flag
             ylabel(hs(1),'$p_{\rm{ads}}$','FontSize',40,'Interpreter','Latex');
             xlb = xlabel(hs(2),'$N$','FontSize',40,'Interpreter','Latex');
             
-            saveas(harch_subplot,sprintf('./../../all_figures/avg_dist_%s_%s.png',dirstr,pdifree_str));
+            saveas(harch_subplot,sprintf('./../../Figs_paper/avg_dist_%s_%s.png',dirstr,pdifree_str));
             
         end % end arch loop
         
