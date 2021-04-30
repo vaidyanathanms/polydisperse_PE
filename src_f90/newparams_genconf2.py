@@ -25,14 +25,14 @@ from my_python_functions import find_recent_file
 
 #---------input flags------------------------------------------
 #0-initial run  1- production
-num_hrs   = 24 # Total number of hours for run
-num_nodes = 2  # Number of nodes
+num_hrs   = 48 # Total number of hours for run
+num_nodes = 1  # Number of nodes
 num_procs = 24 # Number of procs per node
 maxtime   = 40000000 # Maximum timesteps
 equiltime = 25000000 # Equilibrium timesteps
 
 #---------input details----------------------------------------
-free_chains  = [16,32,64,128,150]
+free_chains  = [16,64,128,150]
 free_avg_mw  = 30
 graft_chains = 32
 graft_avg_mw = 35 
