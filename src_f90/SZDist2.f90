@@ -3,11 +3,11 @@ program SZdist
 
   !--------Input parameters------------------------------------------
   integer,parameter::maxsteps = 100000 ! Number of steps 
-  integer,parameter::maxiteration = 10000 ! sets the maximum amount
+  integer,parameter::maxiteration = 500000 ! sets the maximum amount
   ! of times the program will  try to get a PDI within the tolerance
   ! before exiting
-  real:: tol = 5 ! tolerance value for PDI(%). Value between 1-100
-  real,parameter::range = 5 ! Max value of Sigma
+  real:: tol = 6 ! tolerance value for PDI(%). Value between 1-100
+  real,parameter::range = 10 ! Max value of Sigma
   
   !--------Other parameters------------------------------------------
   real::PDI1 ! PDI (polydispersive index) of FREE chains
@@ -32,6 +32,8 @@ program SZdist
   integer::num_free,num_graft
   integer::M1 ! Number avg MW of FREE chains
   integer::M2 ! MW of GRAFT chains
+
+  real :: m1_compute, m2_compute !avg mw of chains from simulations
 
   integer::itercnt = 0 !used to count till max iterations
   integer::subtract = 1 ! Conditional: equal to 1 when the program is
@@ -100,7 +102,7 @@ program SZdist
   if(PDI1 .GT. 1.0) then
      ! Calculate probability function
      do i=1,maxsteps
-        P1(i) = (k1**k1)*(GAMMA(S(i))**-1)*(S(i)**(k1-1))*(EXP(-1*k1&
+        P1(i) = (k1**k1)*(GAMMA(k1)**-1)*(S(i)**(k1-1))*(EXP(-1*k1&
              &*S(i)))
      end do
 
@@ -132,7 +134,7 @@ program SZdist
      
   if(PDI2 .GT. 1.0) then
      do i=1,maxsteps
-        P2(i) = (k2**k2)*(GAMMA(S(i))**-1)*(S(i)**(k2-1))*(EXP(-1*k2&
+        P2(i) = (k2**k2)*(GAMMA(k2)**-1)*(S(i)**(k2-1))*(EXP(-1*k2&
              &*S(i)))
      end do
 
@@ -178,7 +180,7 @@ program SZdist
      do while(loop == 1 .and. itercnt .le. maxiteration)
         
         itercnt = itercnt + 1
-        Mi = 0
+        Mi = 0; m1_compute =0.0
         Mi2 = 0
 
         ! ====== Generates polymer list using subtraction method =====
@@ -192,7 +194,7 @@ program SZdist
               
               if (randnum .le.  0) then
                  subtract = 0
-                 MolWt1(i) = int(S(j-1)*M1) 
+                 MolWt1(i) = anint(S(j-1)*M1) 
               else      
                  j = j + 1
                  if(j == maxsteps+1) then
@@ -213,16 +215,19 @@ program SZdist
            Mi = Mi + Molwt1(i)
         end do
         
-        PDIgen1 = real(Mi2*num_free)/real(Mi**2)
-        
+        m1_compute = Mi/REAL(num_free)
+        PDIgen1 = real(Mi2*num_free)/real(Mi**2)        
+
         ! Checks if generated PDI is within tolerance of desired PDI
         ! and  does  not have an Mi smaller than 2
 
-        if (ABS(PDIgen1 - PDI1) .le. (PDI1*tol)) then
-           if (minval(MolWt1) .ge. 2) then 
-              loop = 0
-           end if
-        endif
+        if (ABS(PDIgen1 - PDI1) .le. (PDI1*tol)) then 
+           if(ABS(m1_compute-M1) .le. (M1*tol)) then
+              if (minval(MolWt1) .ge. 2) then 
+                 loop = 0
+              end if
+           endif
+        end if
 
      end do
 
@@ -244,7 +249,7 @@ program SZdist
 
   end if
 
-  if(PDI1 .GT. 1 .and. loop == 1) then
+  if(itercnt .GT. maxiteration) then
      print *, "WARNING: Not converged before maximum iteration"
   end if
   open(unit = 20, file = "FreeChains.dat")
@@ -271,9 +276,9 @@ program SZdist
      do while(loop == 1 .and. itercnt .le. maxiteration) 
 
         Mi = 0
-        Mi2 = 0
+        Mi2 = 0; m2_compute = 0.0
         itercnt = itercnt + 1
-
+        
         ! ====== Generates polymer list using subtraction method =====
 
         do i=1,num_graft
@@ -286,7 +291,7 @@ program SZdist
               
               if (randnum .le.  0) then
                  subtract = 0
-                 MolWt2(i) = int(S(j-1)*M2) 
+                 MolWt2(i) = anint(S(j-1)*M2) 
               else      
                  j = j + 1
                  if(j == maxsteps+1) then
@@ -305,14 +310,17 @@ program SZdist
            Mi = Mi + Molwt2(i)
         end do
         
+        m2_compute = Mi/REAL(num_graft)
         PDIgen2 = real(Mi2*num_graft)/real(Mi**2)
         
         ! Checks if generated PDI is within tolerance of desired PDI
         ! and does  not have an Mi smaller than 4
         
         if (ABS(PDIgen2 - PDI2) .le. (PDI2*tol)) then
-           if (minval(MolWt2) .ge. 4) then 
-              loop = 0
+           if(ABS(m2_compute-M2) .le. (M2*tol)) then
+              if (minval(MolWt2) .ge. 4) then 
+                 loop = 0
+              end if
            end if
         end if
         
@@ -336,7 +344,7 @@ program SZdist
      
   end if
 
-  if(PDI2 .GT. 1 .and. loop == 1) then
+  if(itercnt .GT. maxiteration) then
      print *, "WARNING: Not converged before maximum iteration"
   end if
 
