@@ -242,7 +242,7 @@ if figfads
         
     end
     
-    legend(legendinfo,'FontSize',12,'Location','NorthWest','Interpreter','Latex')
+    legend(legendinfo,'FontSize',16,'Location','SouthEast','Interpreter','Latex')
     legend boxoff
     saveas(h1,'./../../Figs_paper/fads_npabynpc_pdi_arch.png');
     clear legendinfo
