@@ -39,6 +39,12 @@ pdigraft_str = num2str(pdigraft,'%1.1f');
 
 %% Main Analysis
 
+% Create output directories
+s1 = create_output_dirs('./../../outfiles');
+s2 = create_output_dirs('./../../outfiles/overall');
+s3 = create_output_dirs('./../../ttest_dir');
+s4 = create_output_dirs('./../../ttest_dir/overall');
+
 % Create consolidated list
 fout_cons = fopen(sprintf('./../../outfiles/overall/adsorbed_chain_consolidated_rcut_%s.dat',...
     cutoff),'w');
@@ -82,6 +88,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
             end
             
             % Create case-based avg outfiles
+            s5 = create_output_dirs(sprintf('./../../outfiles/n_%d',nval));
             fout_case = fopen(sprintf('./../../outfiles/n_%d/adsorbed_chain_rcut_%s_pdifree_%g_%s.dat',...
                 nval,cutoff,pdifree,dirstr),'w');
             fprintf(fout_case,'%s\t%s\t%s\t%s\t%s\t%s\n','N_f','Casenum',...
@@ -89,7 +96,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
             
             
             if ttestflag %write all cases into separate folders in ttest_dir
-                
+                s5 = create_output_dirs(sprintf('./../../ttest_dir/n_%d',nval));
                 fout_ttest = fopen(sprintf('./../../ttest_dir/n_%d/adsfrac_rcut_%s_pdifree_%g_arch_%s.dat',...
                     nval,cutoff,pdifree,dirstr),'w');
                 fprintf(fout_ttest,'%s\n','avg_fraction: #of columns correspond to the number of cases');
