@@ -14,7 +14,7 @@ lsty = {'-','--',':'};
 msty = {'d','s','o','x'};
 
 %% Inputs
-nfreearr = [16;32;64;96;128;150]; 
+nfreearr = [16;32;64;128;150]; 
 casearr  = [1,2,3,4];
 pdi_freearr = [1,1.3,1.5];
 arch_arr = {'bl_bl','bl_al','al_bl','al_al'};

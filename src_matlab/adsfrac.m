@@ -16,7 +16,7 @@ msty = {'d','s','o','x'};
 %% Inputs
 nfreearr = [16,32,64,128,150];
 casearr  = [1,2,3,4];
-pdi_freearr = [1.0,1.5];
+pdi_freearr = [1];
 arch_arr = {'bl_bl','al_al'};
 leg_arr  = {'Block-Block','Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr
 pdigraft = 1.0;

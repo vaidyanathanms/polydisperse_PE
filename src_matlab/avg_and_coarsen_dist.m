@@ -48,7 +48,7 @@ max_mw_free = 10*nfreemons; % An approximate max. Will throw error from extract_
 
 %% For spline fit
 
-pvalarr = [0.1;3.5847648446484876E-4;3.8440521968920746E-4;1.4144914819373184E-4];
+pvalarr = [5.8023914813527593E-4;3.5018844316573883E-5;1.1096443546639338E-4;2.47616468322602E-5];
 %% Compute average_distribution
 
 if avg_flag
@@ -261,7 +261,7 @@ if plt_flag
                 end
                 
                 plt_data = importdata(fylename);
-                
+                xdata = plt_data.data(:,1); ydata = plt_data.data(:,4) ;
                 hs(ncnt) = subplot(1,4,ncnt);
                 plot(plt_data.data(:,1), plt_data.data(:,4), 'Color',pclr{ncnt},'LineStyle','None',...
                     'Marker',msty{pdi_cntr},'MarkerFaceColor',pclr{ncnt},'MarkerEdgeColor',pclr{ncnt},'MarkerSize',8)
@@ -277,10 +277,10 @@ if plt_flag
                 
                 
                 
-                % return an array with y~=0 to draw guideline to eye
+                % return an array with y~=0 and x<~6 STD of number of chains (surrogate for MW) to draw guideline to eye
                 newarrcnt = 1;
                 for cpycnt = 1:length(plt_data.data(:,1))
-                    if plt_data.data(cpycnt,4) ~= 0 % very crude way to get the pvalue
+                    if plt_data.data(cpycnt,4) ~= 0 && plt_data.data(cpycnt,1)/nval < 3% very crude way to get the pvalue
                         xalldata(newarrcnt,1) = plt_data.data(cpycnt,1);
                         yalldata(newarrcnt,1) = plt_data.data(cpycnt,4);
                         newarrcnt = newarrcnt+1;
@@ -290,7 +290,7 @@ if plt_flag
                 % Ref:https://www.mathworks.com/help/curvefit/cubic-smoothing-splines.html
                 %epsilon = ((xinp(end)-xinp(1))/(numel(xinp)-1))^3/16;
                 pval = pvalarr(ncnt); %https://www.mathworks.com/help/curvefit/cubic-smoothing-splines.html
-                xxi = (0:max(xalldata));
+                xxi = (0:0.9*max(xalldata));
                 ys = csaps(xalldata,yalldata,pval,xxi,yalldata);
 %                 plot(xxi,ys,'Color',pclr{ncnt},'LineStyle','--','LineWidth',2)
                 if ncnt == 4

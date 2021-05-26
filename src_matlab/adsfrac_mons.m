@@ -39,6 +39,9 @@ pdigraft_str = num2str(pdigraft,'%1.1f');
 
 %% Main Analysis
 
+s1 = create_output_dirs('./../../monads');
+s2 = create_output_dirs('./../../monads/overall');
+
 % Create consolidated list
 fout_cons = fopen(sprintf('./../../monads/overall/adsorbed_mon_consolidated_rcut_%s.dat',...
     cutoff),'w');
@@ -73,7 +76,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
         for arch_cnt = 1:length(arch_arr)  % begin arch loop
             dirstr = arch_arr{arch_cnt};
             
-            dirname = sprintf('./../../monads/outresults_dir_n_%d/%s/pdifree_%s_pdigraft_%s',...
+            dirname = sprintf('./../../sim_results/outresults_dir_n_%d/%s/pdifree_%s_pdigraft_%s',...
                 nval,dirstr,pdifree_str,pdigraft_str);
             
             if ~exist(dirname,'dir')
@@ -81,6 +84,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                 continue
             end
             
+            s3 = create_output_dirs(sprintf('./../../monads/n_%d',nval));
             % Create case-based avg outfiles
             fout_case = fopen(sprintf('./../../monads/n_%d/adsorbed_mon_rcut_%s_pdifree_%g_%s.dat',...
                 nval,cutoff,pdifree,dirstr),'w');
@@ -102,7 +106,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
             for casecntr = 1:length(casearr) % begin case loop
                 casenum = casearr(casecntr);
                 
-                dirname = sprintf('./../../monads/outresults_dir_n_%d/%s/pdifree_%s_pdigraft_%s/Case_%d',...
+                dirname = sprintf('./../../sim_results/outresults_dir_n_%d/%s/pdifree_%s_pdigraft_%s/Case_%d',...
                     nval,dirstr,pdifree_str,pdigraft_str,casenum);
                 
                 if ~exist(dirname,'dir')
