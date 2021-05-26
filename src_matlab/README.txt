@@ -41,3 +41,8 @@ Outputs to ../../monads and its subdirectory
 
 ***** File 7: plot_paper.m *********************************************************************
 To plot the data for the paper. See code comments for instructions
+
+***** File 8: netcharge_brush.m *********************************************************************
+Input files required are  ./../../data_all_dir/n_*/PEinitdata.txt and ./../../sim_results/outresults_dir_n_%d/%s/pdifree_%s_pdigraft_%s/Case_%d/dens_config*.lammpstrj
+Output files will be in ./../../net_charge
+Run plot_paper.m to obtain the plots after running this

@@ -47,6 +47,10 @@ num_cases = length(casearr);
 
 %% Main Analysis
 
+% Create output directories
+s1 = create_output_dirs('./../../outfiles');
+s2 = create_output_dirs('./../../outfiles/overall');
+
 if siflag %latex output
     % SI Data
     fout_latex_sidata = fopen('./../../outfiles/overall/sidata_pdi_initdata_consolidate.dat','w');

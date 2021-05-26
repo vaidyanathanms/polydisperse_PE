@@ -34,8 +34,8 @@ tot_graftmon = nmongraft*ngraft;
 % see definitions above
 figsz   = 0;
 figfads = 0; figfads_mon = 0;
-figqnet = 0;
-figdens  = 1; nplot = 150; %for density profiles
+figqnet = 1;
+figdens  = 0; nplot = 16; %nplot corresponds to the number of chains value for density profiles
 
 %% Pre-calculations
 rhofree = nfreearr*30/(lz*area);
@@ -273,7 +273,7 @@ if figqnet
         fads_id = fopen(fname);
         
         if fads_id <= 0
-            fprintf('%s does not exist', fname);
+            fprintf('%s does not exist\n', fname);
             continue;
         end
         
@@ -387,7 +387,7 @@ if figqnet
         
     end
     
-    lgd = legend(legendinfo,'FontSize',12,'Location','NorthWest','Interpreter','Latex');
+    lgd = legend(legendinfo,'FontSize',16,'Location','NorthEast','Interpreter','Latex');
     legend boxoff
     saveas(h1,'./../../Figs_paper/fig_qnetbrush.png');
     
@@ -489,7 +489,7 @@ if figdens
         end
         
         lgd = legend(legendinfo,'FontSize',16,'Location','NorthEast','Interpreter','Latex');
-        ylim([0 1.2*max(avg_rho_graft)])
+%         ylim([0 1.2*max(avg_rho_graft)])
         legend boxoff
         saveas(h1,sprintf('./../../Figs_paper/SI_Figs/fig_dens_%s_%d.png',dirstr,nplot));
         
