@@ -32,10 +32,10 @@ tot_graftmon = nmongraft*ngraft;
 
 %% Input flags
 % see definitions above
-figsz   = 1;
+figsz   = 0;
 figfads = 0; figfads_mon = 0;
-figqnet = 0;
-figdens  = 0; nplot = 150; %for density profiles
+figqnet = 1;
+figdens  = 0; nplot = 16; %nplot corresponds to the number of chains value for density profiles
 
 %% Pre-calculations
 rhofree = nfreearr*30/(lz*area);
@@ -44,7 +44,7 @@ pdigraft_str = num2str(pdigraft,'%1.1f');
 %% SZ
 if figsz
     
-    nval_pl = [64,150]; casenum = 1; arch = 'bl_bl'; mnideal = 30; pdifree = 1.50;
+    nval_pl = [64;128]; casenum = 1; arch = 'bl_bl'; mnideal = 30; pdifree = 1.50;
     h1 = figure;
     hold on
     box on
@@ -66,7 +66,7 @@ if figsz
     term1 = k^k;
     term2 = mwrat.^(k-1);
     term3 = exp(-k*mwrat);
-    term4 = gamma(mwrat);
+    term4 = gamma(k);
     
     psztheory = (term1.*term2.*term3)./term4;
     normval = trapz(mwvals,psztheory);
@@ -94,7 +94,7 @@ if figsz
             nval_pl(plcnt),arch,casenum);
         alldata = importdata(strcat(dirname,'/init_mol_details.dat'));
         
-        histogram(alldata.data(:,3),'BinWidth',8,'BinLimits',[1,max(alldata.data(:,3))+1]);
+        histogram(alldata.data(:,3),'BinWidth',1,'BinLimits',[1,max(alldata.data(:,3))+1]);
         legendinfo{plcnt} = ['$n_{pa} =$ ' num2str(nval_pl(plcnt))];
     end
    
@@ -242,7 +242,7 @@ if figfads
         
     end
     
-    legend(legendinfo,'FontSize',12,'Location','NorthWest','Interpreter','Latex')
+    legend(legendinfo,'FontSize',16,'Location','SouthEast','Interpreter','Latex')
     legend boxoff
     saveas(h1,'./../../Figs_paper/fads_npabynpc_pdi_arch.png');
     clear legendinfo
@@ -273,7 +273,7 @@ if figqnet
         fads_id = fopen(fname);
         
         if fads_id <= 0
-            fprintf('%s does not exist', fname);
+            fprintf('%s does not exist\n', fname);
             continue;
         end
         
@@ -387,7 +387,7 @@ if figqnet
         
     end
     
-    lgd = legend(legendinfo,'FontSize',12,'Location','NorthWest','Interpreter','Latex');
+    lgd = legend(legendinfo,'FontSize',16,'Location','NorthEast','Interpreter','Latex');
     legend boxoff
     saveas(h1,'./../../Figs_paper/fig_qnetbrush.png');
     
@@ -488,7 +488,8 @@ if figdens
             
         end
         
-        lgd = legend(legendinfo,'FontSize',12,'Location','NorthEast','Interpreter','Latex');
+        lgd = legend(legendinfo,'FontSize',16,'Location','NorthEast','Interpreter','Latex');
+%         ylim([0 1.2*max(avg_rho_graft)])
         legend boxoff
         saveas(h1,sprintf('./../../Figs_paper/SI_Figs/fig_dens_%s_%d.png',dirstr,nplot));
         
@@ -630,7 +631,7 @@ if figfads_mon
         
     end
     
-    legend(legendinfo,'FontSize',12,'Location','SouthEast','Interpreter','Latex')
+    legend(legendinfo,'FontSize',16,'Location','SouthEast','Interpreter','Latex')
     legend boxoff
     saveas(h1,'./../../Figs_paper/fadsmon_npabynpc_pdi_arch.png');
     clear legendinfo

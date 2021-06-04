@@ -14,7 +14,7 @@ lsty = {'-','--',':'};
 msty = {'d','s','o','x'};
 
 %% Inputs
-nch_freearr = [150] %[16;32;64;128;150];
+nch_freearr = [16;32;64;128;150];
 casearr  = [1;2;3;4];
 pdi_freearr = [1.5];
 arch_arr = {'bl_bl';'al_al'};
@@ -46,6 +46,10 @@ pdigraft_str = num2str(pdigraft,'%1.1f');
 num_cases = length(casearr);
 
 %% Main Analysis
+
+% Create output directories
+s1 = create_output_dirs('./../../outfiles');
+s2 = create_output_dirs('./../../outfiles/overall');
 
 if siflag %latex output
     % SI Data

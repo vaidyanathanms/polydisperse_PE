@@ -24,6 +24,8 @@ nch_graft = 32;
 lz = 120; area=35^2;
 set_tmax = 3e7; % maximum timestep for analysis;
 
+s1 = create_output_dirs('./../../net_charge');
+
 for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
     
     ref_pdifree     = pdi_freearr(pdi_cntr);
