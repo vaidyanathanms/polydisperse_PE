@@ -700,6 +700,12 @@ SUBROUTINE OPEN_STRUCT_OUTPUT_FILES()
           &//trim(adjustl(traj_fname))
      OPEN(unit =adsmonwrite,file =trim(dum_fname),action="write"&
           &,status="replace")
+
+     dum_fname = "adsfrac_chmw_rcut_"//rcutchar//"_"&
+          &//trim(adjustl(traj_fname))
+     OPEN(unit =adschmwwrite,file =trim(dum_fname),action="write"&
+          &,status="replace")
+
   END IF
 
   IF(chainads) THEN
@@ -715,8 +721,6 @@ SUBROUTINE OPEN_STRUCT_OUTPUT_FILES()
 
      WRITE(adschwrite2,'(A)') "frame ID,  graftatomID,   freeatomID,  &
           &   freechainID, freechainMW"  
-
-
 
      dum_fname = "avgadsfracchain_rcut_"//ch_rcutchar//"_"&
           &//trim(adjustl(traj_fname))
@@ -806,7 +810,17 @@ SUBROUTINE STRUCT_INIT()
 
            densarray(i,j) = 0.0
            ch_densarray(i,j) = 0.0
+           
+        END DO
 
+     END DO
+
+     DO i = 0,maxden_bin-1
+        
+        DO j = 1,nfreegrp
+        
+           ads_densarray(i,j) = 0.0
+        
         END DO
 
      END DO
@@ -1339,8 +1353,6 @@ SUBROUTINE COMPUTE_ANCATRDF(iframe)
 
 !$OMP END PARALLEL
 
-
-
 END SUBROUTINE COMPUTE_ANCATRDF
 
 !--------------------------------------------------------------------
@@ -1475,6 +1487,96 @@ SUBROUTINE COMPUTE_RADGYR(iframe)
   END IF
      
 END SUBROUTINE COMPUTE_RADGYR
+
+!--------------------------------------------------------------------
+
+SUBROUTINE COMPUTE_DENS_ADSCHAINS(iframe,ref_chainid)
+
+  USE PARAMETERS_PE
+  IMPLICIT NONE
+  INTEGER, INTENT(IN) :: iframe,ref_chainid
+  INTEGER :: i,j,k, arrindx, dflag, binval,sval, molid
+  REAL :: boxdir, rval, rbin
+  INTEGER,DIMENSION(0:maxden_bin-1,nfreegrp):: inst_array
+  IF(dens_axis == 1) THEN
+     boxdir = box_xl
+  ELSEIF(dens_axis == 2) THEN
+     boxdir = box_yl
+  ELSEIF(dens_axis == 3) THEN
+     boxdir = box_zl
+  ELSE
+     STOP "Unknown box direction"
+  END IF
+
+  ! normdens is already defined in compute_dens
+  rbin = boxdir/REAL(maxden_bin)
+
+  DO i = 0, maxden_bin-1
+     
+     DO j = 1,nfreegrp
+
+        inst_array(i,j) = 0.0
+
+     END DO
+
+  END DO
+
+  DO i = 1,ntotatoms
+
+     molid=aidvals(i,2)
+
+     IF(molid == ref_chainid) THEN
+
+        dflag = -1;arrindx = -1;
+        
+        DO j = 1,nfreegrp
+           IF(aidvals(i,3) == free_ptr(j)) THEN
+              arrindx = j
+              dflag = 1
+              EXIT
+           END IF
+        END DO
+
+        IF(dflag==-1) THEN
+           PRINT *, "ERROR: ID/type mismatch"
+           PRINT *, ref_chainid,molid,aidvals(i,3)
+           PRINT *, free_ptr
+           STOP
+        END IF
+
+        IF(dens_axis == 1) THEN
+           rval = rxyz_lmp(i,1) - box_xl*FLOOR(rxyz_lmp(i,1)/box_xl)
+           binval = FLOOR(rval/rbin)
+        ELSEIF(dens_axis == 2) THEN
+           rval = rxyz_lmp(i,2) - box_yl*FLOOR(rxyz_lmp(i,2)/box_yl)
+           binval = FLOOR(rval/rbin)
+        ELSEIF(dens_axis == 3) THEN
+           rval = rxyz_lmp(i,3) - box_zl*FLOOR(rxyz_lmp(i,3)/box_zl)
+           binval = FLOOR(rval/rbin)
+        END IF
+
+        IF(binval .LE. maxden_bin) THEN
+
+           inst_array(binval,arrindx)=inst_array(binval,arrindx)+1
+
+        END IF
+
+     END IF
+
+  END DO
+
+
+  DO i = 0, maxden_bin - 1
+        
+     DO j = 1, nfreegrp
+        
+        ads_densarray(i,j) = ads_densarray(i,j) + inst_array(i,j)
+        
+     END DO
+     
+  END DO
+
+END SUBROUTINE COMPUTE_DENS_ADSCHAINS
 
 !--------------------------------------------------------------------
 
@@ -1693,6 +1795,8 @@ END SUBROUTINE COMPUTE_DENS
 
 SUBROUTINE COMPUTE_ADSORBEDFREE(iframe)
 
+  !Obsolete: based on brush height
+
   USE PARAMETERS_PE
   IMPLICIT NONE
 
@@ -1767,6 +1871,10 @@ END SUBROUTINE COMPUTE_ADSORBEDFREE
 
 SUBROUTINE COMPUTE_FREEPENETRATE_MONS(iframe)
 
+  ! Crude definition: number of monomers adsorbed is equal to the
+  ! number of free chain monomers that are within rcut of graft chain
+  ! monomers. 
+
   USE PARAMETERS_PE
   IMPLICIT NONE
 
@@ -1813,7 +1921,6 @@ SUBROUTINE COMPUTE_FREEPENETRATE_MONS(iframe)
 END SUBROUTINE COMPUTE_FREEPENETRATE_MONS
 
 !--------------------------------------------------------------------
-
 
 SUBROUTINE COMPUTE_INTERGRAFT_DISTANCE(iframe)
 
@@ -1870,18 +1977,29 @@ END SUBROUTINE COMPUTE_INTERGRAFT_DISTANCE
 !--------------------------------------------------------------------
 
 SUBROUTINE COMPUTE_FREEPENETRATE_CHAINS(iframe)
+  
+  ! Computes two things by default: 1) the number of adsorbed free
+  ! chains defined in such a way that if any of the monomer of the
+  ! free chain is adsorbed, the entire chain is considered as
+  ! adbsorbed. 2)If any of the monomers of the free chain is within
+  ! rcut of the graft chain monomers, then the entire length of the
+  ! chain is counted for counting the number of monomers adsorbed. In
+  ! other words this corresponds to the average MW of the chains
+  ! adsorbed.
 
   USE PARAMETERS_PE
   IMPLICIT NONE
 
   INTEGER,INTENT(IN) :: iframe
   INTEGER :: i,j,ibin,dumads_ch_cnt,a1id,a2id,findindex,indexval
+  INTEGER :: dumads_chmw
   INTEGER :: molid
   REAL :: rxval, ryval, rzval, rval
   INTEGER,DIMENSION(1:nfreechains) :: chainptr_adsorbed
 
   chainptr_adsorbed = -1
   dumads_ch_cnt = 0
+  dumads_chmw = 0
 
   DO i = 1,nfreemons
      
@@ -1935,10 +2053,16 @@ SUBROUTINE COMPUTE_FREEPENETRATE_CHAINS(iframe)
               chainptr_adsorbed(indexval) = 1
               adsfree_chainsarr(indexval) =&
                    & adsfree_chainsarr(indexval) + 1
+              dumads_chmw = dumads_chmw + chain_id_to_mw_map(molid)
               WRITE(adschwrite2,'(5(I0,1X))') timestep,a2id,a1id&
                    &,molid,chain_id_to_mw_map(molid)
 
+              IF (denscalc) THEN
+                 CALL COMPUTE_DENS_ADSCHAINS(iframe,molid)
+              END IF
+
               EXIT
+
 
            END IF
         
@@ -1951,6 +2075,7 @@ SUBROUTINE COMPUTE_FREEPENETRATE_CHAINS(iframe)
   WRITE(adschwrite,'(2(I0,1X),F14.8)') timestep, dumads_ch_cnt,&
        & REAL(dumads_ch_cnt)/REAL(ngraftchains)
      
+  WRITE(adschmwwrite,'(2(I0,2X))') timestep, dumads_chmw
   avg_ch_adscnt = avg_ch_adscnt + REAL(dumads_ch_cnt)&
        &/REAL(ngraftchains)
 
@@ -2142,6 +2267,7 @@ SUBROUTINE OUTPUT_DENS()
   frac = 0
   grp_poly = 0
 
+!*********************************************************************
   DO i = 1,ntotatoms
      
      IF(aidvals(i,3) == 3 .OR. aidvals(i,3) == 4) THEN
@@ -2219,6 +2345,50 @@ SUBROUTINE OUTPUT_DENS()
 
   CLOSE(dumwrite)
   CLOSE(dumchwrite)
+!*********************************************************************
+
+! If density of adsorbed chains needs to be computed
+
+  IF(chainads /= 0) THEN
+
+     dum_fname = "densadsch_"//trim(adjustl(traj_fname))
+     OPEN(unit = dumwrite,file =trim(dum_fname),action="write"&
+          &,status="replace",iostat=ierr)
+     
+     IF(ierr /= 0) THEN
+        PRINT *, "Could not open", trim(dum_fname)
+     END IF
+
+     WRITE(dumwrite,'(A,2X)',advance="no") "r"
+
+     DO j = 1,nfreegrp
+
+        WRITE(dumwrite,'(I0,1X)',advance="no") free_ptr(j)
+        
+     END DO
+
+     WRITE(dumwrite,*)
+
+     DO i = 0,maxden_bin-1
+        
+        WRITE(dumwrite,'(F16.5,2X)',advance="no") 0.5*denbinavg&
+             &*(REAL(2*i+1))
+
+        DO j = 1,nfreegrp
+
+           ! No need to normalize with average number
+           WRITE(dumwrite,'(F16.9,1X)',advance="no") ads_densarray(i&
+                &,j)*normdens/(REAL(densfrnorm)) 
+           
+        END DO
+
+        WRITE(dumwrite,*)        
+
+     END DO
+
+  END IF
+
+!*********************************************************************
 
 ! If Group is involved
 
@@ -2318,7 +2488,7 @@ SUBROUTINE OUTPUT_DENS()
 
   END IF
 
-
+!*********************************************************************
 
 ! As a check for groups
 
@@ -2457,6 +2627,14 @@ SUBROUTINE ALLOCATE_ARRAYS()
      DEALLOCATE(densarray)
      ALLOCATE(ch_densarray(1,1),stat = AllocateStatus)
      DEALLOCATE(ch_densarray)
+  END IF
+
+  IF(denscalc .AND. chainads) THEN
+     ALLOCATE(ads_densarray(0:maxden_bin-1,nfreegrp),stat&
+          &=AllocateStatus)
+  ELSE
+     ALLOCATE(ads_densarray(1,1),stat=AllocateStatus)
+     DEALLOCATE(ads_densarray)
   END IF
 
   IF(adscalc == 0) THEN

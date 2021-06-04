@@ -46,8 +46,9 @@ MODULE PARAMETERS_PE
   INTEGER, PARAMETER :: adsmonwrite=370,adschwrite = 380
   INTEGER, PARAMETER :: adschwrite2=390, tethwrite = 410
   INTEGER, PARAMETER :: avgadschwrite=470
+  INTEGER, PARAMETER :: adschmwwrite=480
   INTEGER, PARAMETER :: init_mw_write=420
-
+  
   !Math Constants
 
   REAL*8, PARAMETER :: pival  = 3.14159265359
@@ -86,6 +87,7 @@ MODULE PARAMETERS_PE
   !Required Arrays - Structural Quantities
 
   REAL,ALLOCATABLE,DIMENSION(:,:):: rdfarray, densarray, grparray
+  REAL,ALLOCATABLE,DIMENSION(:,:)::ads_densarray
   REAL,ALLOCATABLE,DIMENSION(:,:):: ch_densarray, ch_grparray
   REAL,ALLOCATABLE,DIMENSION(:,:):: avgpolyarr
   REAL,ALLOCATABLE,DIMENSION(:):: acrdfarray
