@@ -33,9 +33,10 @@ tot_graftmon = nmongraft*ngraft;
 %% Input flags
 % see definitions above
 figsz   = 0;
-figfads = 0; figfads_mon = 0;
-figqnet = 1;
+figfads = 1; figfads_mon = 0; figfads_mon2 = 0; fignumavg_MW=1;
+figqnet = 0;
 figdens  = 0; nplot = 16; %nplot corresponds to the number of chains value for density profiles
+figdens2 = 0; % density of only the ADSORBED chains according to monomeric definition
 
 %% Pre-calculations
 rhofree = nfreearr*30/(lz*area);
@@ -219,7 +220,7 @@ if figfads
     box on
     set(gca,'FontSize',16)
     xlabel('$n_{pa}/n_{pc}$','FontSize',20,'Interpreter','Latex')
-    ylabel('$f_{\rm{ads}}$','FontSize',20,'Interpreter','Latex')
+    ylabel('$f_{\rm{ads}}^{\rm{ch}}$','FontSize',20,'Interpreter','Latex')
     
     lcnt = 1;
     for plcnt = 1:length(pdi_freearr)
@@ -634,6 +635,398 @@ if figfads_mon
     legend(legendinfo,'FontSize',16,'Location','SouthEast','Interpreter','Latex')
     legend boxoff
     saveas(h1,'./../../Figs_paper/fadsmon_npabynpc_pdi_arch.png');
+    clear legendinfo
+    
+end
+
+%% Adsorbed monomer with respect to the chain definition
+if figfads_mon2
+    % Create arrays for according to the input array sizes
+    frac_ads = zeros(length(nfreearr),length(arch_arr)+1,length(pdi_freearr)); %+1 for y-dimension to incorporate the N_f values
+    err_ads  = zeros(length(nfreearr),length(arch_arr)+1,length(pdi_freearr)); %+1 for y-dimension to incorporate the N_f values
+    pdi_plot = zeros(length(pdi_freearr));
+    
+    for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
+        
+        pdifree     = pdi_freearr(pdi_cntr);
+        pdifree_str = num2str(pdifree,'%1.1f');
+        
+        frac_ads(:,1,pdi_cntr) = nfreearr;
+        err_ads(:,1,pdi_cntr)  = nfreearr;
+        pdi_plot(pdi_cntr,1)   = pdifree;
+        
+        % Check file existence
+        fname = sprintf('./../../monads/overall/adsorbedmon_wrtch_ave_allcases_rcut_%s_pdifree_%g.dat',...
+            cutoff,pdifree);
+        fads_id = fopen(fname);
+        
+        if fads_id <= 0
+            fprintf('%s does not exist', fname);
+            continue;
+        end
+        
+        fprintf('File under process %s\n', fname);
+        
+        % Read and parse first line
+        tline = fgetl(fads_id); % get header
+        if ~ischar(tline) || isempty(tline)
+            fprintf('ERROR: Unable to read file %s\n', tline);
+            continue;
+        end
+        spl_tline = strtrim(strsplit(strtrim(tline)));
+        
+        nf_col = -1; arch_col = -1; favg_col = -1; err_col = -1;
+        for wcnt = 1:length(spl_tline)
+            if strcmp(spl_tline{wcnt},'N_f')
+                nf_col = wcnt;
+            elseif strcmp(spl_tline{wcnt},'Arch')
+                arch_col = wcnt;
+            elseif strcmp(spl_tline{wcnt},'avg_fraction')
+                favg_col = wcnt;
+            elseif strcmp(spl_tline{wcnt},'StdErrMean')
+                err_col = wcnt;
+            end
+        end
+        
+        if nf_col == -1 || arch_col == -1 || favg_col == -1 || err_col == -1
+            fprintf('Could not find all headers in %s \n' , tline);
+            continue
+        end
+        
+        
+        while ~feof(fads_id)
+            
+            % Store data into arrays by comparing with the input arrays
+            tline = fgetl(fads_id); % get line
+            if ~ischar(tline) && isempty(tline)
+                fprintf('ERROR: Unable to read line %s\n', tline);
+                continue;
+            end
+            spl_tline = strtrim(strsplit(strtrim(tline)));
+            
+            % nf value
+            findnf = -1;
+            for itercnt = 1:length(nfreearr) % comparing wrt the INPUT array
+                if str2double(spl_tline{nf_col}) == nfreearr(itercnt)
+                    findnf = 1;
+                    rownum = itercnt;
+                    break;
+                end
+            end
+            if findnf == -1
+                fprintf('WARNING: Did not find N_pa value in the input array: %d\n', str2double(spl_tline{nf_col}));
+                continue;
+            end
+            
+            
+            %arch value
+            findarch = -1;
+            for itercnt = 1:length(arch_arr) %comparing wrt the INPUT Array
+                if strcmp(arch_arr{itercnt},spl_tline{arch_col})
+                    findarch = 1;
+                    colnum = itercnt;
+                    break;
+                end
+            end
+            
+            if findarch == -1
+                fprintf('WARNING: Did not find arch value in the input array: %s\n', spl_tline{arch_col});
+                continue;
+            end
+            
+            frac_ads(rownum,colnum+1,pdi_cntr) = str2double(spl_tline{favg_col});
+            err_ads(rownum,colnum+1,pdi_cntr)  = str2double(spl_tline{err_col});
+            
+        end
+        
+        fprintf('Finished analyzing %s\n', fname);
+        
+    end
+    
+    % Plot frac_ads, err_ads in one go
+    
+    h1 = figure;
+    hold on
+    box on
+    set(gca,'FontSize',16)
+    xlabel('$n_{pa}/n_{pc}$','FontSize',20,'Interpreter','Latex')
+    ylabel('$f_{\rm{ads}}^{\rm{mon}}$','FontSize',20,'Interpreter','Latex')
+    
+    lcnt = 1;
+    for plcnt = 1:length(pdi_freearr)
+        
+        for arch_cnt = 1:length(arch_arr)
+            
+            if pdi_freearr(plcnt) == 1
+                errorbar(frac_ads(:,1,plcnt)/nch_graft,frac_ads(:,1+arch_cnt,plcnt)/tot_graftmon,err_ads(:,1+arch_cnt,plcnt)/tot_graftmon,...
+                    'Color', pclr{arch_cnt},'Marker',msty{arch_cnt},'MarkerFaceColor',...
+                    'None','LineStyle',lsty{plcnt},'LineWidth',1,'MarkerSize',10)
+            else
+                errorbar(frac_ads(:,1,plcnt)/nch_graft,frac_ads(:,1+arch_cnt,plcnt)/tot_graftmon,err_ads(:,1+arch_cnt,plcnt)/tot_graftmon,...
+                    'Color', pclr{arch_cnt},'Marker',msty{arch_cnt},'MarkerFaceColor',...
+                    pclr{arch_cnt},'LineStyle',lsty{plcnt},'LineWidth',1,'MarkerSize',10)
+            end
+            legendinfo{lcnt} = [leg_arr{arch_cnt} ', PDI = ' num2str(pdi_plot(plcnt,1),'%.1f')];
+            lcnt = lcnt + 1;
+            
+        end
+        
+    end
+    
+    legend(legendinfo,'FontSize',16,'Location','SouthEast','Interpreter','Latex')
+    legend boxoff
+    saveas(h1,'./../../Figs_paper/fadsmon_wrtch_npabynpc_pdi_arch.png');
+    clear legendinfo
+    
+end
+
+%% Density of adsorbed monomers according to the defn that if one monomer is adsorbed, entire chain is adsorbed
+if figdens2
+    
+    fprintf('%s\n','Preparing density plots');
+    
+    for nval = 1:length(nfreearr)
+        nplot = nfreearr(nval);
+        
+        for arch_cnt = 1:length(arch_arr)  % begin arch loop
+            dirstr = arch_arr{arch_cnt};lcnt = 1;
+            
+            % Plot density profiles
+            h1 = figure;
+            hold on
+            box on
+            set(gca,'FontSize',16)
+            xlabel('$z/L_{z}$','FontSize',20,'Interpreter','Latex')
+            ylabel('$\rho$','FontSize',20,'Interpreter','Latex')
+            
+            for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
+                
+                pdifree     = pdi_freearr(pdi_cntr);
+                pdifree_str = num2str(pdifree,'%1.1f');
+                totcases = 0;avg_rho_neutral = 0; avg_rho_charged = 0;
+                
+                for casecntr = 1:length(casearr) % begin case loop
+                    casenum = casearr(casecntr);
+                    
+                    % Check file existence
+                    dirname = sprintf('./../../sim_results/outresults_dir_n_%d/%s/pdifree_%s_pdigraft_%s/Case_%d',...
+                        nplot,dirstr,pdifree_str,pdigraft_str,casenum);
+                    if ~exist(dirname,'dir')
+                        fprintf('%s does not exist\n',dirname);
+                        continue
+                    end
+                    rho_prefix = 'densadsch_config_*.lammpstrj';
+                    rho_fylelist = dir(strcat(dirname,'/',rho_prefix));
+                    if min(size(rho_fylelist)) == 0
+                        fprintf('No files/Empty files are found for %s\n',rho_prefix);
+                        continue;
+                    end
+                    
+                    nfyles = numel(rho_fylelist); %number of files of the type
+                    if nfyles == 0
+                        fprintf('Did not find files of the type grpdens_config* in %d\t%s\n', nplot,dirstr);
+                        continue;
+                    else
+                        [latest_fyleindex] = find_latest_fyle(rho_fylelist,nfyles);
+                    end
+                    
+                    rho_fylename = strcat(dirname,'/',rho_fylelist(latest_fyleindex).name);
+                    if exist(rho_fylename,'file') ~= 2
+                        fprintf('%s does not exist/empty file\n',rho_fylename);
+                        continue;
+                    elseif struct(dir(rho_fylename)).bytes == 0
+                        fprintf('Empty file: %s \n',rho_fylename);
+                        continue;
+                    end
+                    fprintf('Plotting density profiles using %s for n_pa = %d\n', rho_fylename, nplot);
+                    
+                    all_data = importdata(rho_fylename,' ',1);
+                    fld = all_data.data;
+                    rdata = fld(:,1); lz = fld(1,1) + fld(length(fld(:,1)),1); %because of binning
+                    nbins = length(rdata(:,1));
+                    
+                    % sanity check for length of data
+                    if casecntr == 1
+                        nbins_old = nbins;
+                    else
+                        if nbins_old ~= nbins
+                            fprintf('ERROR: The values of bins do not match %s\t%d\t%g\n',dirstr,nplot,pdifree)
+                            error('CHECK nbins')
+                        else
+                            nbins_old = nbins;
+                        end
+                    end
+                    
+                    avg_rho_neutral = fld(:,2) + avg_rho_neutral;
+                    avg_rho_charged  = fld(:,3) + avg_rho_charged;
+                    
+                    totcases = totcases + 1;
+                    
+                end
+                
+                avg_rho_neutral =  avg_rho_neutral/totcases;
+                avg_rho_charged  =  avg_rho_charged/totcases;
+                
+                plot(rdata/lz,avg_rho_neutral,'Color','k','LineStyle',lsty{pdi_cntr},'LineWidth',2)
+                plot(rdata/lz,avg_rho_charged,'Color',green,'LineStyle',lsty{pdi_cntr},'LineWidth',2)
+                
+                legendinfo{lcnt} = ['Neutral Monomers; ' 'PDI = ' num2str(pdifree,'%.1f')];
+                lcnt = lcnt + 1;
+                legendinfo{lcnt} = ['Charged Monomers; ' 'PDI = ' num2str(pdifree,'%.1f')];
+                lcnt = lcnt + 1;
+                
+            end
+            
+            lgd = legend(legendinfo,'FontSize',16,'Location','NorthEast','Interpreter','Latex');
+            legend boxoff
+            saveas(h1,sprintf('./../../Figs_paper/SI_Figs/fig_densadsmons_wrtch_%s_%d.png',dirstr,nplot));
+            
+        end
+        
+    end
+    
+end
+
+%% Plot number averaged molecular weight
+
+if fignumavg_MW
+    
+     % Create arrays for according to the input array sizes
+    frac_ads = zeros(length(nfreearr),length(arch_arr)+1,length(pdi_freearr)); %+1 for y-dimension to incorporate the N_f values
+    err_ads  = zeros(length(nfreearr),length(arch_arr)+1,length(pdi_freearr)); %+1 for y-dimension to incorporate the N_f values
+    pdi_plot = zeros(length(pdi_freearr));
+    
+    for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
+        
+        pdifree     = pdi_freearr(pdi_cntr);
+        pdifree_str = num2str(pdifree,'%1.1f');
+        
+        frac_ads(:,1,pdi_cntr) = nfreearr;
+        err_ads(:,1,pdi_cntr)  = nfreearr;
+        pdi_plot(pdi_cntr,1)   = pdifree;
+        
+        % Check file existence
+        fname = sprintf('./../../outfiles/overall/numavgMW_ave_allcases_rcut_%s_pdifree_%g.dat',...
+            cutoff,pdifree);
+        fads_id = fopen(fname);
+        
+        if fads_id <= 0
+            fprintf('%s does not exist', fname);
+            continue;
+        end
+        
+        fprintf('File under process %s\n', fname);
+        
+        % Read and parse first line
+        tline = fgetl(fads_id); % get header
+        if ~ischar(tline) || isempty(tline)
+            fprintf('ERROR: Unable to read file %s\n', tline);
+            continue;
+        end
+        spl_tline = strtrim(strsplit(strtrim(tline)));
+        
+        nf_col = -1; arch_col = -1; favg_col = -1; err_col = -1;
+        for wcnt = 1:length(spl_tline)
+            if strcmp(spl_tline{wcnt},'N_f')
+                nf_col = wcnt;
+            elseif strcmp(spl_tline{wcnt},'Arch')
+                arch_col = wcnt;
+            elseif strcmp(spl_tline{wcnt},'avg_fraction_numavgMW')
+                favg_col = wcnt;
+            elseif strcmp(spl_tline{wcnt},'StdErrMean')
+                err_col = wcnt;
+            end
+        end
+        
+        if nf_col == -1 || arch_col == -1 || favg_col == -1 || err_col == -1
+            fprintf('Could not find all headers in %s \n' , tline);
+            continue
+        end
+        
+        
+        while ~feof(fads_id)
+            
+            % Store data into arrays by comparing with the input arrays
+            tline = fgetl(fads_id); % get line
+            if ~ischar(tline) && isempty(tline)
+                fprintf('ERROR: Unable to read line %s\n', tline);
+                continue;
+            end
+            spl_tline = strtrim(strsplit(strtrim(tline)));
+            
+            % nf value
+            findnf = -1;
+            for itercnt = 1:length(nfreearr) % comparing wrt the INPUT array
+                if str2double(spl_tline{nf_col}) == nfreearr(itercnt)
+                    findnf = 1;
+                    rownum = itercnt;
+                    break;
+                end
+            end
+            if findnf == -1
+                fprintf('WARNING: Did not find N_pa value in the input array: %d\n', str2double(spl_tline{nf_col}));
+                continue;
+            end
+            
+            
+            %arch value
+            findarch = -1;
+            for itercnt = 1:length(arch_arr) %comparing wrt the INPUT Array
+                if strcmp(arch_arr{itercnt},spl_tline{arch_col})
+                    findarch = 1;
+                    colnum = itercnt;
+                    break;
+                end
+            end
+            
+            if findarch == -1
+                fprintf('WARNING: Did not find arch value in the input array: %s\n', spl_tline{arch_col});
+                continue;
+            end
+            
+            frac_ads(rownum,colnum+1,pdi_cntr) = str2double(spl_tline{favg_col});
+            err_ads(rownum,colnum+1,pdi_cntr)  = str2double(spl_tline{err_col});
+            
+        end
+        
+        fprintf('Finished analyzing %s\n', fname);
+        
+    end
+    
+    % Plot frac_ads, err_ads in one go
+    
+    h1 = figure;
+    hold on
+    box on
+    set(gca,'FontSize',16)
+    xlabel('$n_{pa}/n_{pc}$','FontSize',20,'Interpreter','Latex')
+    ylabel('$f_{\rm{ads}}^{\bar{MW}}$','FontSize',20,'Interpreter','Latex')
+    
+    lcnt = 1;
+    for plcnt = 1:length(pdi_freearr)
+        
+        for arch_cnt = 1:length(arch_arr)
+            
+            if pdi_freearr(plcnt) == 1
+                errorbar(frac_ads(:,1,plcnt)/nch_graft,frac_ads(:,1+arch_cnt,plcnt)/nmongraft,err_ads(:,1+arch_cnt,plcnt)/nmongraft,...
+                    'Color', pclr{arch_cnt},'Marker',msty{arch_cnt},'MarkerFaceColor',...
+                    'None','LineStyle',lsty{plcnt},'LineWidth',1,'MarkerSize',10)
+            else
+                errorbar(frac_ads(:,1,plcnt)/nch_graft,frac_ads(:,1+arch_cnt,plcnt)/nmongraft,err_ads(:,1+arch_cnt,plcnt)/nmongraft,...
+                    'Color', pclr{arch_cnt},'Marker',msty{arch_cnt},'MarkerFaceColor',...
+                    pclr{arch_cnt},'LineStyle',lsty{plcnt},'LineWidth',1,'MarkerSize',10)
+            end
+            legendinfo{lcnt} = [leg_arr{arch_cnt} ', PDI = ' num2str(pdi_plot(plcnt,1),'%.1f')];
+            lcnt = lcnt + 1;
+            
+        end
+        
+    end
+    
+    legend(legendinfo,'FontSize',16,'Location','NorthWest','Interpreter','Latex')
+    legend boxoff
+    ylim([0.9 2])            
+    saveas(h1,'./../../Figs_paper/fnumavgMW_npabynpc_pdi_arch.png');
     clear legendinfo
     
 end
