@@ -2075,7 +2075,8 @@ SUBROUTINE COMPUTE_FREEPENETRATE_CHAINS(iframe)
   WRITE(adschwrite,'(2(I0,1X),F14.8)') timestep, dumads_ch_cnt,&
        & REAL(dumads_ch_cnt)/REAL(ngraftchains)
      
-  WRITE(adschmwwrite,'(2(I0,2X))') timestep, dumads_chmw
+  WRITE(adschmwwrite,'(3(I0,2X),F14.6)') timestep, dumads_chmw,&
+       & dumads_ch_cnt, REAL(dumads_chmw)/REAL(dumads_ch_cnt)
   avg_ch_adscnt = avg_ch_adscnt + REAL(dumads_ch_cnt)&
        &/REAL(ngraftchains)
 
