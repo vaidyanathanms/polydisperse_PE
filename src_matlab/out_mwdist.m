@@ -48,9 +48,15 @@ bin_lims = [1,max_mw_free]; % THIS IS NEEDED TO ENSURE ALL CASES ARE BINNED IN T
 
 %% Main Analysis
 
+s1 = create_output_dirs('./../../distribution_dir/');
+s2 = create_output_dirs('./../../outfiles');
+s3 = create_output_dirs('./../../outfiles/overall');
+
 for ncnt = 1:length(nch_freearr) % begin nfree loop
-    nval = nch_freearr(ncnt);
     
+    nval = nch_freearr(ncnt);
+    s1 = create_output_dirs(sprintf('./../../distribution_dir/n_%d',nval));
+
     for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
         ref_pdifree     = pdi_freearr(pdi_cntr);
         pdifree_str     = num2str(ref_pdifree,'%1.1f');
@@ -105,18 +111,17 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 nfyles = numel(ads_fylelist); %number of files of the type
                 nframes_case = 0; % total frames per case: sum across all files.
                 
-                
                 % output for each case
                 dirout = sprintf('../../distribution_dir/n_%d/%s',nval,dirstr);
                 if ~exist(dirname,'dir')
-                    fprintf('%s does not exist\n',dirname);
-                    continue
+                    s1 = create_output_dirs(dirout);
                 end
                 distfyle = sprintf('distout_rcut_%s_case_%d.dat',cutoff,casenum);
                 distoutfyle = strcat(dirout,'/',distfyle);
                 fcase = fopen(distoutfyle,'w');
-                fprintf(fcase,'%s\t%s\t%s\t%s\t%s\n',...
-                    'MW','initial #of chains','Total occurences','Total occurences/frame','Normalized adsorption probability');
+                fprintf(fcase,'%s\t%s\t%s\t%s\t%s\t%s\n',...
+                    'MW','initial #of chains','Total occurences','Total occurences/frame','Normalized adsorption probability'...
+                    ,'Total adsorption MW');
                 
   
                 % Output MWD averaged across cases
@@ -171,13 +176,14 @@ for ncnt = 1:length(nch_freearr) % begin nfree loop
                 
                 %NOTE 2: For each casenum, Output is added across
                 %different time frames. Think of it as a big file. So
-                %adding is OK!
+                %adding is one way of averaging!
                 
                 distoutfyle = strcat(dirname,'/','ads_distout_details.dat');
                 fdist = fopen(distoutfyle,'w');
                 fprintf(fdist,'%s\t%s\t%s\t%d\n','Adsorbed chain MW', 'Adsorbed chain counts','Total frames',nframes_case);
                 fprintf(fdist,'%d\t%d\n',[avgads_molarr(:,1) avgads_molarr(:,2)]');
                 fclose(fdist);
+                
                 
                 % Store into avg arrays
                 % NOTE 3: Easiest way is to add all the adsorbed mol wts and

@@ -80,6 +80,8 @@ if avg_flag
                     continue;
                 end
                 
+                s1 = create_output_dirs('./../../distribution_dir/avg_values');
+
                 fprintf('Analyzing %s\n', finp_fyle);
                 fout_data = fopen(sprintf('./../../distribution_dir/avg_values/avg_mwdist_n_%d_pdi_%g_%s_rcut_%s.dat',...
                     nval,ref_pdifree,dirstr,cutoff),'w');
@@ -109,7 +111,7 @@ if avg_flag
                     
                     % check if the first and fifth column are the MW and
                     % norm_adsorption_prob respectively.
-                    tline = fgetl(finp_data);
+                    tline = fgetl(finp_data); % get column numbers of adsorption prob for each case
                     spl_tline = strtrim(strsplit(strtrim(tline)));
                     if ~strcmp(strtrim(spl_tline{1}),'MW') || ~strcmp(strtrim(spl_tline{5}),'Norm_adsorption_prob')
                         fprintf('ERROR: 1st and 5th column needs to be MW and norm_adsorption_prob respectively: %s\t%s\n',strtrim(spl_tline{1}),strtrim(spl_tline{5}));
@@ -120,7 +122,6 @@ if avg_flag
                     for linecnt = 1:num_unique_MWs % Read each case and process
                         tline = fgetl(finp_data);
                         spl_tline = strtrim(strsplit(strtrim(tline)));
-                        
                         MW_val = str2double(strtrim(spl_tline{1}));
                         norm_adsorb_val = str2double(strtrim(spl_tline{5}));
                         
@@ -128,7 +129,7 @@ if avg_flag
                             fprintf('ERROR: Unknown mol. wt: %d\n',MW_val);
                             continue;
                         end
-                        
+
                         %find MW_val is already present in the first column mw_data_arr
                         check_flag = ismember(mw_data_arr(:,1),MW_val);
                         if max(check_flag(:,1)) == 0
@@ -161,8 +162,7 @@ if avg_flag
                 end % end reading the file for a given architecture (end of while loop)
                 
                 if err_flag ~= 1
-                    
-                    
+                          
                     for write_cntr = 1:length(mw_data_arr(:,1))
                         
                         if mw_data_arr(write_cntr,3) == 0

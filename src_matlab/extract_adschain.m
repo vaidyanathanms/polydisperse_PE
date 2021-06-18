@@ -66,7 +66,7 @@ while true
     ch_mw = str2double(spl_tline{column_num});
     % check if this exceeds the max designated value
     if ch_mw > max_mw_ads 
-        fprintf('ERROR: MW of ads_chains (%d) exceeds the max value (%d). Change "max_mw_free" value in the "Pre-calculations" section',...
+        fprintf('ERROR: MW of ads_chains (%d) exceeds the max value (%d). Change "max_mw_free" value in the out_mwdist.m',...
             ch_mw, max_mw_ads);
         break;
     end
