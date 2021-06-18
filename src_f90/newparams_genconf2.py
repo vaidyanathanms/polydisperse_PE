@@ -1,5 +1,6 @@
 # Edited to avoid restart flags
 # New Version: April-14-2020
+# The path to the source file for LAMMPS (search keyword "srcfyl") needs to be updated
 import numpy
 import os
 import shutil
@@ -26,13 +27,13 @@ from my_python_functions import find_recent_file
 #---------input flags------------------------------------------
 #0-initial run  1- production
 num_hrs   = 48 # Total number of hours for run
-num_nodes = 1  # Number of nodes
+num_nodes = 2  # Number of nodes
 num_procs = 24 # Number of procs per node
 maxtime   = 40000000 # Maximum timesteps
-equiltime = 25000000 # Equilibrium timesteps
+equiltime = 15000000 # Equilibrium timesteps
 
 #---------input details----------------------------------------
-free_chains  = [16,64,128,150]
+free_chains  = [64,128]
 free_avg_mw  = 30
 graft_chains = 32
 graft_avg_mw = 35 
