@@ -8,6 +8,8 @@ MATLAB codes: Requires 2019b+ (see src_matlab)
 
 NOTE: For the Python codes, check the directory paths and rename accordingly. The scratch (where the codes will be running) will be DIFFERENT and needs to be changed accordingly. Specifically, one needs to set "jobdir", "scratchdir" and "lmpdir" whenever necessary. Please do a grep command to find the points where they are defined. 
 
+NOTE2: The path to the executable for LAMMPS - lmp_mesabi also needs to be changed. Please do a grep for "lmp_mesabi" to see where they needs to be changed.
+
 File Usage:
 
 newparams_genconf2.py - To generate the input configurations. See "Inputs" within the code to see the kind of inputs required

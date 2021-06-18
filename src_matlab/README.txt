@@ -46,3 +46,22 @@ To plot the data for the paper. See code comments for instructions
 Input files required are  ./../../data_all_dir/n_*/PEinitdata.txt and ./../../sim_results/outresults_dir_n_%d/%s/pdifree_%s_pdigraft_%s/Case_%d/dens_config*.lammpstrj
 Output files will be in ./../../net_charge
 Run plot_paper.m to obtain the plots after running this
+
+***** File 8: compute_adsfrac_newdef.m *********************************************************************
+Input files required are  ./../../monads/outresults_dir_n_%d/%s/pdifree_%s_pdigraft_%s/Case_%d/adsfrac_chmw_config*.lammpstrj
+Computes the adsorbed fraction of monomers according to the definition that if a chain is adsorbed, the number of monomers adsorbed is equal to the MW of the chain.
+Output files will be in ./../../monads/overall/
+Run plot_paper.m to obtain the plots after running this
+
+***** File 9: generate_numavgMW.m *********************************************************************
+Input files required are  ./../../numavg_mw/outresults_dir_n_%d/%s/pdifree_%s_pdigraft_%s/Case_%d/adsfrac_chain_config*.lammpstrj AND ./../../numavg_mw/outresults_dir_n_%d/%s/pdifree_%s_pdigraft_%s/Case_%d/adsfrac_chmw_config*.lammpstrj
+NOTE: Make sure that the files have the same timestep prefixed to *.lammpstrj.
+Generates the time data for the number averaged MW.
+Output files will be in the same directory where input files are found with adsfrac_numavg_config*.lammpstrj.
+Run compute_numavgMW.m after this.
+
+***** File 10: compute_numavgMW.m *********************************************************************
+Input files required are  ./../../numavgMW/outresults_dir_n_%d/%s/pdifree_%s_pdigraft_%s/Case_%d/adsfrac_numavg_rcut_*_config*.lammpstrj
+Output files will be in ./../../outfiles/overall/
+Computes number averaged MW
+Run plot_paper.m to obtain the plots after running this
