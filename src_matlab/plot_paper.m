@@ -1,9 +1,15 @@
 %% Plot all data for the paper
 
-% Figsz   : SZ-distribution
-% Figfads : f_ads vs Npa/Npc for different PDI and architectures
-% Figqnet : Qnet vs Npa/Npc for different PDI and architectures
-% Figdens : Density plots
+% figsz   : SZ-distribution
+% figfads : f_ads vs Npa/Npc for different PDI and architectures
+% figqnet : Qnet vs Npa/Npc for different PDI and architectures
+% figdens : Density plots of all chains
+% figdens2: Density plots of chains that are adsorbed. If one monomer is
+% adsorbed, entire chain is considered to be adsorbed.
+% figadsmon: If 20 of 30 are adsorbed, only 20 is counted
+% figadsmon2: If even one of 30 is adsorbed, all 30 is counted
+% fignumavg_MW: number average MW based on figadsmon2 (that is even if one
+% monomer is adsorbed, entire MW counts towards the calculation)
 
 clear
 clc
@@ -33,7 +39,7 @@ tot_graftmon = nmongraft*ngraft;
 %% Input flags
 % see definitions above
 figsz   = 0;
-figfads = 1; figfads_mon = 0; figfads_mon2 = 0; fignumavg_MW=1;
+figfads = 0; figfads_mon = 0; figfads_mon2 = 0; fignumavg_MW=1;
 figqnet = 0;
 figdens  = 0; nplot = 16; %nplot corresponds to the number of chains value for density profiles
 figdens2 = 0; % density of only the ADSORBED chains according to monomeric definition
@@ -395,7 +401,7 @@ if figqnet
 end % end if fig2b
 
 
-%% \rho
+%% Monomeric density of all monomers
 if figdens
     
     fprintf('%s\n','Preparing density plots');
@@ -482,9 +488,9 @@ if figdens
             plot(rdata/lz,avg_rho_graft,'Color','k','LineStyle',lsty{pdi_cntr},'LineWidth',2)
             plot(rdata/lz,avg_rho_free,'Color',green,'LineStyle',lsty{pdi_cntr},'LineWidth',2)
             
-            legendinfo{lcnt} = ['Brush Monomers; ' 'PDI = ' num2str(pdifree,'%.1f')];
+            legendinfo{lcnt} = ['Polycation Monomers; ' 'PDI = ' num2str(pdifree,'%.1f')];
             lcnt = lcnt + 1;
-            legendinfo{lcnt} = ['Free Monomers; ' 'PDI = ' num2str(pdifree,'%.1f')];
+            legendinfo{lcnt} = ['Polyanion Monomers; ' 'PDI = ' num2str(pdifree,'%.1f')];
             lcnt = lcnt + 1;
             
         end
@@ -499,6 +505,9 @@ if figdens
 end
 
 %% f_ads_mon
+% ONLY the monomers that are within the cutoff of the graft chain are
+% counted. If 20 of 30 monomers are within cutoff, the number of adsorbed =
+% 20
 if figfads_mon
     % Create arrays for according to the input array sizes
     frac_ads = zeros(length(nfreearr),length(arch_arr)+1,length(pdi_freearr)); %+1 for y-dimension to incorporate the N_f values
@@ -640,6 +649,11 @@ if figfads_mon
 end
 
 %% Adsorbed monomer with respect to the chain definition
+% Definition of # of adsorbed monomers = length of the chain if one of the
+% monomer of free chain is within cutoff of the graft chain. Similarly. The
+% a chain is adsorbed if any of the monomer of the free is within cutoff of
+% the graft chain. If 20 of 30 monomers are within cutoff, the number of adsorbed =
+% 30
 if figfads_mon2
     % Create arrays for according to the input array sizes
     frac_ads = zeros(length(nfreearr),length(arch_arr)+1,length(pdi_freearr)); %+1 for y-dimension to incorporate the N_f values
@@ -781,13 +795,17 @@ if figfads_mon2
 end
 
 %% Density of adsorbed monomers according to the defn that if one monomer is adsorbed, entire chain is adsorbed
+% A chain is adsorbed if any of the monomer of the free is within cutoff of
+% the graft chain. All monomers of the chain are assumed to be adsorbed if
+% one of the monomers is within a cutoff distance. If 20 of 30 monomers are within cutoff, the number of adsorbed =
+% 30
 if figdens2
     
     fprintf('%s\n','Preparing density plots');
     
     for nval = 1:length(nfreearr)
         nplot = nfreearr(nval);
-        
+%         nplot = 150;
         for arch_cnt = 1:length(arch_arr)  % begin arch loop
             dirstr = arch_arr{arch_cnt};lcnt = 1;
             
@@ -867,8 +885,8 @@ if figdens2
                 avg_rho_neutral =  avg_rho_neutral/totcases;
                 avg_rho_charged  =  avg_rho_charged/totcases;
                 
-                plot(rdata/lz,avg_rho_neutral,'Color','k','LineStyle',lsty{pdi_cntr},'LineWidth',2)
-                plot(rdata/lz,avg_rho_charged,'Color',green,'LineStyle',lsty{pdi_cntr},'LineWidth',2)
+                plot(rdata/lz,avg_rho_neutral,'Color',orange,'LineStyle',lsty{pdi_cntr},'LineWidth',2)
+                plot(rdata/lz,avg_rho_charged,'Color','m','LineStyle',lsty{pdi_cntr},'LineWidth',2)
                 
                 legendinfo{lcnt} = ['Neutral Monomers; ' 'PDI = ' num2str(pdifree,'%.1f')];
                 lcnt = lcnt + 1;
@@ -888,7 +906,11 @@ if figdens2
 end
 
 %% Plot number averaged molecular weight
-
+% Definition of # of adsorbed monomers = length of the chain if one of the
+% monomer of free chain is within cutoff of the graft chain. Similarly. The
+% a chain is adsorbed if any of the monomer of the free is within cutoff of
+% the graft chain. If 20 of 30 monomers are within cutoff, the number of adsorbed =
+% 30
 if fignumavg_MW
     
      % Create arrays for according to the input array sizes
@@ -1000,7 +1022,7 @@ if fignumavg_MW
     box on
     set(gca,'FontSize',16)
     xlabel('$n_{pa}/n_{pc}$','FontSize',20,'Interpreter','Latex')
-    ylabel('$f_{\rm{ads}}^{\bar{MW}}$','FontSize',20,'Interpreter','Latex')
+    ylabel('$M_{\rm{n, ads}}$','FontSize',20,'Interpreter','Latex')
     
     lcnt = 1;
     for plcnt = 1:length(pdi_freearr)
