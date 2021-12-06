@@ -26,14 +26,15 @@ plt_flag = 1;
 nch_freearr = [32;64;128;150];
 casearr  = [1;2;3;4];
 pdi_freearr = [1.5];
-arch_arr  = {'al_al'};
+arch_arr  = {'bl_bl'};
 pdigraft  = 1.0;
 nfreemons = 30;
 ngraft_ch = 32; % Number of graft chains
 cutoff = '1.50';
 lz = 120;
 area = 35^2;
-
+kT = 1;
+xlab_req = 1; % Plot with x labels if value is 1
 %% Graft details
 ncharge_mons_graft = 30; % per graft chain details
 ntail_mons_graft = 5;    % per graft chain details
@@ -265,6 +266,8 @@ if plt_flag
                 hs(ncnt) = subplot(1,4,ncnt);
                 plot(plt_data.data(:,1), plt_data.data(:,4), 'Color',pclr{ncnt},'LineStyle','None',...
                     'Marker',msty{pdi_cntr},'MarkerFaceColor',pclr{ncnt},'MarkerEdgeColor',pclr{ncnt},'MarkerSize',8)
+                init_guess = [0,0];
+                [hval,eval] = fit_to_theory(xdata,ydata,1/kT,init_guess);
                 hold on
                 %                 F = @(x,xdata)tanh(2*(xdata-x(1))/x(2));
                 %                 x0 = [ntot_mons_graft ntot_mons_graft];
@@ -293,6 +296,9 @@ if plt_flag
                 xxi = (0:0.9*max(xalldata));
                 ys = csaps(xalldata,yalldata,pval,xxi,yalldata);
 %                 plot(xxi,ys,'Color',pclr{ncnt},'LineStyle','--','LineWidth',2)
+                xval = linspace(min(xdata),max(xdata));
+                fitdata = (hval*exp(eval*xval))./(1+hval*exp(eval*xval));
+%                plot(xval,fitdata,'Color',pclr{ncnt},'LineStyle','--','LineWidth',2)
                 if ncnt == 4
                     x3d = xalldata; y3d = yalldata;
                 end
@@ -307,7 +313,7 @@ if plt_flag
                 lgd = legend(['$n_{pa}/n_{pc}$ = ' num2str(nval/ngraft_ch,'%1.1f')]);
                 lgd.FontSize = 25;
                 lgd.Interpreter = 'Latex';
-                lgd.Location='SouthEast';
+                lgd.Location='NorthWest';
                 legend boxon
                 
             end % end nfree loop
@@ -317,20 +323,28 @@ if plt_flag
             p3 = get(hs(3),'Position');
             p4 = get(hs(4),'Position');
             
-            set(hs(4),'YTick',[],'XTick',[0 75 150]);
-            set(hs(3),'YTick',[],'XTick',[0 75 150]);
-            set(hs(2),'YTick',[],'XTick',[0 75 150]);
-            set(hs(1),'XTick',[0 75 150]);
+            if xlab_req
+                set(hs(4),'YTick',[],'XTick',[0 60 120]);
+                set(hs(3),'YTick',[],'XTick',[0 60 120]);
+                set(hs(2),'YTick',[],'XTick',[0 60 120]);
+                set(hs(1),'XTick',[0 60 120]);
+            else
+                set(hs(4),'YTick',[],'XTick',[0 60 120],'XTickLabel', []);
+                set(hs(3),'YTick',[],'XTick',[0 60 120],'XTickLabel', []);
+                set(hs(2),'YTick',[],'XTick',[0 60 120],'XTickLabel', []);
+                set(hs(1),'XTick',[0 60 120],'XTickLabel', []);
+            end
+                
+            ylim(hs(1),[y_min_max_lims(4,1) y_min_max_lims(4,2)+0.15]);
+            ylim(hs(2),[y_min_max_lims(4,1) y_min_max_lims(4,2)+0.15]);
+            ylim(hs(3),[y_min_max_lims(4,1) y_min_max_lims(4,2)+0.15]);
+            ylim(hs(4),[y_min_max_lims(4,1) y_min_max_lims(4,2)+0.15]);
             
-            ylim(hs(1),[y_min_max_lims(4,1) y_min_max_lims(4,2)+0.1]);
-            ylim(hs(2),[y_min_max_lims(4,1) y_min_max_lims(4,2)+0.1]);
-            ylim(hs(3),[y_min_max_lims(4,1) y_min_max_lims(4,2)+0.1]);
-            ylim(hs(4),[y_min_max_lims(4,1) y_min_max_lims(4,2)+0.1]);
-            
-            xmax = x_min_max_lims(4,2)+0.2*x_min_max_lims(4,2);
-            xlim(hs(1),[x_min_max_lims(4,1)-2 xmax]);
-            xlim(hs(2),[x_min_max_lims(4,1)-2 xmax]);
-            xlim(hs(3),[x_min_max_lims(4,1)-2 xmax]);
+            xmax = 150; % x_min_max_lims(4,2)+0.2*x_min_max_lims(4,2);
+            xlim(hs(1),[x_min_max_lims(4,1)-6 xmax]);
+            xlim(hs(2),[x_min_max_lims(4,1)-6 xmax]);
+            xlim(hs(3),[x_min_max_lims(4,1)-6 xmax]);
+            xlim(hs(4),[x_min_max_lims(4,1)-6 xmax]);
             
             p1(3) = 0.775/4;
             p2(3) = 0.775/4;
@@ -356,7 +370,9 @@ if plt_flag
             han.XLabel.Visible='on';
             han.YLabel.Visible='on';
             ylabel(hs(1),'$p_{\rm{ads}}$','FontSize',40,'Interpreter','Latex');
-            xlb = xlabel(hs(2),'$N$','FontSize',40,'Interpreter','Latex');
+            if xlab_req
+                xlb = xlabel(hs(2),'$N$','FontSize',40,'Interpreter','Latex');
+            end
             
             saveas(harch_subplot,sprintf('./../../Figs_paper/avg_dist_%s_%s.png',dirstr,pdifree_str));
             
