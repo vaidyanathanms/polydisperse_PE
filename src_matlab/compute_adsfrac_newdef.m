@@ -73,13 +73,13 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
     fout_avg = fopen(sprintf('./../../monads/overall/adsorbedmon_wrtch_ave_allcases_rcut_%s_pdifree_%g.dat',...
         cutoff,pdifree),'w');
     fprintf(fout_avg,'%s\t%s\t%s\t%s\t%s\t%s\n','N_f','Arch','ncases','numsample_pts',...
-        'avg_fraction','StdErrMean');
+        'avg_fraction','StdErrMean'); %actually outputting the number, not the fraction (divided in plot_paper.m)
     
     % Create case-based avg outfiles for SI data
     fout_sidata = fopen(sprintf('./../../monads/overall/sidata_adsorbedmon_wrtch_rcut_%s_pdifree_%g.dat',...
         cutoff,pdifree),'w');
     fprintf(fout_sidata,'%s\t%s\t%s\t%s\t%s\n','\DJ$_{\rm{ideal}}$','$N_{pa}$','Arch',...
-        'Case \#','avg_fraction');
+        'Case \#','avg_fraction'); %actually outputting the number, not the fraction (divided in plot_paper.m)
     
     
     for ncnt = 1:length(nfreearr) % begin nfree loop
