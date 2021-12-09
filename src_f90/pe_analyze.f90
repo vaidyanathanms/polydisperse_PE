@@ -2376,10 +2376,14 @@ SUBROUTINE OUTPUT_DENS()
              &*(REAL(2*i+1))
 
         DO j = 1,nfreegrp
-
+!$$ EDIT ON DEC-09-2021
+!$$ THERE SHOULD NOT BE ANY densfrnorm since this is called everytime
+!$$ HOWEVER OLD ANALYSIS HAVE THIS. SO TAKEN CARE IN MATLAB FILES 
+!$$ CHECK MATLAB FILE: plot_paper.m
+!$$ MAKE SURE FOR NEW ANALYSIS, densfreq is set to 1 in plot_paper.m
            ! No need to normalize with average number
            WRITE(dumwrite,'(F16.9,1X)',advance="no") ads_densarray(i&
-                &,j)*normdens/(REAL(densfrnorm)) 
+                &,j)*normdensi 
            
         END DO
 
