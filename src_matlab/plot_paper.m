@@ -39,10 +39,10 @@ tot_graftmon = nmongraft*ngraft;
 %% Input flags
 % see definitions above
 figsz   = 0;
-figfads = 0; figfads_mon = 0; figfads_mon2 = 0; fignumavg_MW=1;
+figfads = 0; figfads_mon = 0; figfads_mon2 = 0; fignumavg_MW=0;
 figqnet = 0;
 figdens  = 0; nplot = 16; %nplot corresponds to the number of chains value for density profiles
-figdens2 = 0; % density of only the ADSORBED chains according to monomeric definition
+figdens2 = 1; % density of only the ADSORBED chains according to monomeric definition
 
 %% Pre-calculations
 rhofree = nfreearr*30/(lz*area);
@@ -695,7 +695,7 @@ if figfads_mon2
                 nf_col = wcnt;
             elseif strcmp(spl_tline{wcnt},'Arch')
                 arch_col = wcnt;
-            elseif strcmp(spl_tline{wcnt},'avg_fraction')
+            elseif strcmp(spl_tline{wcnt},'avg_fraction') %actually this is the number, not the fraction
                 favg_col = wcnt;
             elseif strcmp(spl_tline{wcnt},'StdErrMean')
                 err_col = wcnt;
@@ -802,6 +802,10 @@ end
 if figdens2
     
     fprintf('%s\n','Preparing density plots');
+    % Create case-based avg outfiles for SI data
+    fout_sidata = fopen(sprintf('./../../monads/overall/sidata_adsorbedmon_wrtch_fromdensity.dat'),'w');
+    fprintf(fout_sidata,'%s\t%s\t%s\t%s\n','\DJ$_{\rm{ideal}}$','$N_{pa}$','Arch',...
+        'avg_fraction_from_density');
     
     for nval = 1:length(nfreearr)
         nplot = nfreearr(nval);
@@ -822,7 +826,7 @@ if figdens2
                 pdifree     = pdi_freearr(pdi_cntr);
                 pdifree_str = num2str(pdifree,'%1.1f');
                 totcases = 0;avg_rho_neutral = 0; avg_rho_charged = 0;
-                
+               
                 for casecntr = 1:length(casearr) % begin case loop
                     casenum = casearr(casecntr);
                     
@@ -883,8 +887,12 @@ if figdens2
                 end
                 
                 avg_rho_neutral =  avg_rho_neutral/totcases;
-                avg_rho_charged  =  avg_rho_charged/totcases;
+                avg_rho_charged =  avg_rho_charged/totcases;
                 
+                neut_beads = area*trapz(rdata,avg_rho_neutral);
+                char_beads = area*trapz(rdata,avg_rho_charged);
+                fprintf('%s\t%d\t%s\t%g\n',pdifree_str,nplot,dirstr,...
+                    neut_beads+char_beads)
                 plot(rdata/lz,avg_rho_neutral,'Color',orange,'LineStyle',lsty{pdi_cntr},'LineWidth',2)
                 plot(rdata/lz,avg_rho_charged,'Color','m','LineStyle',lsty{pdi_cntr},'LineWidth',2)
                 
@@ -892,6 +900,9 @@ if figdens2
                 lcnt = lcnt + 1;
                 legendinfo{lcnt} = ['Charged Monomers; ' 'PDI = ' num2str(pdifree,'%.1f')];
                 lcnt = lcnt + 1;
+                
+                fprintf(fout_sidata,'%s\t%d\t%s\t%g\n',pdifree_str,nplot,dirstr,...
+                    (neut_beads+char_beads)/tot_graftmon);
                 
             end
             
