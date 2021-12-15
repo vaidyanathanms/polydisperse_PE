@@ -35,13 +35,15 @@ nch_graft = 32;
 lz = 120; area=35^2;
 set_tmax = 3e7; % maximum timestep for analysis;
 tot_graftmon = nmongraft*ngraft;
+% ONLY FOR ADSORBED CHAIN CALCULATION. TO OVERCOME THE STUPID MISTAKE IN THE ANALYSIS CODE WHERE I MISSED A FACTOR OF densfreq for adsorbed chain calculation and not for actual density calculation
+densfreq = 5; 
 
 %% Input flags
 % see definitions above
 figsz   = 0;
 figfads = 0; figfads_mon = 0; figfads_mon2 = 0; fignumavg_MW=0;
 figqnet = 0;
-figdens  = 0; nplot = 16; %nplot corresponds to the number of chains value for density profiles
+figdens  = 0; nplot = 150; %nplot corresponds to the number of chains value for density profiles
 figdens2 = 1; % density of only the ADSORBED chains according to monomeric definition
 
 %% Pre-calculations
@@ -484,6 +486,7 @@ if figdens
             
             avg_rho_graft =  avg_rho_graft/totcases;
             avg_rho_free  =  avg_rho_free/totcases;
+            fprintf('%g\t%g\n',area*trapz(rdata-0.5,avg_rho_graft), area*trapz(avg_rho_free))
             
             plot(rdata/lz,avg_rho_graft,'Color','k','LineStyle',lsty{pdi_cntr},'LineWidth',2)
             plot(rdata/lz,avg_rho_free,'Color',green,'LineStyle',lsty{pdi_cntr},'LineWidth',2)
@@ -878,7 +881,6 @@ if figdens2
                             nbins_old = nbins;
                         end
                     end
-                    
                     avg_rho_neutral = fld(:,2) + avg_rho_neutral;
                     avg_rho_charged  = fld(:,3) + avg_rho_charged;
                     
@@ -891,10 +893,10 @@ if figdens2
                 
                 neut_beads = area*trapz(rdata,avg_rho_neutral);
                 char_beads = area*trapz(rdata,avg_rho_charged);
-                fprintf('%s\t%d\t%s\t%g\n',pdifree_str,nplot,dirstr,...
-                    neut_beads+char_beads)
-                plot(rdata/lz,avg_rho_neutral,'Color',orange,'LineStyle',lsty{pdi_cntr},'LineWidth',2)
-                plot(rdata/lz,avg_rho_charged,'Color','m','LineStyle',lsty{pdi_cntr},'LineWidth',2)
+                fprintf('%s\t%d\t%s\t%d\t%d\n',pdifree_str,nplot,dirstr,...
+                    neut_beads,char_beads)
+                plot(rdata/lz,avg_rho_neutral/densfreq,'Color',orange,'LineStyle',lsty{pdi_cntr},'LineWidth',2)
+                plot(rdata/lz,avg_rho_charged/densfreq,'Color','m','LineStyle',lsty{pdi_cntr},'LineWidth',2)
                 
                 legendinfo{lcnt} = ['Neutral Monomers; ' 'PDI = ' num2str(pdifree,'%.1f')];
                 lcnt = lcnt + 1;
@@ -902,7 +904,7 @@ if figdens2
                 lcnt = lcnt + 1;
                 
                 fprintf(fout_sidata,'%s\t%d\t%s\t%g\n',pdifree_str,nplot,dirstr,...
-                    (neut_beads+char_beads)/tot_graftmon);
+                    (neut_beads+char_beads)/(densfreq*tot_graftmon));
                 
             end
             
