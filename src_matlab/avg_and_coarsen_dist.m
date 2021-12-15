@@ -14,9 +14,9 @@ format long;
 %% Color codes
 
 green = [0 0.5 0.0]; gold = [0.9 0.75 0]; orange = [0.91 0.41 0.17]; brown=[0.6 0.2 0];
-pclr = {'m','r',gold,green,orange,'k','b',brown};
-lsty = {'-','--',':'};
-msty = {'d','s','o','x'};
+pclr = {'m','r',gold,green,orange,'k','b',brown}; % Color order for plotting
+lsty = {'-','--',':'}; % line style order for plotting
+msty = {'d','s','o','x'}; % marker style order for plotting
 
 %% Flags
 avg_flag = 1;
@@ -211,8 +211,8 @@ if plt_flag
             for ncnt = 1:length(nch_freearr) % begin nfree loop
                 nval = nch_freearr(ncnt);
                 
-                fylename = sprintf('./../../distribution_dir/avg_values/avg_mwdist_n_%d_pdi_%g_%s_rcut_%s.dat',...
-                    nval,ref_pdifree,dirstr,cutoff);
+                    fylename = sprintf('./../../distribution_dir/avg_values/avg_mwdist_n_%d_pdi_%g_%s_rcut_%s.dat',...
+                        nval,ref_pdifree,dirstr,cutoff);
                 if exist(fylename,'file') ~=2
                     fprintf('%s does not exist', fylename);
                     continue;
