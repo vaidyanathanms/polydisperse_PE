@@ -85,7 +85,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
     for ncnt = 1:length(nfreearr) % begin nfree loop
         nval = nfreearr(ncnt);
         s2 = create_output_dirs(sprintf('./../../outfiles/overall/n_%d',nval));
-
+        
         for arch_cnt = 1:length(arch_arr)  % begin arch loop
             dirstr = arch_arr{arch_cnt};
             
@@ -141,7 +141,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                 reordered_ads_list = renumber_files(ads_fylelist,nfyles); % reorder file names to avoid double counting
                 
                 sum_across_files = 0; tot_cntr_across_files = 0; mintime = 10^10; maxtime = 0;
-                mintstep = 0; 
+                mintstep = 0;
                 for fylcnt = 1:nfyles % begin running through all files of the given type
                     ads_fylename = strcat(dirname,'/',reordered_ads_list{fylcnt});
                     if exist(ads_fylename,'file') ~= 2
@@ -156,7 +156,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                     data = importdata(ads_fylename);
                     lendata = length(data(:,1));
                     
-                   
+                    
                     %average adsorption values
                     if min(data(:,1)) > set_tmin
                         
@@ -181,7 +181,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                     end
                     
                 end % end summing adsfrac across all files for a given case
-%                 fprintf('%g\t%g\n',sum_across_files,tot_cntr_across_files);
+                %                 fprintf('%g\t%g\n',sum_across_files,tot_cntr_across_files);
                 if tot_cntr_across_files ~=0
                     avg_for_each_casenum = sum_across_files/tot_cntr_across_files;
                 else
@@ -225,7 +225,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                 nonzerovals = avgcase_store(avgcase_store~=0);
                 stderr_val = std(nonzerovals)/sqrt(length(nonzerovals));
                 avg_across_cases(ncnt,arch_cnt,pdi_cntr) = nadsmon_all(ncnt,arch_cnt)/length(nonzerovals);
-
+                
             else
                 
                 stderr_val = -1; % Invalid for just one case
@@ -236,65 +236,8 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
             
         end % end arch loop
         
-            end % end nfree loop
+    end % end nfree loop
     
     fclose(fout_avg);
     
 end
-                    dirname = sprintf('./../../sim_results/outresults_dir_n_%d/%s/pdifree_%s_pdigraft_%s/Case_%d',...
-                        nplot,dirstr,pdifree_str,pdigraft_str,casenum);
-                    if ~exist(dirname,'dir')
-                        fprintf('%s does not exist\n',dirname);
-                        continue
-                    end
-                    rho_prefix = 'densadsch_config_*.lammpstrj';
-                    rho_fylelist = dir(strcat(dirname,'/',rho_prefix));
-                    if min(size(rho_fylelist)) == 0
-                        fprintf('No files/Empty files are found for %s\n',rho_prefix);
-                        continue;
-                    end
-                    
-                    nfyles = numel(rho_fylelist); %number of files of the type
-                    if nfyles == 0
-                        fprintf('Did not find files of the type grpdens_config* in %d\t%s\n', nplot,dirstr);
-                        continue;
-                    else
-                        [latest_fyleindex] = find_latest_fyle(rho_fylelist,nfyles);
-                    end
-                    
-                    rho_fylename = strcat(dirname,'/',rho_fylelist(latest_fyleindex).name);
-                    if exist(rho_fylename,'file') ~= 2
-                        fprintf('%s does not exist/empty file\n',rho_fylename);
-                        continue;
-                    elseif struct(dir(rho_fylename)).bytes == 0
-                        fprintf('Empty file: %s \n',rho_fylename);
-                        continue;
-                    end
-                    fprintf('Plotting density profiles using %s for n_pa = %d\n', rho_fylename, nplot);
-                    
-                    all_data = importdata(rho_fylename,' ',1);
-                    fld = all_data.data;
-                    rdata = fld(:,1); lz = fld(1,1) + fld(length(fld(:,1)),1); %because of binning
-                    nbins = length(rdata(:,1));
-                    
-                    % sanity check for length of data
-                    if casecntr == 1
-                        nbins_old = nbins;
-                    else
-                        if nbins_old ~= nbins
-                            fprintf('ERROR: The values of bins do not match %s\t%d\t%g\n',dirstr,nplot,pdifree)
-                            error('CHECK nbins')
-                        else
-                            nbins_old = nbins;
-                        end
-                    end
-                    
-                    avg_rho_neutral = fld(:,2) + avg_rho_neutral;
-                    avg_rho_charged  = fld(:,3) + avg_rho_charged;
-                    
-                    totcases = totcases + 1;
-                    
-                end
-                
-                avg_rho_neutral =  avg_rho_neutral/totcases;
-                avg_rho_charged  =  avg_rho_charged/totcases;
