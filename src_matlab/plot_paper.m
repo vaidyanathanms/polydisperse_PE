@@ -41,10 +41,10 @@ densfreq = 5;
 %% Input flags
 % see definitions above
 figsz   = 0;
-figfads = 0; figfads_mon = 0; figfads_mon2 = 0; fignumavg_MW=0;
+figfads = 0; figfads_mon = 0; figfads_mon2 = 0; fignumavg_MW=1;
 figqnet = 0;
 figdens  = 0; nplot = 150; %nplot corresponds to the number of chains value for density profiles
-figdens2 = 1; % density of only the ADSORBED chains according to monomeric definition
+figdens2 = 0; % density of only the ADSORBED chains according to monomeric definition
 
 %% Pre-calculations
 rhofree = nfreearr*30/(lz*area);
@@ -435,7 +435,7 @@ if figdens
                     fprintf('%s does not exist\n',dirname);
                     continue
                 end
-                rho_prefix = 'grpdens_config_*.lammpstrj';
+                rho_prefix = 'polydens_config_*.lammpstrj';
                 rho_fylelist = dir(strcat(dirname,'/',rho_prefix));
                 if min(size(rho_fylelist)) == 0
                     fprintf('No files/Empty files are found for %s\n',rho_prefix);
@@ -444,7 +444,7 @@ if figdens
                 
                 nfyles = numel(rho_fylelist); %number of files of the type
                 if nfyles == 0
-                    fprintf('Did not find files of the type grpdens_config* in %d\t%s\n', nplot,dirstr);
+                    fprintf('Did not find files of the type polydens_config* in %d\t%s\n', nplot,dirstr);
                     continue;
                 else
                     [latest_fyleindex] = find_latest_fyle(rho_fylelist,nfyles);
@@ -460,11 +460,13 @@ if figdens
                 end
                 fprintf('Plotting density profiles using %s for n_pa = %d\n', rho_fylename, nplot);
                 
-                all_data = importdata(rho_fylename,' ',1);
-                fld = all_data.data;
+%                 all_data = importdata(rho_fylename,' ',1);
+%                 fld = all_data.data;
+                all_data = importdata(rho_fylename); %,' ',1);
+                fld = all_data;
                 rdata = fld(:,1); lz = fld(1,1) + fld(length(fld(:,1)),1); %because of binning
                 nbins = length(rdata(:,1));
-                
+
                 % sanity check for length of data
                 if casecntr == 1
                     nbins_old = nbins;
@@ -481,12 +483,12 @@ if figdens
                 avg_rho_free  = fld(:,3) + avg_rho_free;
                 
                 totcases = totcases + 1;
-                
+                fprintf('%g\t%g\n',area*trapz(rdata,fld(:,2))*tot_graftmon, area*trapz(rdata,fld(:,3)))
+
             end
             
             avg_rho_graft =  avg_rho_graft/totcases;
             avg_rho_free  =  avg_rho_free/totcases;
-            fprintf('%g\t%g\n',area*trapz(rdata-0.5,avg_rho_graft), area*trapz(avg_rho_free))
             
             plot(rdata/lz,avg_rho_graft,'Color','k','LineStyle',lsty{pdi_cntr},'LineWidth',2)
             plot(rdata/lz,avg_rho_free,'Color',green,'LineStyle',lsty{pdi_cntr},'LineWidth',2)
@@ -1035,7 +1037,7 @@ if fignumavg_MW
     box on
     set(gca,'FontSize',16)
     xlabel('$n_{pa}/n_{pc}$','FontSize',20,'Interpreter','Latex')
-    ylabel('$M_{\rm{n, ads}}$','FontSize',20,'Interpreter','Latex')
+    ylabel('$N_{n}^{\rm ads}/N_{n}$','FontSize',20,'Interpreter','Latex')
     
     lcnt = 1;
     for plcnt = 1:length(pdi_freearr)
@@ -1043,11 +1045,11 @@ if fignumavg_MW
         for arch_cnt = 1:length(arch_arr)
             
             if pdi_freearr(plcnt) == 1
-                errorbar(frac_ads(:,1,plcnt)/nch_graft,frac_ads(:,1+arch_cnt,plcnt)/nmongraft,err_ads(:,1+arch_cnt,plcnt)/nmongraft,...
+                errorbar(frac_ads(:,1,plcnt)/nch_graft,frac_ads(:,1+arch_cnt,plcnt)/nmonfree,err_ads(:,1+arch_cnt,plcnt)/nmongraft,...
                     'Color', pclr{arch_cnt},'Marker',msty{arch_cnt},'MarkerFaceColor',...
                     'None','LineStyle',lsty{plcnt},'LineWidth',1,'MarkerSize',10)
             else
-                errorbar(frac_ads(:,1,plcnt)/nch_graft,frac_ads(:,1+arch_cnt,plcnt)/nmongraft,err_ads(:,1+arch_cnt,plcnt)/nmongraft,...
+                errorbar(frac_ads(:,1,plcnt)/nch_graft,frac_ads(:,1+arch_cnt,plcnt)/nmonfree,err_ads(:,1+arch_cnt,plcnt)/nmongraft,...
                     'Color', pclr{arch_cnt},'Marker',msty{arch_cnt},'MarkerFaceColor',...
                     pclr{arch_cnt},'LineStyle',lsty{plcnt},'LineWidth',1,'MarkerSize',10)
             end
