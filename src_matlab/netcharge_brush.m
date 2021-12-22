@@ -126,7 +126,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                 
                 % Find height of the brush to compute charge within the
                 % brush region
-                grp_prefix = 'grpdens_config_*.lammpstrj';
+                grp_prefix = 'polydens_config_*.lammpstrj';
                 grp_fylelist = dir(strcat(dirname,'/',grp_prefix));
                 if min(size(grp_fylelist)) == 0
                     fprintf('No files/Empty files are found for %s\n',grp_prefix);
