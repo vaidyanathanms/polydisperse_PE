@@ -1363,45 +1363,48 @@ SUBROUTINE COMPUTE_RADGYR(iframe)
   IMPLICIT NONE
 
   INTEGER :: i,j,molid,atype
-  REAL, DIMENSION(1:nchains) :: rgxx, rgyy, rgzz, rgsq
-  REAL, DIMENSION(1:nchains) :: rxcm, rycm, rzcm, totmass
+  REAL, DIMENSION(1:ngraftchains) :: rgxx, rgyy, rgzz, rgsq
+  REAL, DIMENSION(1:ngraftchains) :: rxcm, rycm, rzcm, totmass
   REAL :: rgsqavg, rgxxavg, rgyyavg, rgzzavg
   INTEGER, INTENT(IN) :: iframe
 
   rgxx = 0.0; rgyy =0.0; rgzz = 0.0; rgsq = 0.0
   totmass = 0.0
   rgsqavg = 0.0; rgxxavg = 0.0; rgyyavg = 0.0; rgzzavg = 0.0
-  
+  rxcm = 0.0; rycm = 0.0; rzcm = 0.0
+
   IF(iframe == 1) PRINT *, "Atoms/molecule: ", atperchain
   IF(iframe == 1) PRINT *, masses
 
-  DO i = 1,nchains*atperchain
+  DO i = 1,ntotatoms
 
      molid = aidvals(i,2)
      atype = aidvals(i,3)
-     totmass(molid) = totmass(molid) + masses(atype,1)
+     IF(atype == 1 .OR. atype == 2 .OR. atype == 3 .OR. atype == 4)&
+          & THEN
+        totmass(molid) = totmass(molid) + masses(atype,1)
 
-     rxcm(molid) = rxcm(molid)+ rxyz_lmp(i,1)*masses(atype,1)
-     rycm(molid) = rycm(molid)+ rxyz_lmp(i,2)*masses(atype,1)
-     rzcm(molid) = rzcm(molid)+ rxyz_lmp(i,3)*masses(atype,1)
-
+        rxcm(molid) = rxcm(molid)+ rxyz_lmp(i,1)*masses(atype,1)
+        rycm(molid) = rycm(molid)+ rxyz_lmp(i,2)*masses(atype,1)
+        rzcm(molid) = rzcm(molid)+ rxyz_lmp(i,3)*masses(atype,1)
+     END IF
   END DO
 
-  DO i = 1,nchains
+  DO i = 1,ngraftchains
 
      rxcm(i) = rxcm(i)/totmass(i)
      rycm(i) = rycm(i)/totmass(i)
      rzcm(i) = rzcm(i)/totmass(i)
 
   END DO
-
+  
   
   IF(iframe == 1) THEN
 
      OPEN(unit = 98,file ="totmasschk.txt",action="write",status="repl&
           &ace")
 
-     DO i = 1,nchains
+     DO i = 1,ngraftchains
 
         WRITE(98,'(I0,1X,4(F14.9,1X))') i, totmass(i),rxcm(i),&
              & rycm(i), rzcm(i)
@@ -1423,25 +1426,29 @@ SUBROUTINE COMPUTE_RADGYR(iframe)
 
   END IF
   
-  DO i = 1,nchains*atperchain
+  DO i = 1,ntotatoms
 
      molid = aidvals(i,2)
      atype = aidvals(i,3)
 
-     rgxx(molid) = rgxx(molid) + masses(atype,1)*((rxyz_lmp(i,1)&
-          &-rxcm(molid))**2)
-     rgyy(molid) = rgyy(molid) + masses(atype,1)*((rxyz_lmp(i,2)&
-          &-rycm(molid))**2)
-     rgzz(molid) = rgzz(molid) + masses(atype,1)*((rxyz_lmp(i,3)&
-          &-rzcm(molid))**2)
+     IF(atype == 1 .OR. atype == 2 .OR. atype == 3 .OR. atype == 4)&
+          & THEN
+        rgxx(molid) = rgxx(molid) + masses(atype,1)*((rxyz_lmp(i,1)&
+             &-rxcm(molid))**2)
+        rgyy(molid) = rgyy(molid) + masses(atype,1)*((rxyz_lmp(i,2)&
+             &-rycm(molid))**2)
+        rgzz(molid) = rgzz(molid) + masses(atype,1)*((rxyz_lmp(i,3)&
+             &-rzcm(molid))**2)
 
-     rgsq(molid) = rgsq(molid) + masses(atype,1)*((rxyz_lmp(i,1)&
-          &-rxcm(molid))**2 + (rxyz_lmp(i,2)-rycm(molid))**2 +&
-          & (rxyz_lmp(i,3)-rzcm(molid))**2)
+        rgsq(molid) = rgsq(molid) + masses(atype,1)*((rxyz_lmp(i,1)&
+             &-rxcm(molid))**2 + (rxyz_lmp(i,2)-rycm(molid))**2 +&
+             & (rxyz_lmp(i,3)-rzcm(molid))**2)
+
+     END IF
 
   END DO
 
-  DO i = 1,nchains
+  DO i = 1,ngraftchains
 
      rgsq(i) = rgsq(i)/totmass(i)
      rgxx(i) = rgxx(i)/totmass(i)
@@ -1451,7 +1458,7 @@ SUBROUTINE COMPUTE_RADGYR(iframe)
   END DO
 
 
-  DO i = 1,nchains
+  DO i = 1,ngraftchains
 
      rgsqavg = rgsqavg + rgsq(i)
      rgxxavg = rgxxavg + rgxx(i)
@@ -1460,10 +1467,10 @@ SUBROUTINE COMPUTE_RADGYR(iframe)
      
   END DO
   
-  rgsqavg = rgsqavg/REAL(nchains)
-  rgxxavg = rgxxavg/REAL(nchains)
-  rgyyavg = rgyyavg/REAL(nchains)
-  rgzzavg = rgzzavg/REAL(nchains)
+  rgsqavg = rgsqavg/REAL(ngraftchains)
+  rgxxavg = rgxxavg/REAL(ngraftchains)
+  rgyyavg = rgyyavg/REAL(ngraftchains)
+  rgzzavg = rgzzavg/REAL(ngraftchains)
   
 
   IF(rgavg) THEN
@@ -1475,9 +1482,9 @@ SUBROUTINE COMPUTE_RADGYR(iframe)
 
   IF(rgall) THEN
      
-     WRITE(rgwrite,'(2(I0,1X))') timestep, nchains
+     WRITE(rgwrite,'(2(I0,1X))') timestep, ngraftchains
 
-     DO i = 1,nchains
+     DO i = 1,ngraftchains
      
         WRITE(rgwrite,'(I0,1X,4(F14.6,1X))') i,rgxx(i),rgyy(i),&
              & rgzz(i),sqrt(rgsq(i))
@@ -2383,7 +2390,7 @@ SUBROUTINE OUTPUT_DENS()
 !$$ MAKE SURE FOR NEW ANALYSIS, densfreq is set to 1 in plot_paper.m
            ! No need to normalize with average number
            WRITE(dumwrite,'(F16.9,1X)',advance="no") ads_densarray(i&
-                &,j)*normdensi 
+                &,j)*normdens 
            
         END DO
 
