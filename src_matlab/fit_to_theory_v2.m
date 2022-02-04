@@ -81,12 +81,15 @@ yreg = w./(1+w);
 plot(xreg,yreg,'-','Color',pclr{panel_num},'LineWidth',2)
 hold off
 xlabel_str = '$N$';
-ylabel_str = '$p_{\rm abs}$';
+ylabel_str = '$p_{\rm ads}$';
 xlims = [0,120];
 ylims = [0,1];
 xscale = 'linear';
 yscale = 'linear';
 format_plot(xlabel_str,ylabel_str,xlims,ylims,xscale,yscale)
+ytick=0:0.2:1;
+YTickLabels = cellstr(num2str(ytick(:)));
+set(gca,'YTick',ytick,'YTickLabel',YTickLabels,'TickLabelInterpreter','tex')
 filename = strcat(sim_type,'_panel',num2str(panel_num),'_pads.eps');
 saveas(g,strcat('../../Figs_paper/',filename),'epsc')
 
@@ -137,10 +140,13 @@ L47 = '$n_{pa}/n_{pc} = 4.7$';
 legend({L10,L20,L40,L47},'Interpreter','Latex',...
     'Location','SouthEast','FontSize',18)
 xlabel_str = '$N$';
-ylabel_str = '$p_{\rm abs}/(1-p_{\rm abs})$';
+ylabel_str = '$p_{\rm ads}/(1-p_{\rm ads})$';
 xscale = 'linear';
 yscale = 'log';
 format_plot(xlabel_str,ylabel_str,xlims,ylims,xscale,yscale)
+ytick=10.^(-2:2:2);
+YTickLabels = cellstr(num2str(round(log10(ytick(:))), '10^{%d}'));
+set(gca,'YTick',ytick,'YTickLabel',YTickLabels,'TickLabelInterpreter','tex')
 filename = strcat('../../Figs_Paper/',sim_type,'_all_data.eps');
 saveas(g,filename,'epsc')
 
