@@ -60,12 +60,12 @@ plot_semilog(sim_type,z10,z20,z40,z47,pclr,Nmax)
 
 %plot each of the data sets on their own w/o log formatting
 fprintf('Making a plot of each data set \n')
-plot_single_data(sim_type,z10_full,z10,pclr,Nmax,1)
-plot_single_data(sim_type,z20_full,z20,pclr,Nmax,2)
-plot_single_data(sim_type,z40_full,z40,pclr,Nmax,3)
-plot_single_data(sim_type,z47_full,z47,pclr,Nmax,4)
+plot_single_data(sim_type,z10_full,z10,pclr,Nmax,1,1.0)
+plot_single_data(sim_type,z20_full,z20,pclr,Nmax,2,2.0)
+plot_single_data(sim_type,z40_full,z40,pclr,Nmax,3,4.0)
+plot_single_data(sim_type,z47_full,z47,pclr,Nmax,4,4.7)
 
-function plot_single_data(sim_type,zfull,z,pclr,Nmax,panel_num)
+function plot_single_data(sim_type,zfull,z,pclr,Nmax,panel_num,ratio)
 %plot a single case with a distribution
 %z = trimmed data
 %zfull = the full data set, not trimmed
@@ -90,8 +90,12 @@ format_plot(xlabel_str,ylabel_str,xlims,ylims,xscale,yscale)
 ytick=0:0.2:1;
 YTickLabels = cellstr(num2str(ytick(:)));
 set(gca,'YTick',ytick,'YTickLabel',YTickLabels,'TickLabelInterpreter','tex')
+ylim=get(gca,'ylim');
+xlim=get(gca,'xlim');
+SE = [max(xlim) min(ylim)]+[-diff(xlim) diff(ylim)]*0.4;
+text(SE(1),SE(2),['$n_{pa}/n_{pc}$ = ' num2str(ratio,'%1.1f')],'FontSize',18)
 filename = strcat(sim_type,'_panel',num2str(panel_num),'_pads.eps');
-saveas(g,strcat('../../Figs_paper/',filename),'epsc')
+saveas(g,strcat('../../Figs_paper/SI_Figs/',filename),'epsc')
 
 
 function plot_semilog(sim_type,z10,z20,z40,z47,pclr,Nmax)
@@ -147,7 +151,7 @@ format_plot(xlabel_str,ylabel_str,xlims,ylims,xscale,yscale)
 ytick=10.^(-2:2:2);
 YTickLabels = cellstr(num2str(round(log10(ytick(:))), '10^{%d}'));
 set(gca,'YTick',ytick,'YTickLabel',YTickLabels,'TickLabelInterpreter','tex')
-filename = strcat('../../Figs_Paper/',sim_type,'_all_data.eps');
+filename = strcat('../../Figs_Paper/SI_Figs/',sim_type,'_all_data.eps');
 saveas(g,filename,'epsc')
 
 
