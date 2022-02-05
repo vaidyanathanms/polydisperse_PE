@@ -202,8 +202,9 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                 end
                 
             end % end case loop
-            
-            fclose(fout_ttest);
+            if ttestflag
+                fclose(fout_ttest);
+            end
             fclose(fout_case);
             
             avg_across_cases(ncnt,arch_cnt,pdi_cntr) = nadsmon_all(ncnt,arch_cnt)/casecntr_arr(ncnt,arch_cnt);
