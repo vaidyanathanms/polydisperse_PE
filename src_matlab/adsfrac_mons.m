@@ -292,5 +292,3 @@ if plotads
     end
     
 end
-
-
