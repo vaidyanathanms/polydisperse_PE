@@ -16,11 +16,11 @@ lsty = {'-','--',':'};
 msty = {'d','s','o','x'};
 
 %% Inputs
-nfreearr = [16,32,64,128,150];
+nfreearr = [150];
 casearr  = [1,2,3,4];
 pdi_freearr = [1,1.5];
-arch_arr = {'bl_bl','al_al'};
-leg_arr  = {'Block-Block','Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr
+arch_arr = {'bl_bl','bl_al','al_bl','al_al'};
+leg_arr  = {'Block-Block','Block-Alter','Alter-Block','Alter-Alter'}; % ALWAYS CHECK for correspondence with arch_arr
 pdigraft = 1.0;
 nmonfree = 30; nmongraft = 30; ngraft = 32;
 cutoff = '1.50';
@@ -29,7 +29,7 @@ set_tmax = 2.5e7; % maximum timestep for analysis;
 set_tmin = 1e7; % minimum timestep for analysis;
 
 %% Input flags
-ttestflag = 1; % write to ttest_dir the individual cases
+ttestflag = 0; % write to ttest_dir the individual cases
 plotads   = 1; % plot fads as a function of PDI
 
 %% Zero arrays
@@ -41,11 +41,11 @@ pdigraft_str = num2str(pdigraft,'%1.1f');
 
 %% Main Analysis
 
-s1 = create_output_dirs('./../../monads');
-s2 = create_output_dirs('./../../monads/overall');
+s1 = create_output_dirs('./../../seq_analysis');
+s2 = create_output_dirs('./../../seq_analysis/overall');
 
 % Create consolidated list
-fout_cons = fopen(sprintf('./../../monads/overall/adsorbed_mon_consolidated_rcut_%s.dat',...
+fout_cons = fopen(sprintf('./../../seq_analysis/overall/adsorbed_mon_consolidated_rcut_%s.dat',...
     cutoff),'w');
 fprintf(fout_cons,'%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n','PDI_free','N_f','Arch',...
     'Case_num','min_time','max_time','numsample_pts','avg_fraction');
@@ -61,12 +61,12 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
     totsamples    = zeros(length(nfreearr),length(arch_arr));
     
     % Create average across all cases
-    fout_avg = fopen(sprintf('./../../monads/overall/adsorbed_mon_ave_allcases_rcut_%s_pdifree_%g.dat',...
+    fout_avg = fopen(sprintf('./../../seq_analysis/overall/adsorbed_mon_ave_allcases_rcut_%s_pdifree_%g.dat',...
         cutoff,pdifree),'w');
     fprintf(fout_avg,'%s\t%s\t%s\t%s\t%s\t%s\n','N_f','Arch','ncases','numsample_pts','avg_fraction','StdErrMean');
     
     % Create case-based avg outfiles for SI data
-    fout_sidata = fopen(sprintf('./../../monads/overall/sidata_adsorbed_mon_rcut_%s_pdifree_%g.dat',...
+    fout_sidata = fopen(sprintf('./../../seq_analysis/overall/sidata_adsorbed_mon_rcut_%s_pdifree_%g.dat',...
         cutoff,pdifree),'w');
     fprintf(fout_sidata,'%s\t%s\t%s\t%s\t%s\n','\DJ$_{\rm{ideal}}$','$N_{pa}$','Arch',...
         'Case \#','avg_fraction');
@@ -78,7 +78,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
         for arch_cnt = 1:length(arch_arr)  % begin arch loop
             dirstr = arch_arr{arch_cnt};
             
-            dirname = sprintf('./../../sim_results/outresults_dir_n_%d/%s/pdifree_%s_pdigraft_%s',...
+            dirname = sprintf('./../../seq_analysis/outresults_dir_n_%d/%s/pdifree_%s_pdigraft_%s',...
                 nval,dirstr,pdifree_str,pdigraft_str);
             
             if ~exist(dirname,'dir')
@@ -86,9 +86,9 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                 continue
             end
             
-            s3 = create_output_dirs(sprintf('./../../monads/n_%d',nval));
+            s3 = create_output_dirs(sprintf('./../../seq_analysis/n_%d',nval));
             % Create case-based avg outfiles
-            fout_case = fopen(sprintf('./../../monads/n_%d/adsorbed_mon_rcut_%s_pdifree_%g_%s.dat',...
+            fout_case = fopen(sprintf('./../../seq_analysis/n_%d/adsorbed_mon_rcut_%s_pdifree_%g_%s.dat',...
                 nval,cutoff,pdifree,dirstr),'w');
             fprintf(fout_case,'%s\t%s\t%s\t%s\t%s\t%s\n','N_f','Casenum',...
                 'Mintime','Maxtime','numavgpoints','avg_fraction');
@@ -96,7 +96,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
             
             if ttestflag %write all cases into separate folders in ttest_dir
                 
-                fout_ttest = fopen(sprintf('./../../monads/ttest_dir/n_%d/adsfrac_rcut_%s_pdifree_%g_arch_%s.dat',...
+                fout_ttest = fopen(sprintf('./../../seq_analysis/ttest_dir/n_%d/adsfrac_rcut_%s_pdifree_%g_arch_%s.dat',...
                     nval,cutoff,pdifree,dirstr),'w');
                 fprintf(fout_ttest,'%s\n','avg_fraction: #of columns correspond to the number of cases');
                 
@@ -108,7 +108,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
             for casecntr = 1:length(casearr) % begin case loop
                 casenum = casearr(casecntr);
                 
-                dirname = sprintf('./../../sim_results/outresults_dir_n_%d/%s/pdifree_%s_pdigraft_%s/Case_%d',...
+                dirname = sprintf('./../../seq_analysis/outresults_dir_n_%d/%s/pdifree_%s_pdigraft_%s/Case_%d',...
                     nval,dirstr,pdifree_str,pdigraft_str,casenum);
                 
                 if ~exist(dirname,'dir')
@@ -258,8 +258,7 @@ end % end pdi free loop
 fclose(fout_cons);
 
 
-%% Plot as a function of PDI for each nval
-
+%% Plot as a function of sequence for n = 150
 if plotads
     
     for ncnt = 1:length(nfreearr) % begin nfree loop
