@@ -6,10 +6,12 @@
 % figdens : Density plots of all chains
 % figdens2: Density plots of chains that are adsorbed. If one monomer is
 % adsorbed, entire chain is considered to be adsorbed.
-% figadsmon: If 20 of 30 are adsorbed, only 20 is counted
-% figadsmon2: If even one of 30 is adsorbed, all 30 is counted
+% figads_mon: If 20 of 30 are adsorbed, only 20 is counted (NOT USED IN
+% PAPER).
+% figads_mon2: If even one of 30 is adsorbed, all 30 is counted
 % fignumavg_MW: number average MW based on figadsmon2 (that is even if one
 % monomer is adsorbed, entire MW counts towards the calculation)
+% figrg: plot rg
 
 clear
 clc
@@ -36,15 +38,16 @@ lz = 120; area=35^2;
 set_tmax = 3e7; % maximum timestep for analysis;
 tot_graftmon = nmongraft*ngraft;
 % ONLY FOR ADSORBED CHAIN CALCULATION. TO OVERCOME THE STUPID MISTAKE IN THE ANALYSIS CODE WHERE I MISSED A FACTOR OF densfreq for adsorbed chain calculation and not for actual density calculation
-densfreq = 5; 
+densfreq = 5;
 
 %% Input flags
 % see definitions above
 figsz   = 0;
-figfads = 0; figfads_mon = 0; figfads_mon2 = 0; fignumavg_MW=1;
+figfads = 0; figfads_mon = 0; figfads_mon2 = 1; fignumavg_MW=0;
 figqnet = 0;
 figdens  = 0; nplot = 150; %nplot corresponds to the number of chains value for density profiles
 figdens2 = 0; % density of only the ADSORBED chains according to monomeric definition
+figrg    = 0;
 
 %% Pre-calculations
 rhofree = nfreearr*30/(lz*area);
@@ -106,7 +109,7 @@ if figsz
         histogram(alldata.data(:,3),'BinWidth',1,'BinLimits',[1,max(alldata.data(:,3))+1]);
         legendinfo{plcnt} = ['$n_{pa} =$ ' num2str(nval_pl(plcnt))];
     end
-   
+    
     xlim([0 max(alldata.data(:,3))+10])
     
     legend(legendinfo,'FontSize',16,'Location','Best','Interpreter','Latex')
@@ -423,7 +426,7 @@ if figdens
             
             pdifree     = pdi_freearr(pdi_cntr);
             pdifree_str = num2str(pdifree,'%1.1f');
-            totcases = 0;avg_rho_graft = 0; avg_rho_free = 0; 
+            totcases = 0;avg_rho_graft = 0; avg_rho_free = 0;
             
             for casecntr = 1:length(casearr) % begin case loop
                 casenum = casearr(casecntr);
@@ -460,13 +463,13 @@ if figdens
                 end
                 fprintf('Plotting density profiles using %s for n_pa = %d\n', rho_fylename, nplot);
                 
-%                 all_data = importdata(rho_fylename,' ',1);
-%                 fld = all_data.data;
+                %                 all_data = importdata(rho_fylename,' ',1);
+                %                 fld = all_data.data;
                 all_data = importdata(rho_fylename); %,' ',1);
                 fld = all_data;
                 rdata = fld(:,1); lz = fld(1,1) + fld(length(fld(:,1)),1); %because of binning
                 nbins = length(rdata(:,1));
-
+                
                 % sanity check for length of data
                 if casecntr == 1
                     nbins_old = nbins;
@@ -484,7 +487,7 @@ if figdens
                 
                 totcases = totcases + 1;
                 fprintf('%g\t%g\n',area*trapz(rdata,fld(:,2))*tot_graftmon, area*trapz(rdata,fld(:,3)))
-
+                
             end
             
             avg_rho_graft =  avg_rho_graft/totcases;
@@ -501,7 +504,7 @@ if figdens
         end
         
         lgd = legend(legendinfo,'FontSize',16,'Location','NorthEast','Interpreter','Latex');
-%         ylim([0 1.2*max(avg_rho_graft)])
+        %         ylim([0 1.2*max(avg_rho_graft)])
         legend boxoff
         saveas(h1,sprintf('./../../Figs_paper/SI_Figs/fig_dens_%s_%d.png',dirstr,nplot));
         
@@ -814,7 +817,7 @@ if figdens2
     
     for nval = 1:length(nfreearr)
         nplot = nfreearr(nval);
-%         nplot = 150;
+        %         nplot = 150;
         for arch_cnt = 1:length(arch_arr)  % begin arch loop
             dirstr = arch_arr{arch_cnt};lcnt = 1;
             
@@ -831,7 +834,7 @@ if figdens2
                 pdifree     = pdi_freearr(pdi_cntr);
                 pdifree_str = num2str(pdifree,'%1.1f');
                 totcases = 0;avg_rho_neutral = 0; avg_rho_charged = 0;
-               
+                
                 for casecntr = 1:length(casearr) % begin case loop
                     casenum = casearr(casecntr);
                     
@@ -898,7 +901,7 @@ if figdens2
                 fprintf('%s\t%d\t%s\t%d\t%d\n',pdifree_str,nplot,dirstr,...
                     neut_beads,char_beads)
                 plot(rdata/lz,avg_rho_neutral/densfreq,'Color',orange,'LineStyle',lsty{pdi_cntr},'LineWidth',2)
-                plot(rdata/lz,avg_rho_charged/densfreq,'Color','m','LineStyle',lsty{pdi_cntr},'LineWidth',2)
+                plot(rdata/lz,avg_rho_charged/densfreq,'Color','b','LineStyle',lsty{pdi_cntr},'LineWidth',2)
                 
                 legendinfo{lcnt} = ['Neutral Monomers; ' 'PDI = ' num2str(pdifree,'%.1f')];
                 lcnt = lcnt + 1;
@@ -928,7 +931,7 @@ end
 % 30
 if fignumavg_MW
     
-     % Create arrays for according to the input array sizes
+    % Create arrays for according to the input array sizes
     frac_ads = zeros(length(nfreearr),length(arch_arr)+1,length(pdi_freearr)); %+1 for y-dimension to incorporate the N_f values
     err_ads  = zeros(length(nfreearr),length(arch_arr)+1,length(pdi_freearr)); %+1 for y-dimension to incorporate the N_f values
     pdi_plot = zeros(length(pdi_freearr));
@@ -1062,8 +1065,152 @@ if fignumavg_MW
     
     legend(legendinfo,'FontSize',16,'Location','NorthWest','Interpreter','Latex')
     legend boxoff
-    ylim([0.9 2])            
+    ylim([0.9 2])
     saveas(h1,'./../../Figs_paper/fnumavgMW_npabynpc_pdi_arch.png');
+    clear legendinfo
+    
+end
+
+if figrg
+    
+    % Create arrays for according to the input array sizes
+    rg_ads   = zeros(length(nfreearr),length(arch_arr)+1,length(pdi_freearr)); %+1 for y-dimension to incorporate the N_f values
+    err_ads  = zeros(length(nfreearr),length(arch_arr)+1,length(pdi_freearr)); %+1 for y-dimension to incorporate the N_f values
+    pdi_plot = zeros(length(pdi_freearr));
+    
+    for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
+        
+        pdifree     = pdi_freearr(pdi_cntr);
+        pdifree_str = num2str(pdifree,'%1.1f');
+        
+        rg_ads(:,1,pdi_cntr) = nfreearr;
+        err_ads(:,1,pdi_cntr)  = nfreearr;
+        pdi_plot(pdi_cntr,1)   = pdifree;
+        
+        % Check file existence
+        fname = sprintf('./../../rganalysis/overall/rgavg_allcases_rcut_%s_pdifree_%g.dat',...
+            cutoff,pdifree);
+        fads_id = fopen(fname);
+        
+        if fads_id <= 0
+            fprintf('%s does not exist', fname);
+            continue;
+        end
+        
+        fprintf('File under process %s\n', fname);
+        
+        % Read and parse first line
+        tline = fgetl(fads_id); % get header
+        if ~ischar(tline) || isempty(tline)
+            fprintf('ERROR: Unable to read file %s\n', tline);
+            continue;
+        end
+        spl_tline = strtrim(strsplit(strtrim(tline)));
+        
+        nf_col = -1; arch_col = -1; favg_col = -1; err_col = -1;
+        for wcnt = 1:length(spl_tline)
+            if strcmp(spl_tline{wcnt},'N_f')
+                nf_col = wcnt;
+            elseif strcmp(spl_tline{wcnt},'Arch')
+                arch_col = wcnt;
+            elseif strcmp(spl_tline{wcnt},'Rgsq_avg')
+                favg_col = wcnt;
+            elseif strcmp(spl_tline{wcnt},'StdErrMean')
+                err_col = wcnt;
+            end
+        end
+        
+        if nf_col == -1 || arch_col == -1 || favg_col == -1 || err_col == -1
+            fprintf('Could not find all headers in %s \n' , tline);
+            continue
+        end
+        
+        
+        while ~feof(fads_id)
+            
+            % Store data into arrays by comparing with the input arrays
+            tline = fgetl(fads_id); % get line
+            if ~ischar(tline) && isempty(tline)
+                fprintf('ERROR: Unable to read line %s\n', tline);
+                continue;
+            end
+            spl_tline = strtrim(strsplit(strtrim(tline)));
+            
+            % nf value
+            findnf = -1;
+            for itercnt = 1:length(nfreearr) % comparing wrt the INPUT array
+                if str2double(spl_tline{nf_col}) == nfreearr(itercnt)
+                    findnf = 1;
+                    rownum = itercnt;
+                    break;
+                end
+            end
+            if findnf == -1
+                fprintf('WARNING: Did not find N_pa value in the input array: %d\n', str2double(spl_tline{nf_col}));
+                continue;
+            end
+            
+            
+            %arch value
+            findarch = -1;
+            for itercnt = 1:length(arch_arr) %comparing wrt the INPUT Array
+                if strcmp(arch_arr{itercnt},spl_tline{arch_col})
+                    findarch = 1;
+                    colnum = itercnt;
+                    break;
+                end
+            end
+            
+            if findarch == -1
+                fprintf('WARNING: Did not find arch value in the input array: %s\n', spl_tline{arch_col});
+                continue;
+            end
+            
+            rg_ads(rownum,colnum+1,pdi_cntr) = str2double(spl_tline{favg_col});
+            %error of rg^2 is in the file.
+            err_ads(rownum,colnum+1,pdi_cntr)= str2double(spl_tline{err_col})*rg_ads(rownum,colnum+1,pdi_cntr)^(-0.5)*0.5;
+            
+        end
+        
+        fprintf('Finished analyzing %s\n', fname);
+        
+    end
+    
+    % Plot rg_ads, err_ads in one go
+    
+    h1 = figure;
+    hold on
+    box on
+    set(gca,'FontSize',16)
+    xlabel('$n_{pa}/n_{pc}$','FontSize',20,'Interpreter','Latex')
+    ylabel('$\langle R_{g}^{2} \rangle^{1/2}$/$\langle R_{g,0}^{2} \rangle^{1/2}$','FontSize',20,'Interpreter','Latex')
+    lcnt = 1;
+    rg_blbl = 6.34;
+    
+    for plcnt = 1:length(pdi_freearr)
+        
+        for arch_cnt = 1:length(arch_arr)
+            
+            if pdi_freearr(plcnt) == 1
+                errorbar(rg_ads(:,1,plcnt)/nch_graft,rg_ads(:,1+arch_cnt,plcnt).^(0.5)/rg_blbl,err_ads(:,1+arch_cnt,plcnt),...
+                    'Color', pclr{arch_cnt},'Marker',msty{arch_cnt},'MarkerFaceColor',...
+                    'None','LineStyle',lsty{plcnt},'LineWidth',1,'MarkerSize',10)
+            else
+                errorbar(rg_ads(:,1,plcnt)/nch_graft,rg_ads(:,1+arch_cnt,plcnt).^(0.5)/rg_blbl,err_ads(:,1+arch_cnt,plcnt),...
+                    'Color', pclr{arch_cnt},'Marker',msty{arch_cnt},'MarkerFaceColor',...
+                    pclr{arch_cnt},'LineStyle',lsty{plcnt},'LineWidth',1,'MarkerSize',10)
+            end
+            legendinfo{lcnt} = [leg_arr{arch_cnt} ', PDI = ' num2str(pdi_plot(plcnt,1),'%.1f')];
+            lcnt = lcnt + 1;
+            
+        end
+        
+    end
+    
+    legend(legendinfo,'FontSize',16,'Location','NorthWest','Interpreter','Latex')
+    legend boxoff
+    ylim([0.7 1.4])
+    saveas(h1,'./../../Figs_paper/figrg_all.png');
     clear legendinfo
     
 end
