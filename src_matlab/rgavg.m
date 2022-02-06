@@ -1,6 +1,4 @@
-%% To compute average adsorbed fraction of monomers
-% 1) Change path to filename (search for keyword filename) and other places
-% wherever necessary.
+%% To compute radius of gyration of grafted monomers
 
 clear;
 clc;
@@ -45,7 +43,7 @@ s2 = create_output_dirs('./../../rganalysis/overall');
 fout_cons = fopen(sprintf('./../../rganalysis/overall/rgavg_consolidated_rcut_%s.dat',...
     cutoff),'w');
 fprintf(fout_cons,'%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n','PDI_free','N_f','Arch',...
-    'Case_num','min_time','max_time','numsample_pts','Rg_avg');
+    'Case_num','min_time','max_time','numsample_pts','Rgsq_avg');
 
 
 for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
@@ -60,13 +58,13 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
     % Create average across all cases
     fout_avg = fopen(sprintf('./../../rganalysis/overall/rgavg_allcases_rcut_%s_pdifree_%g.dat',...
         cutoff,pdifree),'w');
-    fprintf(fout_avg,'%s\t%s\t%s\t%s\t%s\t%s\n','N_f','Arch','ncases','numsample_pts','Rg_avg','StdErrMean');
+    fprintf(fout_avg,'%s\t%s\t%s\t%s\t%s\t%s\n','N_f','Arch','ncases','numsample_pts','Rgsq_avg','StdErrMean');
     
     % Create case-based avg outfiles for SI data
     fout_sidata = fopen(sprintf('./../../monads/overall/rgavg_rcut_%s_pdifree_%g.dat',...
         cutoff,pdifree),'w');
     fprintf(fout_sidata,'%s\t%s\t%s\t%s\t%s\n','\DJ$_{\rm{ideal}}$','$N_{pa}$','Arch',...
-        'Case \#','Rg_avg');
+        'Case \#','Rgsq_avg');
     
     
     for ncnt = 1:length(nfreearr) % begin nfree loop
@@ -79,7 +77,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                 nval,dirstr,pdifree_str,pdigraft_str);
             
             if ~exist(dirname,'dir')
-%                 fprintf('%s does not exist\n',dirname);
+                %                 fprintf('%s does not exist\n',dirname);
                 continue
             end
             
@@ -88,7 +86,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
             fout_case = fopen(sprintf('./../../rganalysis/n_%d/rgavg_pdifree_%g_%s.dat',...
                 nval,pdifree,dirstr),'w');
             fprintf(fout_case,'%s\t%s\t%s\t%s\t%s\t%s\n','N_f','Casenum',...
-                'Mintime','Maxtime','numavgpoints','Rg_avg');
+                'Mintime','Maxtime','numavgpoints','Rgsq_avg');
             
             
             avgcase_store = zeros(length(casearr),1); % store each average value
@@ -118,7 +116,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                 reordered_ads_list = renumber_files(rg_fylelist,nfyles); % reorder file names to avoid double counting
                 
                 sum_across_files = 0; tot_cntr_across_files = 0; mintime = 10^10; maxtime = 0;
-                mintstep = 0; 
+                mintstep = 0;
                 for fylcnt = 1:nfyles % begin running through all files of the given type
                     ads_fylename = strcat(dirname,'/',reordered_ads_list{fylcnt});
                     if exist(ads_fylename,'file') ~= 2
@@ -133,8 +131,8 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                     data = importdata(ads_fylename);
                     lendata = length(data(:,1));
                     
-                   
-%                     %average rg values
+                    
+                    %                     %average rg values
                     if min(data(:,1)) > set_tmin
                         
                         for minindcnt = 1:lendata %avoid double counting
@@ -144,8 +142,8 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                                 break;
                             end
                         end
-                        sum_rg = sum(data(minindana:lendata,2));
-                        sum_across_files = sum_across_files + sum_rg;
+                        sum_rgsq = sum(data(minindana:lendata,2).^2);
+                        sum_across_files = sum_across_files + sum_rgsq;
                         tot_cntr_across_files = tot_cntr_across_files + length(data(minindana:lendata,2));
                         
                         %find minimum and maximum time
@@ -158,7 +156,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                     end
                     
                 end % end summing adsfrac across all files for a given case
-%                 fprintf('%g\t%g\n',sum_across_files,tot_cntr_across_files);
+                %                 fprintf('%g\t%g\n',sum_across_files,tot_cntr_across_files);
                 if tot_cntr_across_files ~=0
                     avg_for_each_casenum = sum_across_files/tot_cntr_across_files;
                 else
@@ -219,10 +217,10 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
         box on
         set(gca,'FontSize',16)
         xlabel('$N_{pa}/N_{pc}$','FontSize',20,'Interpreter','Latex')
-        ylabel('$f_{ads}$','FontSize',20,'Interpreter','Latex')
+        ylabel('$\langle R_{g} \rangle^{1/2}$','FontSize',20,'Interpreter','Latex')
         
         for plcnt = 1:length(arch_arr)
-            plot(nfreearr/ngraft,avg_across_cases(:,plcnt,pdi_cntr),'color',pclr{plcnt},...
+            plot(nfreearr/ngraft,avg_across_cases(:,plcnt,pdi_cntr).^(0.5),'color',pclr{plcnt},...
                 'Marker',msty{plcnt},'MarkerSize',8,'MarkerFaceColor',pclr{plcnt},'LineStyle','None')
             legendinfo{plcnt} = leg_arr{plcnt};
         end
@@ -239,44 +237,5 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
 end % end pdi free loop
 
 fclose(fout_cons);
-
-
-%% Plot as a function of PDI for each nval
-
-if plotrg
-    
-    for ncnt = 1:length(nfreearr) % begin nfree loop
-        nval = nfreearr(ncnt);
-        
-        h1 = figure;
-        hold on
-        box on
-        set(gca,'FontSize',16)
-        xlabel('PDI','FontSize',20,'Interpreter','Latex')
-        ylabel('$\langle R_{g}^2 \rangle$','FontSize',20,'Interpreter','Latex')
-        
-        for plcnt = 1:length(arch_arr)  % begin arch loop
-            
-            dirstr = arch_arr{plcnt};
-            data_to_plot = zeros(length(pdi_freearr),1);
-            for pdicntr = 1:length(pdi_freearr)
-                data_to_plot(pdicntr) = avg_across_cases(ncnt,plcnt,pdicntr);
-            end
-            data_to_plot(isnan(data_to_plot)) = 0; %to avoid NaNs
-            
-            plot(pdi_freearr,data_to_plot,'color',pclr{plcnt},...
-                'Marker',msty{plcnt},'MarkerSize',8,'MarkerFaceColor',pclr{plcnt},'LineStyle','None')
-            legendinfo{plcnt} = leg_arr{plcnt};
-            
-        end
-        
-        legend(legendinfo,'FontSize',16,'Location','Best')
-        legend boxoff
-        saveas(h1,sprintf('./../../Figs_paper/adsorbmon_rcut_%s_nval_%g.png',cutoff,nval));
-        clear legendinfo
-        
-    end
-    
-end
 
 
