@@ -66,9 +66,14 @@ Output files will be in ./../../outfiles/overall/
 Computes number averaged MW
 Run plot_paper.m to obtain the plots after running this
 
-***** File 1: fit_to_theory_v2.m *********************************************************************
+***** File 11: fit_to_theory_v2.m *********************************************************************
 Input files required are  ./../../Figs_Paper/fig7_*_distribution.fig (* corresponds to 'blbl' or 'alal'
 The code reads the distribution figure and analyzes
 Computes regression to the model presented in the paper and the output regression values
 Output files: '../../Figs_Paper/alal_panel*.eps' or '../../Figs_Paper/blb_panel*.eps' and all linear fit data.
 Regressed coefficients are found in '../../outfiles/overall/*_regression.dat' where * corresponds to blbl or alal.
+
+***** File 12: *_seq.m *********************************************************************
+Input files required are in ./../../seq_analysis
+The code does the corresponding postprocessing as for Files 1,3,4,7-10 except for different sequence at fixed npa
+Output files are in ./../../seq_analysis
