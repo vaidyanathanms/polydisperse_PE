@@ -149,7 +149,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                     
                     
                     %average adsorption values
-                    if min(data(:,1)) > set_tmin
+                    if max(data(:,1)) > set_tmin
                         
                         for minindcnt = 1:lendata %avoid double counting
                             if data(minindcnt,1) > mintstep
@@ -173,7 +173,12 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                     
                 end % end summing adsfrac across all files for a given case
 %                 fprintf('%g\t%g\n',sum_across_files,tot_cntr_across_files);
-                avg_for_each_casenum = sum_across_files/tot_cntr_across_files;
+                if tot_cntr_across_files ~=0
+                    avg_for_each_casenum = sum_across_files/tot_cntr_across_files;
+                else
+                    avg_for_each_casenum = 0;
+                end
+                
                 
                 fprintf(fout_sidata,'%s\t%d\t%s\t%d\t%g\n',pdifree_str,nval,dirstr,...
                     casenum,avg_for_each_casenum);
@@ -206,12 +211,13 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
             fclose(fout_ttest);
             fclose(fout_case);
             
-            avg_across_cases(ncnt,arch_cnt,pdi_cntr) = nadschain_all(ncnt,arch_cnt)/casecntr_arr(ncnt,arch_cnt);
+            
             
             if casecntr_arr(ncnt,arch_cnt) > 1
                 
                 nonzerovals = avgcase_store(avgcase_store~=0);
                 stderr_val = std(nonzerovals)/sqrt(length(nonzerovals));
+                avg_across_cases(ncnt,arch_cnt,pdi_cntr) = nadschain_all(ncnt,arch_cnt)/length(nonzerovals);
                 
             else
                 

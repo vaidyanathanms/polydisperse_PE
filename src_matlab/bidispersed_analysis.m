@@ -241,4 +241,88 @@ if plt_data
    
 end
 
+if plt_data
+    
+    % Plot with multiple y-axes
+    % Plot all mws and ratio of mws
+    % Reference: https://www.mathworks.com/matlabcentral/answers/164738-bar-plot-with-two-y-axes
+    
+    h3 = figure;
+    hold on
+    box on
+    set(gca,'FontSize',16)
+    clear pleg
+    
+    X = categorical({leg_arr{1};leg_arr{2}});
+    Yf_data = zeros(length(arch_arr),3); Erf_data = zeros(length(arch_arr),3);
+    for i = 1:length(arch_arr)
+        Yf_data(i,1) = mean_data_arch_sml(i,1);
+        Yf_data(i,2) = mean_data_arch_big(i,1);
+        Yf_data(i,3) = 0;
+        
+        Erf_data(i,1) = stderr_data_arch_sml(i,1);
+        Erf_data(i,2) = stderr_data_arch_big(i,1);
+        Erf_data(i,3) = 0;
+    end
+
+
+    Yphi_data = zeros(length(arch_arr),3); Erphi_data = zeros(length(arch_arr),3);
+    for i = 1:length(arch_arr)
+        Yphi_data(i,1) = 0;
+        Yphi_data(i,2) = 0;
+        Yphi_data(i,3) = mean_data_arch_rat(i,1);
+        
+        Erphi_data(i,1) = 0;
+        Erphi_data(i,2) = 0;
+        Erphi_data(i,3) = stderr_data_arch_rat(i,1);
+    end
+
+    yyaxis left
+    hBar = bar(X,Yf_data,'FaceColor','flat');
+    ylim([0.006 15])
+    pleg{1} = '$N$ = 8 ($f_{\rm{ads}}$)';
+    pleg{2} = '$N$ = 52 ($f_{\rm{ads}}$)';
+    xlabel('Architecture','FontSize',20,'Interpreter','Latex')
+    ylabel('$f_{\rm{ads}}$','FontSize',20,'Interpreter','Latex')
+    set(gca,'yscale','log');
+    ylim([0.006 19])
+    hBar(2).FaceColor = [.2 .6 .5];
+    ytick=10.^(-2:2);
+    yticklab = cellstr(num2str(round(log10(ytick(:))), '$10^{%d}$'));
+    set(gca,'YTick',ytick,'YTickLabel',yticklab,'TickLabelInterpreter','Latex')
+    
+    yyaxis right
+    hBar2 = bar(X,Yphi_data);
+    xlabel('Architecture','FontSize',20,'Interpreter','Latex')
+    ylabel('$\phi_{\rm{ads}}$','FontSize',20,'Interpreter','Latex')
+    set(gca,'yscale','log');
+    ylim([0.006 19])
+    hBar2(2).FaceColor = [.2 .6 .5];
+    hlgnd = legend([hBar(1),hBar(2)],pleg{1},pleg{2},'Interpreter','Latex','Location','NorthWest');
+    ytick=10.^(-2:2);
+    yticklab = cellstr(num2str(round(log10(ytick(:))), '$10^{%d}$'));
+    set(gca,'YTick',ytick,'YTickLabel',yticklab,'TickLabelInterpreter','Latex')
+    
+    %xticks([1 2]); xticklabels = ({leg_arr{1} leg_arr{2}});
+    
+    % Only to plot with error bars
+    % Ref: https://www.mathworks.com/matlabcentral/answers/102220-how-do-i-place-errorbars-on-my-grouped-bar-graph-using-function-errorbar-in-matlab
+%     % Find the number of groups and the number of bars in each group
+%     ngroups = size(Yall_data, 1);
+%     nbars = size(Yall_data, 2);
+%     % Calculate the width for each bar group
+%     groupwidth = min(0.8, nbars/(nbars + 1.5));
+%     % Set the position of each error bar in the centre of the main bar
+%     % Based on barweb.m by Bolu Ajiboye from MATLAB File Exchange
+%     for i = 1:nbars
+%         % Calculate center of each bar
+%         x = (1:ngroups) - groupwidth/2 + (2*i-1) * groupwidth / (2*nbars);
+%         errorbar(x, Yall_data(:,i), Erall_data(:,i), 'k', 'linestyle', 'none');
+%     end
+%     set(gca,'yscale','log'); % edit legends and xlabels AFTER PLOTTING. Could not insert automatically.
+%     hold off
+    
+   
+end
+
 

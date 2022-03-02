@@ -22,7 +22,7 @@ nmonfree = 30; nmongraft = 30; ngraft = 32;
 cutoff = '1.50';
 lz = 120; area=35^2;
 set_tmax = 2.5e7; % maximum timestep for analysis;
-set_tmin = 1e7; % minimum timestep for analysis;
+set_tmin = 0.99e7; % minimum timestep for analysis;
 
 %% Input flags
 ttestflag = 1; % write to ttest_dir the individual cases
@@ -149,7 +149,7 @@ for pdi_cntr = 1:length(pdi_freearr) % begin pdi free loop
                     
                    
                     %average adsorption values
-                    if min(data(:,1)) > set_tmin
+                    if min(data(:,1)) >= set_tmin
                         
                         for minindcnt = 1:lendata %avoid double counting
                             if data(minindcnt,1) > mintstep

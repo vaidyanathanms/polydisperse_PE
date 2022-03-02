@@ -43,11 +43,11 @@ densfreq = 5;
 %% Input flags
 % see definitions above
 figsz   = 0;
-figfads = 0; figfads_mon = 0; figfads_mon2 = 1; fignumavg_MW=0;
+figfads = 0; figfads_mon = 0; figfads_mon2 = 0; fignumavg_MW=0;
 figqnet = 0;
 figdens  = 0; nplot = 150; %nplot corresponds to the number of chains value for density profiles
 figdens2 = 0; % density of only the ADSORBED chains according to monomeric definition
-figrg    = 0;
+figrg    = 1;
 
 %% Pre-calculations
 rhofree = nfreearr*30/(lz*area);
@@ -120,7 +120,7 @@ if figsz
     
 end
 
-%% f_ads
+%% f_ads (Adsorbed chain fraction).
 if figfads
     % Create arrays for according to the input array sizes
     frac_ads = zeros(length(nfreearr),length(arch_arr)+1,length(pdi_freearr)); %+1 for y-dimension to incorporate the N_f values
@@ -1071,6 +1071,7 @@ if fignumavg_MW
     
 end
 
+%% Rg of grafts
 if figrg
     
     % Create arrays for according to the input array sizes
@@ -1185,18 +1186,18 @@ if figrg
     xlabel('$n_{pa}/n_{pc}$','FontSize',20,'Interpreter','Latex')
     ylabel('$\langle R_{g}^{2} \rangle^{1/2}$/$\langle R_{g,0}^{2} \rangle^{1/2}$','FontSize',20,'Interpreter','Latex')
     lcnt = 1;
-    rg_blbl = 6.34;
-    
+    rg_blbl = 6.34; rg_alal = 6.65;
+    rg_homo = [rg_blbl; rg_alal];
     for plcnt = 1:length(pdi_freearr)
         
         for arch_cnt = 1:length(arch_arr)
             
             if pdi_freearr(plcnt) == 1
-                errorbar(rg_ads(:,1,plcnt)/nch_graft,rg_ads(:,1+arch_cnt,plcnt).^(0.5)/rg_blbl,err_ads(:,1+arch_cnt,plcnt),...
+                errorbar(rg_ads(:,1,plcnt)/nch_graft,rg_ads(:,1+arch_cnt,plcnt).^(0.5)/rg_homo(arch_cnt),err_ads(:,1+arch_cnt,plcnt),...
                     'Color', pclr{arch_cnt},'Marker',msty{arch_cnt},'MarkerFaceColor',...
                     'None','LineStyle',lsty{plcnt},'LineWidth',1,'MarkerSize',10)
             else
-                errorbar(rg_ads(:,1,plcnt)/nch_graft,rg_ads(:,1+arch_cnt,plcnt).^(0.5)/rg_blbl,err_ads(:,1+arch_cnt,plcnt),...
+                errorbar(rg_ads(:,1,plcnt)/nch_graft,rg_ads(:,1+arch_cnt,plcnt).^(0.5)/rg_homo(arch_cnt),err_ads(:,1+arch_cnt,plcnt),...
                     'Color', pclr{arch_cnt},'Marker',msty{arch_cnt},'MarkerFaceColor',...
                     pclr{arch_cnt},'LineStyle',lsty{plcnt},'LineWidth',1,'MarkerSize',10)
             end
