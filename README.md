@@ -12,11 +12,16 @@ NOTE2: The path to the executable for LAMMPS - lmp_mesabi also needs to be chang
 
 File Usage:
 
-newparams_genconf2.py - To generate the input configurations. See "Inputs" within the code to see the kind of inputs required
+newparams_genconf2.py - To generate the input configurations. See "Inputs" within the code to see the kind of inputs required.
+
 ana.py - To compute the analysis of the data generated.
+
 copy_to_analyze.py - To copy all the analysis output files to a new directory for further analysis with MATLAB. 
-my_python_functions.py - Supplemental functions for running python codes
+
+my_python_functions.py - Supplemental functions for running python codes.
 
 The FORTRAN files are called within the python files to generate the SZ distribution (SZdist2.f90) and generating the LAMMPS inputs (params_inpconf.f90, inpconf_generator.f90, ran_numbers.f90). Analysis files are called using ana.py and the dependencies are pe_analyze.f90 and pe_params.f90
 
 Some of the FORTRAN and input files may have a *_var* version which is used by the python codes to replace the inputs/parameters with user input versions. DO NOT delete this versions if the user is using the Python codes
+
+See README.txt in src_matlab directory to see usages on MATLAB codes
