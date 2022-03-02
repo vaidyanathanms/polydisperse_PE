@@ -29,6 +29,7 @@ dihedral_style	none
 improper_style 	none
 
 pair_style      lj/cut/coul/long 1.122462 10.0
+pair_modify     shift yes
 pair_coeff	* * 1 1 
 kspace_style	pppm 0.00001
 kspace_modify   slab 3.0

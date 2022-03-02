@@ -12,8 +12,8 @@ log 		log.txt
 read_restart	restart1
 
 # Neighbor information
-neighbor        0.3 bin
-neigh_modify	every 10 one 10000
+neighbor        1.0 bin
+neigh_modify	every 1 delay 1 one 10000
 
 # Pair Information
 bond_style	fene
@@ -27,6 +27,7 @@ dihedral_style	none
 improper_style 	none
 
 pair_style      lj/cut/coul/long 1.122462 10.0
+pair_modify     shift yes
 pair_coeff	* * 1 1 
 kspace_style	pppm 0.00001
 kspace_modify   slab 3.0
@@ -61,7 +62,7 @@ run_style verlet
 restart   5000 restart1 restart2
 restart   500000 archival_*.restart
 timestep  0.005
-run	  10000000
+run	  20000000
 
 timestep  0.01
 run  5000000

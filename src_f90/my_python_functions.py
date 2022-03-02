@@ -148,7 +148,7 @@ def run_lammps(nch_free,pdifree,casenum,dirstr,inpjob,outjob,\
     fw.close()
     fr.close()
 
-    subprocess.call(["qsub", outjob])
+    subprocess.call(["sbatch","-p","small", outjob])
     
     
 def clean_backup_initfiles(f90_files,pdi_files,par_files,destdir):

@@ -30,6 +30,7 @@ dihedral_style	none
 improper_style 	none
 
 pair_coeff	* * 1 1 
+pair_modify    shift yes
 kspace_style	pppm 0.00001
 kspace_modify   slab 3.0
 dielectric		1
